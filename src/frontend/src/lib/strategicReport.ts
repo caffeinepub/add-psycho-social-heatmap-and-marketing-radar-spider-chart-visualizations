@@ -7,6 +7,7 @@ import type { Document } from '../backend';
 import { mockEmotionAnalysis } from './mockData';
 import { computePsychoSocialMatrix, PSYCHO_SOCIAL_DIMENSIONS, EMOTION_CATEGORIES } from './psychoSocialMetrics';
 import { computeMarketingMetrics } from './marketingMetrics';
+import { type Locale, getReportTemplates, translateEmotion } from './strategicReportLocale';
 
 export interface StrategicRecommendation {
   title: string;
@@ -27,6 +28,7 @@ export interface StrategicReport {
     hasMarketingData: boolean;
     hasPurchaseIntentionData: boolean;
   };
+  locale: Locale;
 }
 
 /**
@@ -128,9 +130,11 @@ function generateRecommendations(
   topEmotions: Array<{ emotion: string; count: number; percentage: number }>,
   psychoSocialDimensions: Array<{ dimension: string; score: number }>,
   marketingAnalysis: { weakest: { metric: string; score: number } | null; strongest: { metric: string; score: number } | null },
-  brandMentions: Record<string, number>
+  brandMentions: Record<string, number>,
+  locale: Locale
 ): StrategicRecommendation[] {
   const recommendations: StrategicRecommendation[] = [];
+  const templates = getReportTemplates(locale);
   
   // Recommendation 1: Based on dominant emotion
   if (topEmotions.length > 0) {
@@ -138,20 +142,20 @@ function generateRecommendations(
     
     if (topEmotion.emotion === 'fear' || topEmotion.emotion === 'skepticism') {
       recommendations.push({
-        title: 'Address Consumer Concerns Through Transparency',
-        rationale: `${topEmotion.percentage}% of sentiment shows ${topEmotion.emotion}, indicating significant consumer hesitation. Implement trust-building campaigns focusing on safety certifications, warranty programs, and real customer testimonials to reduce anxiety.`,
+        title: templates.addressConcerns.title,
+        rationale: templates.addressConcerns.rationale(topEmotion.percentage, translateEmotion(topEmotion.emotion, locale)),
         priority: 'high',
       });
     } else if (topEmotion.emotion === 'interest' || topEmotion.emotion === 'satisfaction') {
       recommendations.push({
-        title: 'Capitalize on Positive Sentiment with Conversion Campaigns',
-        rationale: `${topEmotion.percentage}% of sentiment reflects ${topEmotion.emotion}, showing strong market receptivity. Launch targeted conversion campaigns with limited-time offers and test-ride programs to convert interest into purchases.`,
+        title: templates.capitalizePositive.title,
+        rationale: templates.capitalizePositive.rationale(topEmotion.percentage, translateEmotion(topEmotion.emotion, locale)),
         priority: 'high',
       });
     } else if (topEmotion.emotion === 'trust') {
       recommendations.push({
-        title: 'Leverage Trust for Brand Advocacy Programs',
-        rationale: `${topEmotion.percentage}% of sentiment demonstrates trust, a valuable asset. Develop referral programs and brand ambassador initiatives to amplify positive word-of-mouth and expand market reach.`,
+        title: templates.leverageTrust.title,
+        rationale: templates.leverageTrust.rationale(topEmotion.percentage),
         priority: 'high',
       });
     }
@@ -163,26 +167,26 @@ function generateRecommendations(
     
     if (weakMetric.metric === 'Awareness') {
       recommendations.push({
-        title: 'Increase Brand Visibility Through Multi-Channel Campaigns',
-        rationale: `Awareness scores at ${weakMetric.score}/100 indicate low brand recognition. Invest in digital advertising, influencer partnerships, and public events to increase top-of-mind awareness among target demographics.`,
+        title: templates.increaseBrandVisibility.title,
+        rationale: templates.increaseBrandVisibility.rationale(weakMetric.score),
         priority: 'high',
       });
     } else if (weakMetric.metric === 'Consideration') {
       recommendations.push({
-        title: 'Strengthen Product Information and Comparison Tools',
-        rationale: `Consideration scores at ${weakMetric.score}/100 suggest consumers need more information. Develop detailed comparison guides, interactive product configurators, and educational content to support decision-making.`,
+        title: templates.strengthenProductInfo.title,
+        rationale: templates.strengthenProductInfo.rationale(weakMetric.score),
         priority: 'medium',
       });
     } else if (weakMetric.metric === 'Intent') {
       recommendations.push({
-        title: 'Implement Purchase Incentive Programs',
-        rationale: `Intent scores at ${weakMetric.score}/100 reveal a conversion gap. Introduce financing options, trade-in programs, and early-adopter discounts to lower purchase barriers and accelerate decision-making.`,
+        title: templates.implementIncentives.title,
+        rationale: templates.implementIncentives.rationale(weakMetric.score),
         priority: 'high',
       });
     } else if (weakMetric.metric === 'Advocacy') {
       recommendations.push({
-        title: 'Build Community and Loyalty Programs',
-        rationale: `Advocacy scores at ${weakMetric.score}/100 indicate limited word-of-mouth. Create owner communities, loyalty rewards, and referral incentives to transform satisfied customers into brand advocates.`,
+        title: templates.buildCommunity.title,
+        rationale: templates.buildCommunity.rationale(weakMetric.score),
         priority: 'medium',
       });
     }
@@ -194,20 +198,20 @@ function generateRecommendations(
     
     if (topDimension.dimension === 'Anxiety' || topDimension.dimension === 'Risk Perception') {
       recommendations.push({
-        title: 'Mitigate Risk Perception with Comprehensive Support',
-        rationale: `High ${topDimension.dimension} scores (${topDimension.score}/100) indicate consumer uncertainty. Offer extended warranties, 24/7 customer support, and money-back guarantees to reduce perceived risk and build confidence.`,
+        title: templates.mitigateRisk.title,
+        rationale: templates.mitigateRisk.rationale(topDimension.dimension, topDimension.score),
         priority: 'high',
       });
     } else if (topDimension.dimension === 'Social Influence') {
       recommendations.push({
-        title: 'Amplify Social Proof and Community Engagement',
-        rationale: `Strong Social Influence signals (${topDimension.score}/100) show peer recommendations matter. Showcase user-generated content, customer reviews, and community events to leverage social validation.`,
+        title: templates.amplifySocialProof.title,
+        rationale: templates.amplifySocialProof.rationale(topDimension.score),
         priority: 'medium',
       });
     } else if (topDimension.dimension === 'Self-Efficacy') {
       recommendations.push({
-        title: 'Simplify User Experience and Onboarding',
-        rationale: `Self-Efficacy scores (${topDimension.score}/100) suggest consumers value ease of use. Provide comprehensive tutorials, intuitive interfaces, and hands-on training sessions to boost user confidence.`,
+        title: templates.simplifyUX.title,
+        rationale: templates.simplifyUX.rationale(topDimension.score),
         priority: 'medium',
       });
     }
@@ -221,8 +225,8 @@ function generateRecommendations(
   if (topBrands.length > 0) {
     const [topBrand, mentions] = topBrands[0];
     recommendations.push({
-      title: `Focus Marketing Resources on High-Engagement Brands`,
-      rationale: `${topBrand} dominates conversation with ${mentions} mentions. Allocate marketing budget proportionally to high-engagement brands while investigating why others receive less attention.`,
+      title: templates.focusMarketing.title,
+      rationale: templates.focusMarketing.rationale(topBrand, mentions),
       priority: 'medium',
     });
   }
@@ -230,8 +234,8 @@ function generateRecommendations(
   // Ensure at least 3 recommendations
   if (recommendations.length < 3) {
     recommendations.push({
-      title: 'Expand Data Collection for Deeper Insights',
-      rationale: 'Current dataset provides limited signals. Implement systematic feedback collection across customer touchpoints to enable more granular strategic analysis and targeted interventions.',
+      title: templates.expandDataCollection.title,
+      rationale: templates.expandDataCollection.rationale,
       priority: 'low',
     });
   }
@@ -246,29 +250,36 @@ function generateKeyFindings(
   documents: Document[],
   topEmotions: Array<{ emotion: string; count: number; percentage: number }>,
   psychoSocialDimensions: Array<{ dimension: string; score: number }>,
-  marketingAnalysis: { weakest: { metric: string; score: number } | null; strongest: { metric: string; score: number } | null }
+  marketingAnalysis: { weakest: { metric: string; score: number } | null; strongest: { metric: string; score: number } | null },
+  locale: Locale
 ): string[] {
   const findings: string[] = [];
+  const templates = getReportTemplates(locale);
   
-  findings.push(`Analyzed ${documents.length} consumer sentiment documents across electric motorcycle brands.`);
+  findings.push(templates.analyzedDocuments(documents.length));
   
   if (topEmotions.length > 0) {
     const top3 = topEmotions.slice(0, 3);
     findings.push(
-      `Dominant emotions: ${top3.map(e => `${e.emotion} (${e.percentage}%)`).join(', ')}.`
+      templates.dominantEmotions(top3.map(e => `${translateEmotion(e.emotion, locale)} (${e.percentage}%)`).join(', '))
     );
   }
   
   if (psychoSocialDimensions.length > 0) {
     const top2 = psychoSocialDimensions.slice(0, 2);
     findings.push(
-      `Key psycho-social factors: ${top2.map(d => `${d.dimension} (${d.score}/100)`).join(', ')}.`
+      templates.psychoSocialFactors(top2.map(d => `${d.dimension} (${d.score}/100)`).join(', '))
     );
   }
   
   if (marketingAnalysis.strongest && marketingAnalysis.weakest) {
     findings.push(
-      `Marketing funnel: Strongest at ${marketingAnalysis.strongest.metric} (${marketingAnalysis.strongest.score}/100), weakest at ${marketingAnalysis.weakest.metric} (${marketingAnalysis.weakest.score}/100).`
+      templates.marketingFunnel(
+        marketingAnalysis.strongest.metric,
+        marketingAnalysis.strongest.score,
+        marketingAnalysis.weakest.metric,
+        marketingAnalysis.weakest.score
+      )
     );
   }
   
@@ -281,9 +292,11 @@ function generateKeyFindings(
 function generateRisks(
   topEmotions: Array<{ emotion: string; count: number; percentage: number }>,
   psychoSocialDimensions: Array<{ dimension: string; score: number }>,
-  marketingAnalysis: { weakest: { metric: string; score: number } | null }
+  marketingAnalysis: { weakest: { metric: string; score: number } | null },
+  locale: Locale
 ): string[] {
   const risks: string[] = [];
+  const templates = getReportTemplates(locale);
   
   // Risk based on negative emotions
   const negativeEmotions = topEmotions.filter(e => 
@@ -292,7 +305,7 @@ function generateRisks(
   
   if (negativeEmotions.length > 0 && negativeEmotions[0].percentage > 20) {
     risks.push(
-      `High negative sentiment (${negativeEmotions[0].emotion}: ${negativeEmotions[0].percentage}%) may slow adoption rates if not addressed promptly.`
+      templates.highNegativeSentiment(translateEmotion(negativeEmotions[0].emotion, locale), negativeEmotions[0].percentage)
     );
   }
   
@@ -303,22 +316,20 @@ function generateRisks(
   
   if (highAnxiety) {
     risks.push(
-      `Elevated ${highAnxiety.dimension} (${highAnxiety.score}/100) indicates consumers perceive significant barriers to adoption.`
+      templates.elevatedAnxiety(highAnxiety.dimension, highAnxiety.score)
     );
   }
   
   // Risk based on marketing gaps
   if (marketingAnalysis.weakest && marketingAnalysis.weakest.score < 50) {
     risks.push(
-      `Critical gap in ${marketingAnalysis.weakest.metric} (${marketingAnalysis.weakest.score}/100) may limit market penetration and revenue growth.`
+      templates.criticalGap(marketingAnalysis.weakest.metric, marketingAnalysis.weakest.score)
     );
   }
   
   // Default risk if none identified
   if (risks.length === 0) {
-    risks.push(
-      'Limited dataset size may not capture full market sentiment. Expand data collection to validate findings.'
-    );
+    risks.push(templates.limitedDataset);
   }
   
   return risks;
@@ -327,14 +338,9 @@ function generateRisks(
 /**
  * Generate next steps
  */
-function generateNextSteps(): string[] {
-  return [
-    'Present findings to marketing and product teams for strategic alignment.',
-    'Develop detailed action plans for each high-priority recommendation with timelines and KPIs.',
-    'Establish monitoring dashboard to track sentiment changes and campaign effectiveness.',
-    'Schedule quarterly reviews to reassess strategy based on updated market data.',
-    'Allocate budget and resources to address identified gaps in the marketing funnel.',
-  ];
+function generateNextSteps(locale: Locale): string[] {
+  const templates = getReportTemplates(locale);
+  return templates.nextSteps;
 }
 
 /**
@@ -343,12 +349,19 @@ function generateNextSteps(): string[] {
 function generateExecutiveSummary(
   documents: Document[],
   topEmotions: Array<{ emotion: string; count: number; percentage: number }>,
-  recommendations: StrategicRecommendation[]
+  recommendations: StrategicRecommendation[],
+  locale: Locale
 ): string {
+  const templates = getReportTemplates(locale);
   const highPriorityCount = recommendations.filter(r => r.priority === 'high').length;
-  const dominantEmotion = topEmotions.length > 0 ? topEmotions[0].emotion : 'mixed';
+  const dominantEmotion = topEmotions.length > 0 ? translateEmotion(topEmotions[0].emotion, locale) : translateEmotion('mixed', locale);
   
-  return `Analysis of ${documents.length} consumer sentiment documents reveals ${dominantEmotion} as the dominant emotional response to electric motorcycle brands. This report identifies ${recommendations.length} strategic recommendations, including ${highPriorityCount} high-priority actions, to optimize market positioning and accelerate adoption. Key opportunities exist in addressing consumer concerns, strengthening marketing effectiveness, and leveraging positive sentiment for growth.`;
+  return templates.executiveSummaryTemplate(
+    documents.length,
+    dominantEmotion,
+    recommendations.length,
+    highPriorityCount
+  );
 }
 
 /**
@@ -356,15 +369,17 @@ function generateExecutiveSummary(
  */
 export function generateStrategicReport(
   documents: Document[],
-  hasPurchaseIntentionData: boolean = false
+  hasPurchaseIntentionData: boolean = false,
+  locale: Locale = 'en'
 ): StrategicReport {
   const generatedAt = new Date().toISOString();
+  const templates = getReportTemplates(locale);
   
   // If no documents, return empty report
   if (documents.length === 0) {
     return {
       generatedAt,
-      executiveSummary: 'No data available for analysis. Upload documents to generate strategic recommendations.',
+      executiveSummary: templates.noDataSummary,
       keyFindings: [],
       recommendations: [],
       risks: [],
@@ -375,6 +390,7 @@ export function generateStrategicReport(
         hasMarketingData: false,
         hasPurchaseIntentionData: false,
       },
+      locale,
     };
   }
   
@@ -390,28 +406,32 @@ export function generateStrategicReport(
     topEmotions,
     psychoSocialDimensions,
     marketingAnalysis,
-    brandMentions
+    brandMentions,
+    locale
   );
   
   const keyFindings = generateKeyFindings(
     documents,
     topEmotions,
     psychoSocialDimensions,
-    marketingAnalysis
+    marketingAnalysis,
+    locale
   );
   
   const risks = generateRisks(
     topEmotions,
     psychoSocialDimensions,
-    marketingAnalysis
+    marketingAnalysis,
+    locale
   );
   
-  const nextSteps = generateNextSteps();
+  const nextSteps = generateNextSteps(locale);
   
   const executiveSummary = generateExecutiveSummary(
     documents,
     topEmotions,
-    recommendations
+    recommendations,
+    locale
   );
   
   return {
@@ -427,30 +447,56 @@ export function generateStrategicReport(
       hasMarketingData: marketingAnalysis.all.length > 0,
       hasPurchaseIntentionData,
     },
+    locale,
   };
 }
 
 /**
  * Convert report to Markdown format for export
  */
-export function reportToMarkdown(report: StrategicReport): string {
+export function reportToMarkdown(report: StrategicReport, locale?: Locale): string {
   const lines: string[] = [];
+  const effectiveLocale = locale || report.locale || 'en';
+  const templates = getReportTemplates(effectiveLocale);
+  const uiLabels = effectiveLocale === 'id' 
+    ? { 
+        title: 'Laporan Rekomendasi Strategis',
+        generated: 'Dibuat',
+        executiveSummary: 'Ringkasan Eksekutif',
+        keyFindings: 'Temuan Utama',
+        recommendations: 'Rekomendasi Strategis',
+        priority: 'Prioritas',
+        risks: 'Risiko & Perhatian',
+        nextSteps: 'Langkah Selanjutnya',
+        footer: 'Laporan ini dibuat menggunakan analisis sentimen dan wawasan strategis berbasis AI.'
+      }
+    : {
+        title: 'Strategic Recommendation Report',
+        generated: 'Generated',
+        executiveSummary: 'Executive Summary',
+        keyFindings: 'Key Findings',
+        recommendations: 'Strategic Recommendations',
+        priority: 'Priority',
+        risks: 'Risks & Watchouts',
+        nextSteps: 'Next Steps',
+        footer: 'This report was generated using AI-powered sentiment analysis and strategic insights.'
+      };
   
-  lines.push('# Strategic Recommendation Report');
+  lines.push(`# ${uiLabels.title}`);
   lines.push('');
-  lines.push(`**Generated:** ${new Date(report.generatedAt).toLocaleString('en-US', {
+  lines.push(`**${uiLabels.generated}:** ${new Date(report.generatedAt).toLocaleString(effectiveLocale === 'id' ? 'id-ID' : 'en-US', {
     dateStyle: 'full',
     timeStyle: 'short',
   })}`);
   lines.push('');
   
-  lines.push('## Executive Summary');
+  lines.push(`## ${uiLabels.executiveSummary}`);
   lines.push('');
   lines.push(report.executiveSummary);
   lines.push('');
   
   if (report.keyFindings.length > 0) {
-    lines.push('## Key Findings');
+    lines.push(`## ${uiLabels.keyFindings}`);
     lines.push('');
     report.keyFindings.forEach((finding, idx) => {
       lines.push(`${idx + 1}. ${finding}`);
@@ -459,12 +505,15 @@ export function reportToMarkdown(report: StrategicReport): string {
   }
   
   if (report.recommendations.length > 0) {
-    lines.push('## Strategic Recommendations');
+    lines.push(`## ${uiLabels.recommendations}`);
     lines.push('');
     report.recommendations.forEach((rec, idx) => {
       lines.push(`### ${idx + 1}. ${rec.title}`);
       lines.push('');
-      lines.push(`**Priority:** ${rec.priority.toUpperCase()}`);
+      const priorityLabel = effectiveLocale === 'id' 
+        ? (rec.priority === 'high' ? 'TINGGI' : rec.priority === 'medium' ? 'SEDANG' : 'RENDAH')
+        : rec.priority.toUpperCase();
+      lines.push(`**${uiLabels.priority}:** ${priorityLabel}`);
       lines.push('');
       lines.push(rec.rationale);
       lines.push('');
@@ -472,7 +521,7 @@ export function reportToMarkdown(report: StrategicReport): string {
   }
   
   if (report.risks.length > 0) {
-    lines.push('## Risks & Watchouts');
+    lines.push(`## ${uiLabels.risks}`);
     lines.push('');
     report.risks.forEach((risk, idx) => {
       lines.push(`${idx + 1}. ${risk}`);
@@ -481,7 +530,7 @@ export function reportToMarkdown(report: StrategicReport): string {
   }
   
   if (report.nextSteps.length > 0) {
-    lines.push('## Next Steps');
+    lines.push(`## ${uiLabels.nextSteps}`);
     lines.push('');
     report.nextSteps.forEach((step, idx) => {
       lines.push(`${idx + 1}. ${step}`);
@@ -491,7 +540,7 @@ export function reportToMarkdown(report: StrategicReport): string {
   
   lines.push('---');
   lines.push('');
-  lines.push('*This report was generated using AI-powered sentiment analysis and strategic insights.*');
+  lines.push(`*${uiLabels.footer}*`);
   
   return lines.join('\n');
 }

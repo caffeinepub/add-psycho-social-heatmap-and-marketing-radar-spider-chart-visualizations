@@ -2,27 +2,31 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { FileText, Download, Printer, AlertTriangle, CheckCircle2, TrendingUp, Target, AlertCircle } from 'lucide-react';
+import { FileText, Download, Printer, AlertTriangle, CheckCircle2, TrendingUp, Target, AlertCircle, Languages } from 'lucide-react';
 import { useGetAllDocuments } from '../hooks/useQueries';
 import { generateStrategicReport, reportToMarkdown } from '../lib/strategicReport';
+import { type Locale, getUILabels, getPriorityLabel } from '../lib/strategicReportLocale';
 import { toast } from 'sonner';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 export function StrategicRecommendationReportPage() {
   const { data: documents = [], isLoading } = useGetAllDocuments();
+  const [locale, setLocale] = useState<Locale>('en');
 
-  // Generate report from current documents
+  // Generate report from current documents with selected locale
   const report = useMemo(() => {
-    return generateStrategicReport(documents, false);
-  }, [documents]);
+    return generateStrategicReport(documents, false, locale);
+  }, [documents, locale]);
+
+  const labels = getUILabels(locale);
 
   const handleCopyMarkdown = async () => {
     try {
-      const markdown = reportToMarkdown(report);
+      const markdown = reportToMarkdown(report, locale);
       await navigator.clipboard.writeText(markdown);
-      toast.success('Report copied to clipboard as Markdown');
+      toast.success(locale === 'id' ? 'Laporan disalin ke clipboard sebagai Markdown' : 'Report copied to clipboard as Markdown');
     } catch (error) {
-      toast.error('Failed to copy report to clipboard');
+      toast.error(locale === 'id' ? 'Gagal menyalin laporan ke clipboard' : 'Failed to copy report to clipboard');
     }
   };
 
@@ -45,21 +49,42 @@ export function StrategicRecommendationReportPage() {
     return (
       <div className="container py-8">
         <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold">Strategic Recommendation Report</h1>
-          <p className="text-muted-foreground">
-            Executive-ready insights and actionable recommendations for decision-makers
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="mb-2 text-3xl font-bold">{labels.pageTitle}</h1>
+              <p className="text-muted-foreground">
+                {labels.pageDescription}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 print:hidden">
+              <span className="text-sm text-muted-foreground">{labels.languageLabel}:</span>
+              <Button
+                variant={locale === 'en' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setLocale('en')}
+              >
+                English
+              </Button>
+              <Button
+                variant={locale === 'id' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setLocale('id')}
+              >
+                Indonesia
+              </Button>
+            </div>
+          </div>
         </div>
 
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <FileText className="mb-4 h-16 w-16 text-muted-foreground" />
-            <h3 className="mb-2 text-xl font-semibold">No Data Available</h3>
+            <h3 className="mb-2 text-xl font-semibold">{labels.noDataTitle}</h3>
             <p className="mb-6 text-center text-muted-foreground">
-              There is no data to generate a strategic report. Please upload documents to the system first.
+              {labels.noDataDescription}
             </p>
             <Button onClick={() => window.location.href = '/'}>
-              Go to Dashboard
+              {labels.goToDashboard}
             </Button>
           </CardContent>
         </Card>
@@ -79,20 +104,39 @@ export function StrategicRecommendationReportPage() {
       <div className="mb-8 print:hidden">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="mb-2 text-3xl font-bold">Strategic Recommendation Report</h1>
+            <h1 className="mb-2 text-3xl font-bold">{labels.pageTitle}</h1>
             <p className="text-muted-foreground">
-              Executive-ready insights and actionable recommendations for decision-makers
+              {labels.pageDescription}
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={handleCopyMarkdown}>
-              <Download className="mr-2 h-4 w-4" />
-              Copy as Markdown
-            </Button>
-            <Button onClick={handlePrint}>
-              <Printer className="mr-2 h-4 w-4" />
-              Print
-            </Button>
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">{labels.languageLabel}:</span>
+              <Button
+                variant={locale === 'en' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setLocale('en')}
+              >
+                English
+              </Button>
+              <Button
+                variant={locale === 'id' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setLocale('id')}
+              >
+                Indonesia
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleCopyMarkdown}>
+                <Download className="mr-2 h-4 w-4" />
+                {labels.copyMarkdown}
+              </Button>
+              <Button onClick={handlePrint}>
+                <Printer className="mr-2 h-4 w-4" />
+                {labels.print}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -106,17 +150,17 @@ export function StrategicRecommendationReportPage() {
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5" />
-                  Report Metadata
+                  {labels.reportMetadata}
                 </CardTitle>
                 <CardDescription>
-                  Generated on {new Date(report.generatedAt).toLocaleString('en-US', {
+                  {labels.generatedOn} {new Date(report.generatedAt).toLocaleString(locale === 'id' ? 'id-ID' : 'en-US', {
                     dateStyle: 'full',
                     timeStyle: 'short',
                   })}
                 </CardDescription>
               </div>
               <Badge variant="outline" className="text-sm">
-                {documents.length} Documents Analyzed
+                {documents.length} {labels.documentsAnalyzed}
               </Badge>
             </div>
           </CardHeader>
@@ -127,7 +171,7 @@ export function StrategicRecommendationReportPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              Executive Summary
+              {labels.executiveSummary}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -141,7 +185,7 @@ export function StrategicRecommendationReportPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5" />
-                Key Findings
+                {labels.keyFindings}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -165,10 +209,10 @@ export function StrategicRecommendationReportPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Target className="h-5 w-5" />
-                Strategic Recommendations
+                {labels.strategicRecommendations}
               </CardTitle>
               <CardDescription>
-                Actionable recommendations prioritized by impact and urgency
+                {labels.recommendationsDescription}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -181,7 +225,7 @@ export function StrategicRecommendationReportPage() {
                         {idx + 1}. {rec.title}
                       </h3>
                       <Badge variant={priorityColors[rec.priority]}>
-                        {rec.priority.toUpperCase()}
+                        {getPriorityLabel(rec.priority, locale)}
                       </Badge>
                     </div>
                     <p className="leading-relaxed text-muted-foreground">{rec.rationale}</p>
@@ -198,7 +242,7 @@ export function StrategicRecommendationReportPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
                 <AlertTriangle className="h-5 w-5" />
-                Risks & Watchouts
+                {labels.risksWatchouts}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -220,7 +264,7 @@ export function StrategicRecommendationReportPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle2 className="h-5 w-5" />
-                Next Steps
+                {labels.nextSteps}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -245,10 +289,10 @@ export function StrategicRecommendationReportPage() {
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-blue-500" />
               <div className="text-sm">
                 <p className="font-semibold text-blue-700 dark:text-blue-400">
-                  Note: Purchase Intention Data Not Available
+                  {labels.purchaseIntentionNotice}
                 </p>
                 <p className="text-muted-foreground">
-                  This report is based on emotion and sentiment analysis. Purchase intention metrics are not included in the current analysis. For more comprehensive insights, consider enabling purchase intention tracking.
+                  {labels.purchaseIntentionNoticeDescription}
                 </p>
               </div>
             </CardContent>

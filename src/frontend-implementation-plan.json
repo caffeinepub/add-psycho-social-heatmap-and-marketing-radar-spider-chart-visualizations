@@ -1,143 +1,70 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Reliable visualization rendering and consistent dataset state handling",
+  "title": "Bilingual (EN/ID) toggle for Strategic Recommendation Report",
   "requirements": [
     {
-      "id": "REQ-8",
-      "summary": "Fix dashboard visualizations so they always render when documents exist and never show incorrect empty-state due to stale/incorrect dataset detection.",
+      "id": "REQ-11",
+      "summary": "Add an English/Bahasa Indonesia toggle on the Strategic Recommendation Report page and localize all visible UI text and report content without refresh.",
       "acceptanceCriteria": [
-        "After uploading a document from the Dashboard, each visualization on the Dashboard (EmotionDistributionChart, BrandEmotionChart, GenderEmotionChart, GeoEmotionMap, PsychoSocialHeatmap, MarketingRadarChart) displays a non-empty visualization state (or a clear 'insufficient data' message if the uploaded content truly cannot produce that metric), and does not incorrectly show 'No active data' / equivalent empty-state messaging.",
-        "No visualization remains blank due to missing props, incorrect hasActiveDataset logic, or stale query/cache state after upload.",
-        "No runtime errors occur when rendering these visualizations with valid non-empty documents."
+        "StrategicRecommendationReportPage shows an explicit language selection control with two options: English and Bahasa Indonesia.",
+        "Switching the language updates all visible section headings, descriptions, buttons, badges, notices, and empty-state text on the page.",
+        "The selection updates the displayed report content (executive summary, key findings, recommendation titles/rationales, risks, next steps) to the chosen language without requiring a page refresh.",
+        "Language toggle does not break existing Print and Copy-as-Markdown functionality."
       ],
       "file_operations": [
-        {
-          "path": "frontend/src/components/BrandEmotionChart.tsx",
-          "operation": "modify",
-          "description": "Fix brand/emotion aggregation so emotion keys are consistent (avoid mixing Indonesian labels with English emotion ids from analysis), and ensure the chart renders a valid non-empty state whenever at least one document contains a detectable brand; otherwise show an 'insufficient data' message distinct from 'no dataset'."
-        },
-        {
-          "path": "frontend/src/components/GenderEmotionChart.tsx",
-          "operation": "modify",
-          "description": "Adjust empty-state logic to distinguish: (a) no documents uploaded vs (b) documents exist but gender distribution is unavailable/empty; ensure Recharts receives only valid numeric values and never renders blank due to undefined payloads."
-        },
-        {
-          "path": "frontend/src/components/GeoEmotionMap.tsx",
-          "operation": "modify",
-          "description": "Harden data guards for geo distribution matrices (row/column existence, numeric coercion) and ensure the UI differentiates 'no dataset' from 'dataset present but no valid Indonesian location signals' without getting stuck after upload/delete."
-        },
-        {
-          "path": "frontend/src/components/EmotionDistributionChart.tsx",
-          "operation": "modify",
-          "description": "Align dataset detection and derived-metric computation guards so the component never shows an incorrect empty-state when documents exist; ensure chart data never includes undefined/NaN values that can cause Recharts to render blank."
-        },
-        {
-          "path": "frontend/src/components/PsychoSocialHeatmap.tsx",
-          "operation": "modify",
-          "description": "Ensure heatmap matrix computation and rendering are fully guarded (dimensions, bounds checks) and that the component shows a clear 'insufficient data to compute psycho-social metrics' message when documents exist but computation yields no matrix."
-        },
-        {
-          "path": "frontend/src/components/MarketingRadarChart.tsx",
-          "operation": "modify",
-          "description": "Ensure derived marketing metrics are computed defensively from documents, clamp/coerce invalid values, and render either a stable radar visualization or a clear 'insufficient data' message (not the 'no dataset' empty-state) when documents exist."
-        },
-        {
-          "path": "frontend/src/pages/Dashboard.tsx",
-          "operation": "modify",
-          "description": "Ensure the Dashboard passes a single source-of-truth dataset state derived from the documents query to visualization components that support it, and that visualizations are keyed/refreshed appropriately after upload so they don't remain in a stale empty-state."
-        },
-        {
-          "path": "frontend/src/pages/AnalysisPage.tsx",
-          "operation": "modify",
-          "description": "Ensure visualization props and dataset state are consistent between filteredDocuments vs full documents (to avoid charts incorrectly showing 'no dataset' when filters yield 0 but dataset exists); update visualization wiring to show correct messaging."
-        }
-      ]
-    },
-    {
-      "id": "REQ-9",
-      "summary": "Standardize dataset availability and data-shape validation across visualization components for loading, empty dataset, insufficient derived metric, and valid states without runtime errors.",
-      "acceptanceCriteria": [
-        "Each visualization component has deterministic guards for undefined/null/empty inputs and does not index into arrays/objects without checking bounds/availability first (e.g., heatmap matrix row/col access).",
-        "For derived computations (e.g., marketing metrics, psycho-social matrix), components render a stable UI when the computed result is empty even though documents exist, using a distinct message from the 'no dataset uploaded' empty state.",
-        "Console shows no React rendering errors or warnings caused by invalid Recharts inputs (e.g., undefined values, NaN, missing keys) after uploading documents."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/lib/visualizationState.ts",
-          "operation": "create",
-          "description": "Create a small shared utility to standardize dataset/metric state resolution (e.g., loading vs no dataset vs insufficient derived metric vs ready) and provide safe numeric coercion/clamping helpers for chart inputs."
-        },
-        {
-          "path": "frontend/src/components/EmotionDistributionChart.tsx",
-          "operation": "modify",
-          "description": "Adopt the shared visualization state utility for deterministic guards and chart-data sanitization; ensure no unsafe indexing and no Recharts-invalid values. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/BrandEmotionChart.tsx",
-          "operation": "modify",
-          "description": "Adopt the shared visualization state utility for consistent 'no dataset' vs 'insufficient metric' messaging and ensure data-shape normalization before passing data to Recharts. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/GenderEmotionChart.tsx",
-          "operation": "modify",
-          "description": "Adopt the shared visualization state utility and sanitize/normalize distribution values (ensure finite numbers); prevent tooltip rendering from assuming payload shape. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/GeoEmotionMap.tsx",
-          "operation": "modify",
-          "description": "Adopt the shared visualization state utility and apply strict bounds checks when reading the geo matrix; coerce missing cells to 0 and keep the UI stable when derived display data is empty. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/PsychoSocialHeatmap.tsx",
-          "operation": "modify",
-          "description": "Adopt the shared visualization state utility; add matrix dimension validation and safe access helpers so the heatmap never indexes out of bounds, and renders an 'insufficient data' state when computation yields an empty matrix. Verify the component's usage instructions before implementing."
-        },
-        {
-          "path": "frontend/src/components/MarketingRadarChart.tsx",
-          "operation": "modify",
-          "description": "Adopt the shared visualization state utility; ensure radar inputs are finite numbers with required keys present to avoid Recharts warnings and blank renders. Verify the component's usage instructions before implementing."
-        }
-      ]
-    },
-    {
-      "id": "REQ-10",
-      "summary": "Ensure React Query invalidation/refetch produces immediate and consistent visualization updates across all pages after document upload/delete.",
-      "acceptanceCriteria": [
-        "Uploading a document triggers the relevant queries/derived-data views to update without requiring a manual refresh (including gender/geo/purchase intention queries and any charts that depend on documents).",
-        "Deleting documents down to an empty dataset transitions all affected visualizations back to their empty states without crashes or stale rendered data.",
-        "Navigating to the Strategic Recommendation Report after uploading documents generates and renders the report content without requiring additional user actions or page reloads."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Standardize query behaviors for all document-dependent queries to avoid stale/incorrect dataset detection: ensure documents query and derived queries refetch promptly after mutations (e.g., set refetchOnMount/refetchOnWindowFocus as appropriate, reduce staleTime, and prevent enabled-gating from keeping queries stuck when documents transition from 0→1 or 1→0)."
-        },
-        {
-          "path": "frontend/src/pages/Dashboard.tsx",
-          "operation": "modify",
-          "description": "After successful upload, ensure UI reflects the latest documents state immediately (avoid relying on stale memo/derived flags); if needed, trigger navigation only after the documents query is up-to-date so downstream pages/charts render reliably."
-        },
-        {
-          "path": "frontend/src/pages/AnalysisPage.tsx",
-          "operation": "modify",
-          "description": "Ensure delete/upload transitions propagate cleanly through all visualizations on the page (including tabbed content) without requiring refresh; avoid deriving 'has dataset' from filtered results."
-        },
-        {
-          "path": "frontend/src/pages/PurchaseIntentionPage.tsx",
-          "operation": "modify",
-          "description": "Ensure purchase intention visualizations update immediately after upload/delete by basing dataset availability on the documents query and ensuring dependent components re-render when documents length changes."
-        },
         {
           "path": "frontend/src/pages/StrategicRecommendationReportPage.tsx",
           "operation": "modify",
-          "description": "Ensure the report regenerates deterministically from the latest documents after upload/delete and that the page doesn't remain in an empty state due to stale documents data when navigated to right after an upload."
+          "description": "Add locale state ('en'|'id') and a visible language selection control (use shadcn-ui Button/Badge styling patterns for a segmented toggle; Verify the component's usage instructions before implementing). Pass the selected locale into report generation and markdown export utilities, and replace all hardcoded strings on this page (titles, section headers, descriptions, buttons, badges, notices) with locale-aware labels. Ensure Print and Copy-as-Markdown handlers continue to work with the localized content."
         },
         {
-          "path": "frontend/src/pages/MetricsPage.tsx",
+          "path": "frontend/src/lib/strategicReportLocale.ts",
+          "operation": "create",
+          "description": "Create a report-scoped localization helper (no global i18n) that centralizes EN/ID UI labels used by StrategicRecommendationReportPage (e.g., headings, button text, empty-state, notices, and priority labels). Keep it limited to the Strategic Report feature area and structured for deterministic string selection."
+        }
+      ]
+    },
+    {
+      "id": "REQ-12",
+      "summary": "Update strategic report generation and markdown export utilities to accept an explicit locale parameter and produce deterministic bilingual output including localized priority labels.",
+      "acceptanceCriteria": [
+        "generateStrategicReport accepts a language/locale argument (e.g., 'en' | 'id') and returns a report whose narrative fields are in the requested language.",
+        "reportToMarkdown accepts the same language/locale (or uses the report’s language) and outputs fully localized Markdown headers/labels and content in the selected language.",
+        "Priority labels (HIGH/MEDIUM/LOW) are localized appropriately in the UI and in the Markdown export for Indonesian.",
+        "For the same documents + same selected language, the generated content remains deterministic (no randomness/time-dependent wording beyond the existing generatedAt timestamp)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/lib/strategicReport.ts",
           "operation": "modify",
-          "description": "Ensure confusion matrix and performance views consistently transition between dataset empty/active states without stale renders by keying visualizations off documentCount and relying on immediate query refetch behavior."
+          "description": "Introduce a Locale type ('en'|'id') and update generateStrategicReport to accept a locale parameter and generate all narrative fields (executiveSummary, keyFindings, recommendation titles/rationales, risks, nextSteps) in the requested language using deterministic template/translation maps. Update reportToMarkdown to accept locale (or derive from report) and localize all Markdown section headers/labels/content, including localized priority labels for Indonesian."
+        },
+        {
+          "path": "frontend/src/lib/strategicReportLocale.ts",
+          "operation": "modify",
+          "description": "Add deterministic translation maps/templates needed by strategic report generation and markdown export (e.g., section titles, boilerplate sentences, priority label mappings HIGH/MEDIUM/LOW => Indonesian equivalents) and export helpers consumed by strategicReport.ts and the report page."
+        }
+      ]
+    },
+    {
+      "id": "REQ-13",
+      "summary": "Ensure the language toggle behaves consistently across loading/empty/data states and formats generated timestamps using the selected locale.",
+      "acceptanceCriteria": [
+        "When loading, the page shows the existing loading UI; language selection (if visible) does not cause runtime errors.",
+        "When documents.length === 0, the empty state text and CTA are localized based on the selected language.",
+        "When documents are present, the 'Generated on' timestamp formatting uses a locale consistent with the selected language (e.g., en-US for English, id-ID for Indonesian)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/pages/StrategicRecommendationReportPage.tsx",
+          "operation": "modify",
+          "description": "Ensure locale state is initialized safely and can be interacted with (or at least rendered) without breaking the existing loading spinner state. Localize the empty-state content and CTA based on locale, and update the on-page generated timestamp formatting to use the appropriate locale (en-US vs id-ID) while keeping the current dateStyle/timeStyle behavior."
+        },
+        {
+          "path": "frontend/src/lib/strategicReport.ts",
+          "operation": "modify",
+          "description": "Update markdown timestamp formatting to use the requested locale (en-US vs id-ID) and ensure any locale-based labels used during export remain consistent with the page selection."
         }
       ]
     }

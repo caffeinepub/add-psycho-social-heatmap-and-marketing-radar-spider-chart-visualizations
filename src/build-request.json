@@ -1,78 +1,84 @@
 {
   "kind": "build_request",
-  "title": "Ensure all charts and visualizations reliably render when input data exists",
+  "title": "Add English/Indonesian language toggle to Strategic Recommendation Report",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-8",
-      "text": "Audit and fix all dashboard visualizations so they render reliably when there is at least one uploaded document, and never get stuck in an empty-state due to stale/incorrect dataset detection.",
+      "id": "REQ-11",
+      "text": "Add a language toggle (English / Indonesian) on the Strategic Recommendation Report page that lets the user switch the entire report UI and report content between English and Bahasa Indonesia.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4",
-          "msg-10"
+          "recent-19"
         ],
         "quotes": [
-          "pastikan semua grafik/visualisasi tampil dengan baik apabila terdapat data yang diinput"
+          "pada Strategic Recommendation Report, buatkan dalam 2 bahasa yaitu: Bahasa Inggris dan Bahasa Indonesia, ada tombol pilihannya"
         ]
       },
       "acceptanceCriteria": [
-        "After uploading a document from the Dashboard, each visualization on the Dashboard (EmotionDistributionChart, BrandEmotionChart, GenderEmotionChart, GeoEmotionMap, PsychoSocialHeatmap, MarketingRadarChart) displays a non-empty visualization state (or a clear 'insufficient data' message if the uploaded content truly cannot produce that metric), and does not incorrectly show 'No active data' / equivalent empty-state messaging.",
-        "No visualization remains blank due to missing props, incorrect hasActiveDataset logic, or stale query/cache state after upload.",
-        "No runtime errors occur when rendering these visualizations with valid non-empty documents."
+        "StrategicRecommendationReportPage shows an explicit language selection control with two options: English and Bahasa Indonesia.",
+        "Switching the language updates all visible section headings, descriptions, buttons, badges, notices, and empty-state text on the page.",
+        "The selection updates the displayed report content (executive summary, key findings, recommendation titles/rationales, risks, next steps) to the chosen language without requiring a page refresh.",
+        "Language toggle does not break existing Print and Copy-as-Markdown functionality."
       ]
     },
     {
-      "id": "REQ-9",
-      "text": "Standardize dataset-availability and data-shape validation across all visualization components so each chart/heatmap/radar handles: (1) loading, (2) empty dataset, (3) dataset present but derived metric not computable, and (4) valid derived metric states without throwing errors.",
+      "id": "REQ-12",
+      "text": "Update strategic report generation and markdown export utilities to support bilingual output (English and Bahasa Indonesia) via an explicit language/locale parameter, while keeping report generation deterministic for a given dataset and selected language.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4",
-          "msg-10"
+          "recent-19"
         ],
         "quotes": [
-          "pastikan semua grafik/visualisasi tampil dengan baik apabila terdapat data yang diinput"
+          "buatkan dalam 2 bahasa yaitu: Bahasa Inggris dan Bahasa Indonesia"
         ]
       },
       "acceptanceCriteria": [
-        "Each visualization component has deterministic guards for undefined/null/empty inputs and does not index into arrays/objects without checking bounds/availability first (e.g., heatmap matrix row/col access).",
-        "For derived computations (e.g., marketing metrics, psycho-social matrix), components render a stable UI when the computed result is empty even though documents exist, using a distinct message from the 'no dataset uploaded' empty state.",
-        "Console shows no React rendering errors or warnings caused by invalid Recharts inputs (e.g., undefined values, NaN, missing keys) after uploading documents."
+        "generateStrategicReport accepts a language/locale argument (e.g., 'en' | 'id') and returns a report whose narrative fields are in the requested language.",
+        "reportToMarkdown accepts the same language/locale (or uses the report’s language) and outputs fully localized Markdown headers/labels and content in the selected language.",
+        "Priority labels (HIGH/MEDIUM/LOW) are localized appropriately in the UI and in the Markdown export for Indonesian.",
+        "For the same documents + same selected language, the generated content remains deterministic (no randomness/time-dependent wording beyond the existing generatedAt timestamp)."
       ]
     },
     {
-      "id": "REQ-10",
-      "text": "Ensure React Query cache invalidation/refetch behavior results in immediate, consistent UI updates across all pages that show visualizations when new documents are uploaded or deleted (Dashboard, Analysis, Metrics, Purchase Intention, Strategic Recommendation Report).",
+      "id": "REQ-13",
+      "text": "Ensure the language toggle works consistently across all Strategic Recommendation Report states (loading, empty dataset, dataset present) and that date formatting uses an appropriate locale for the selected language.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4",
-          "msg-10"
-        ],
-        "quotes": [
-          "pastikan semua grafik/visualisasi tampil dengan baik apabila terdapat data yang diinput"
+          "recent-19"
         ]
       },
       "acceptanceCriteria": [
-        "Uploading a document triggers the relevant queries/derived-data views to update without requiring a manual refresh (including gender/geo/purchase intention queries and any charts that depend on documents).",
-        "Deleting documents down to an empty dataset transitions all affected visualizations back to their empty states without crashes or stale rendered data.",
-        "Navigating to the Strategic Recommendation Report after uploading documents generates and renders the report content without requiring additional user actions or page reloads."
+        "When loading, the page shows the existing loading UI; language selection (if visible) does not cause runtime errors.",
+        "When documents.length === 0, the empty state text and CTA are localized based on the selected language.",
+        "When documents are present, the 'Generated on' timestamp formatting uses a locale consistent with the selected language (e.g., en-US for English, id-ID for Indonesian)."
       ]
     }
   ],
   "constraints": [
     "Do not modify any files under frontend/src/components/ui (immutable UI component sources).",
-    "Do not modify any files listed in SYSTEM_CONTEXT.frontend.immutablePaths.",
-    "Backend must remain a single-actor Motoko canister; only add migration logic if state schema changes (not expected for this request)."
+    "Do not modify immutable hook files listed in SYSTEM_CONTEXT (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx).",
+    "Keep backend architecture unchanged (single Motoko actor); this change should be implemented entirely on the frontend/report generation utilities unless strictly necessary."
   ],
   "nonGoals": [
-    "Adding new types of charts/visualizations beyond what already exists.",
-    "Introducing real-time communication (WebSockets) or external databases/services.",
-    "Changing authentication providers (Internet Identity remains the only auth)."
+    "Adding additional languages beyond English and Bahasa Indonesia.",
+    "Implementing a global app-wide i18n system across all pages (scope is Strategic Recommendation Report only).",
+    "Changing the underlying analysis logic or metrics computation beyond what is needed to provide translated narrative output."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

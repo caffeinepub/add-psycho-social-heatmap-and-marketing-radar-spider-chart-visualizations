@@ -2,17 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-audit-and-fix-all-dashboard-visualizations-so-they-render-reliably-when-there-is-at-least-one-uploaded-document-and-never-get-stuck-in-an-empty-state-due-to-stale-incorrect-dataset-detection",
-      "featureTitle": "Audit and fix all dashboard visualizations so they render reliably when there is at least one uploaded document, and never get stuck in an empty-state due to stale/incorrect dataset detection.",
+      "featureId": "feature-add-a-language-toggle-english-indonesian-on-the-strategic-recommendation-report-page-that-lets-the-user-switch-the-entire-report-ui-and-report-content-between-english-and-bahasa-indonesia",
+      "featureTitle": "Add a language toggle (English / Indonesian) on the Strategic Recommendation Report page that lets the user switch the entire report UI and report content between English and Bahasa Indonesia.",
       "files": [
-        "frontend/src/components/BrandEmotionChart.tsx",
-        "frontend/src/components/EmotionDistributionChart.tsx",
-        "frontend/src/components/GenderEmotionChart.tsx",
-        "frontend/src/components/GeoEmotionMap.tsx",
-        "frontend/src/components/MarketingRadarChart.tsx",
-        "frontend/src/components/PsychoSocialHeatmap.tsx",
-        "frontend/src/pages/AnalysisPage.tsx",
-        "frontend/src/pages/Dashboard.tsx"
+        "frontend/src/lib/strategicReportLocale.ts",
+        "frontend/src/pages/StrategicRecommendationReportPage.tsx"
       ],
       "components": [
         "blob-storage@4.0.0",
@@ -23,21 +17,16 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-8"
+        "REQ-11"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-standardize-dataset-availability-and-data-shape-validation-across-all-visualization-components-so-each-chart-heatmap-radar-handles-1-loading-2-empty-dataset-3-dataset-present-but-derived-metric-not-computable-and-4-valid-derived-metric-states-without-throwing-errors",
-      "featureTitle": "Standardize dataset-availability and data-shape validation across all visualization components so each chart/heatmap/radar handles: (1) loading, (2) empty dataset, (3) dataset present but derived metric not computable, and (4) valid derived metric states without throwing errors.",
+      "featureId": "feature-update-strategic-report-generation-and-markdown-export-utilities-to-support-bilingual-output-english-and-bahasa-indonesia-via-an-explicit-language-locale-parameter-while-keeping-report-generation-deterministic-for-a-given-dataset-and-selected-language",
+      "featureTitle": "Update strategic report generation and markdown export utilities to support bilingual output (English and Bahasa Indonesia) via an explicit language/locale parameter, while keeping report generation deterministic for a given dataset and selected language.",
       "files": [
-        "frontend/src/components/BrandEmotionChart.tsx",
-        "frontend/src/components/EmotionDistributionChart.tsx",
-        "frontend/src/components/GenderEmotionChart.tsx",
-        "frontend/src/components/GeoEmotionMap.tsx",
-        "frontend/src/components/MarketingRadarChart.tsx",
-        "frontend/src/components/PsychoSocialHeatmap.tsx",
-        "frontend/src/lib/visualizationState.ts"
+        "frontend/src/lib/strategicReport.ts",
+        "frontend/src/lib/strategicReportLocale.ts"
       ],
       "components": [
         "blob-storage@4.0.0",
@@ -48,18 +37,16 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-9"
+        "REQ-12"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-ensure-react-query-cache-invalidation-refetch-behavior-results-in-immediate-consistent-ui-updates-across-all-pages-that-show-visualizations-when-new-documents-are-uploaded-or-deleted-dashboard-analysis-metrics-purchase-intention-strategic-recommendation-report",
-      "featureTitle": "Ensure React Query cache invalidation/refetch behavior results in immediate, consistent UI updates across all pages that show visualizations when new documents are uploaded or deleted (Dashboard, Analysis, Metrics, Purchase Intention, Strategic Recommendation Report).",
+      "featureId": "feature-ensure-the-language-toggle-works-consistently-across-all-strategic-recommendation-report-states-loading-empty-dataset-dataset-present-and-that-date-formatting-uses-an-appropriate-locale-for-the-selected-language",
+      "featureTitle": "Ensure the language toggle works consistently across all Strategic Recommendation Report states (loading, empty dataset, dataset present) and that date formatting uses an appropriate locale for the selected language.",
       "files": [
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/pages/AnalysisPage.tsx",
-        "frontend/src/pages/Dashboard.tsx",
-        "frontend/src/pages/PurchaseIntentionPage.tsx"
+        "frontend/src/lib/strategicReport.ts",
+        "frontend/src/pages/StrategicRecommendationReportPage.tsx"
       ],
       "components": [
         "blob-storage@4.0.0",
@@ -70,7 +57,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-10"
+        "REQ-13"
       ],
       "confidence": "high"
     }

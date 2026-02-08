@@ -1,11 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Ensure all existing dashboard and report visualizations render reliably whenever uploaded documents exist, with consistent empty/insufficient-data handling and correct updates after uploads/deletions.
+**Goal:** Add an English/Bahasa Indonesia toggle to the Strategic Recommendation Report so the entire report UI, generated narrative content, and exports can be switched between the two languages.
 
 **Planned changes:**
-- Audit all visualization components (EmotionDistributionChart, BrandEmotionChart, GenderEmotionChart, GeoEmotionMap, PsychoSocialHeatmap, MarketingRadarChart) to eliminate incorrect “no active data” empty-states when documents exist and prevent blank renders caused by missing props or stale dataset detection.
-- Standardize dataset-availability and data-shape validation across all visualization components to handle loading, no dataset, dataset present but metric not computable, and valid metric states without runtime errors (including guards against undefined/null/empty inputs and invalid chart values).
-- Fix React Query invalidation/refetch flows so pages with visualizations (Dashboard, Analysis, Metrics, Purchase Intention, Strategic Recommendation Report) update immediately and consistently after document uploads or deletions, without manual refresh.
+- Add an explicit language selection control (English / Bahasa Indonesia) on the StrategicRecommendationReportPage.
+- Localize all visible UI text on the Strategic Recommendation Report page (headings, descriptions, buttons, badges, notices, loading/empty states) based on the selected language.
+- Update report generation and export utilities to support a language/locale parameter for bilingual, deterministic report content and fully localized Markdown output (including priority labels).
+- Apply locale-appropriate date formatting for the “Generated on” timestamp based on the selected language, and ensure behavior is consistent across loading, empty, and data-present states.
+- Ensure Print and Copy-as-Markdown continue to work with the selected language without requiring a page refresh.
 
-**User-visible outcome:** After uploading (or deleting) documents, all charts/visualizations and the Strategic Recommendation Report update immediately and render reliably; when a metric can’t be computed, the UI shows a clear “insufficient data” message instead of an incorrect empty dataset state, and no visualization crashes or renders blank due to stale data.
+**User-visible outcome:** Users can toggle the Strategic Recommendation Report between English and Bahasa Indonesia, with the entire on-page report, timestamps, and Markdown export updating immediately while print/copy features continue to work.

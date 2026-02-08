@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T18:17:01.341Z",
+  "generatedAt": "2026-02-08T22:45:09.169Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -11,70 +11,42 @@
     "implemented": 3,
     "items": [
       {
-        "id": "REQ-10",
-        "summary": "Ensure React Query cache invalidation/refetch behavior results in immediate, consistent UI updates across all pages that show visualizations when new documents are uploaded or deleted (Dashboard, Analysis, Metrics, Purchase Intention, Strategic Recommendation Report).",
+        "id": "REQ-11",
+        "summary": "Add a language toggle (English / Indonesian) on the Strategic Recommendation Report page that lets the user switch the entire report UI and report content between English and Bahasa Indonesia.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/Dashboard.tsx",
-          "frontend/src/pages/AnalysisPage.tsx",
-          "frontend/src/pages/PurchaseIntentionPage.tsx",
           "frontend/src/pages/StrategicRecommendationReportPage.tsx",
-          "frontend/src/pages/MetricsPage.tsx"
+          "frontend/src/lib/strategicReportLocale.ts"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useQueries.ts",
-          "frontend/src/pages/Dashboard.tsx",
-          "frontend/src/pages/AnalysisPage.tsx",
-          "frontend/src/pages/PurchaseIntentionPage.tsx"
+          "frontend/src/pages/StrategicRecommendationReportPage.tsx",
+          "frontend/src/lib/strategicReportLocale.ts"
         ]
       },
       {
-        "id": "REQ-8",
-        "summary": "Audit and fix all dashboard visualizations so they render reliably when there is at least one uploaded document, and never get stuck in an empty-state due to stale/incorrect dataset detection.",
+        "id": "REQ-12",
+        "summary": "Update strategic report generation and markdown export utilities to support bilingual output (English and Bahasa Indonesia) via an explicit language/locale parameter, while keeping report generation deterministic for a given dataset and selected language.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/BrandEmotionChart.tsx",
-          "frontend/src/components/GenderEmotionChart.tsx",
-          "frontend/src/components/GeoEmotionMap.tsx",
-          "frontend/src/components/EmotionDistributionChart.tsx",
-          "frontend/src/components/PsychoSocialHeatmap.tsx",
-          "frontend/src/components/MarketingRadarChart.tsx",
-          "frontend/src/pages/Dashboard.tsx",
-          "frontend/src/pages/AnalysisPage.tsx"
+          "frontend/src/lib/strategicReport.ts",
+          "frontend/src/lib/strategicReportLocale.ts"
         ],
         "matchedFiles": [
-          "frontend/src/components/BrandEmotionChart.tsx",
-          "frontend/src/components/GenderEmotionChart.tsx",
-          "frontend/src/components/GeoEmotionMap.tsx",
-          "frontend/src/components/EmotionDistributionChart.tsx",
-          "frontend/src/components/PsychoSocialHeatmap.tsx",
-          "frontend/src/components/MarketingRadarChart.tsx",
-          "frontend/src/pages/Dashboard.tsx",
-          "frontend/src/pages/AnalysisPage.tsx"
+          "frontend/src/lib/strategicReport.ts",
+          "frontend/src/lib/strategicReportLocale.ts"
         ]
       },
       {
-        "id": "REQ-9",
-        "summary": "Standardize dataset-availability and data-shape validation across all visualization components so each chart/heatmap/radar handles: (1) loading, (2) empty dataset, (3) dataset present but derived metric not computable, and (4) valid derived metric states without throwing errors.",
+        "id": "REQ-13",
+        "summary": "Ensure the language toggle works consistently across all Strategic Recommendation Report states (loading, empty dataset, dataset present) and that date formatting uses an appropriate locale for the selected language.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/lib/visualizationState.ts",
-          "frontend/src/components/EmotionDistributionChart.tsx",
-          "frontend/src/components/BrandEmotionChart.tsx",
-          "frontend/src/components/GenderEmotionChart.tsx",
-          "frontend/src/components/GeoEmotionMap.tsx",
-          "frontend/src/components/PsychoSocialHeatmap.tsx",
-          "frontend/src/components/MarketingRadarChart.tsx"
+          "frontend/src/pages/StrategicRecommendationReportPage.tsx",
+          "frontend/src/lib/strategicReport.ts"
         ],
         "matchedFiles": [
-          "frontend/src/lib/visualizationState.ts",
-          "frontend/src/components/EmotionDistributionChart.tsx",
-          "frontend/src/components/BrandEmotionChart.tsx",
-          "frontend/src/components/GenderEmotionChart.tsx",
-          "frontend/src/components/GeoEmotionMap.tsx",
-          "frontend/src/components/PsychoSocialHeatmap.tsx",
-          "frontend/src/components/MarketingRadarChart.tsx"
+          "frontend/src/pages/StrategicRecommendationReportPage.tsx",
+          "frontend/src/lib/strategicReport.ts"
         ]
       }
     ]
@@ -84,17 +56,9 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/BrandEmotionChart.tsx",
-    "frontend/src/components/EmotionDistributionChart.tsx",
-    "frontend/src/components/GenderEmotionChart.tsx",
-    "frontend/src/components/GeoEmotionMap.tsx",
-    "frontend/src/components/MarketingRadarChart.tsx",
-    "frontend/src/components/PsychoSocialHeatmap.tsx",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/lib/visualizationState.ts",
-    "frontend/src/pages/AnalysisPage.tsx",
-    "frontend/src/pages/Dashboard.tsx",
-    "frontend/src/pages/PurchaseIntentionPage.tsx",
+    "frontend/src/lib/strategicReport.ts",
+    "frontend/src/lib/strategicReportLocale.ts",
+    "frontend/src/pages/StrategicRecommendationReportPage.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",
