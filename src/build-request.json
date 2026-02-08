@@ -1,74 +1,74 @@
 {
   "kind": "build_request",
-  "title": "Add Marketing Mix Radar Chart (8 factors) visualization to Dashboard",
-  "priority": "normal",
+  "title": "Accept CSV/JSON uploads with dataset columns ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted",
+  "priority": "high",
   "requirements": [
     {
-      "id": "REQ-19",
-      "text": "Create deterministic frontend-only computation utilities for a Marketing Mix radar chart with exactly 8 factors: (1) PROD — Product / Innovative Product Strategy, (2) PRICE — Price / Innovative Pricing Architecture, (3) DIST — Place / Innovative Distribution Network, (4) COMM — Promotion / Innovative Communication Strategy, (5) HRD — People / Innovative Human Resource Development, (6) CUSJ — Process / Innovative Customer Journey Design, (7) BRAND — Physical Evidence / Innovative Brand Experience Creation, (8) COLLAB — Collaboration Ecosystem Strategy (Proposed). The utilities must aggregate scores across the currently uploaded documents and output normalized 0–100 values per factor (stable/deterministic for the same inputs).",
+      "id": "REQ-22",
+      "text": "Update the file-upload ingestion flow so users can upload datasets whose schema is exactly: `ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted`, without the upload failing.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "recent-messages"
         ],
         "quotes": [
-          "buatkan tambahan visualisasi radar chart Marketing Mix dengan faktor berikut: 1.Product Innovative Product Strategy - PROD\n2.Price Innovative Pricing Architecture-PRICE\n3.Place Innovative Distribution Network-DIST\n4.Promotion (Innovative Communication Strategy-COMM)\n5. People (Innovative Human Resource Development-HRD)\n6. Process (Innovative Customer Journey Design-CUSJ)\n7. Physical Evidence (Innovative Brand Experience Creation-BRAND)\n8.Collaboration Ecosystem Strategy (Usulan)"
+          "datasetnya berikut ini untuk dijadikan format dalam upload file: ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted"
         ]
       },
       "acceptanceCriteria": [
-        "A new reusable computation module exists under frontend/src/lib (or an extension of an existing lib module) that returns an ordered list/array of 8 factor scores for a given Document[] input.",
-        "Returned factor list order is exactly: PROD, PRICE, DIST, COMM, HRD, CUSJ, BRAND, COLLAB.",
-        "Each factor score is a finite number clamped to the inclusive range 0–100 (no NaN/Infinity).",
-        "For identical document contents, the computed factor scores are deterministic (no randomness, no time-based effects)."
+        "Uploading a .csv file with a header row containing exactly the columns `ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted` (case-insensitive, whitespace-tolerant) succeeds.",
+        "Uploading a .json file containing an array of objects with keys matching `ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted` (case-insensitive) succeeds.",
+        "If a CSV/JSON upload is missing the required `text` field/column, the UI shows a clear error message and does not attempt to upload any documents.",
+        "If a CSV/JSON upload has the required schema but contains some rows with empty `text`, those rows are skipped and the upload still succeeds for the remaining valid rows (with a clear warning message indicating how many rows were skipped)."
       ]
     },
     {
-      "id": "REQ-20",
-      "text": "Add a new React component `MarketingMixRadarChart` that renders the Marketing Mix radar chart using the 8 computed factors and follows the existing visualization state conventions (loading/empty/insufficient/ready) used by other charts (e.g., `getVisualizationState`, numeric sanitization/clamping). All user-facing text in this new component must be in English (title, description, empty/insufficient messages, labels/tooltips).",
+      "id": "REQ-23",
+      "text": "For dataset uploads (.csv/.json) that follow the specified schema, parse the file into multiple documents and upload each row as a separate backend document using the row’s `text` value as `Document.content`.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "recent-messages"
         ],
         "quotes": [
-          "buatkan tambahan visualisasi radar chart Marketing Mix ..."
+          "datasetnya berikut ini untuk dijadikan format dalam upload file: ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted"
         ]
       },
       "acceptanceCriteria": [
-        "A new file exists at frontend/src/components/MarketingMixRadarChart.tsx (or equivalent in the same components directory) exporting the chart component.",
-        "When `hasActiveDataset` is false or `documents.length === 0`, the component shows an empty/idle state (no radar rendered) with English messaging.",
-        "When a dataset exists but derived factor scores are all zero/uncomputable, the component shows an 'insufficient data' state with English messaging (no crash).",
-        "When valid factor data exists, the component renders a radar chart with 8 axes and values scaled 0–100.",
-        "The chart tooltip (or an adjacent legend/help section) exposes both the factor code and its full English factor name so users can interpret PROD/PRICE/DIST/COMM/HRD/CUSJ/BRAND/COLLAB.",
-        "The component does not modify any immutable UI component source paths listed in SYSTEM_CONTEXT."
+        "A CSV with N valid rows (non-empty `text`) results in N new documents in `getAllDocuments()` (not 1 document containing the whole file).",
+        "A JSON array with N valid entries (non-empty `text`) results in N new documents in `getAllDocuments()`.",
+        "After a successful dataset upload, Dashboard visualizations update based on the new documents (no manual refresh needed)."
       ]
     },
     {
-      "id": "REQ-21",
-      "text": "Integrate the new `MarketingMixRadarChart` into the main Dashboard page (`frontend/src/pages/Dashboard.tsx`) alongside the existing visualizations, passing the currently loaded `documents` and `hasActiveDataset` so it updates immediately when documents are uploaded/deleted.",
+      "id": "REQ-24",
+      "text": "Make the upload experience resilient and debuggable by reporting parse/validation errors and upload progress/failures clearly in the UI.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "recent-messages"
+        ],
+        "quotes": [
+          "kenapa gagal upload file? tolong perbaiki agar tidak gagal proses upload file",
+          "pastikan perbaikan pada upload file apakah sudah diperbaiki?"
         ]
       },
       "acceptanceCriteria": [
-        "Dashboard imports and renders `MarketingMixRadarChart` using the same document source as other charts (`useGetAllDocuments`).",
-        "The new chart appears as a distinct Dashboard section/card and uses consistent spacing/layout with existing Dashboard chart sections.",
-        "The chart re-renders/refetches correctly when document count changes (e.g., by using a `key` pattern consistent with other Dashboard charts or equivalent reactive wiring).",
-        "No backend changes are required for the new visualization to display."
+        "If parsing fails (e.g., malformed CSV), the UI shows a clear error message describing that the file could not be parsed.",
+        "If uploading one or more rows fails during a multi-row upload, the UI reports how many rows succeeded and how many failed, and the operation does not silently fail.",
+        "The file input allows `.txt`, `.csv`, `.json` as before; `.txt` continues to upload as a single document (current behavior preserved)."
       ]
     }
   ],
   "constraints": [
-    "Frontend immutable paths must not be edited: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui/*.",
-    "Respect existing visualization state handling patterns (no runtime errors on empty/insufficient datasets).",
-    "Backend must remain single-actor; do not introduce additional backend services or external databases."
+    "Do not modify any files under `frontend/src/components/ui` or other immutable paths listed in SYSTEM_CONTEXT.",
+    "Keep the backend as a single Motoko actor in `backend/main.mo`; do not introduce additional backend services or external databases.",
+    "Prefer frontend-only schema mapping/parsing; do not change the backend `Document` type/schema unless strictly required for the upload to succeed."
   ],
   "nonGoals": [
-    "Do not change the existing Marketing Effectiveness radar chart behavior (`MarketingRadarChart`) except where necessary to avoid shared-type conflicts.",
-    "Do not add third-party auth providers or external analytics services.",
-    "Do not require new backend endpoints for Marketing Mix scoring; compute from existing `documents` on the frontend."
+    "Implementing a full data warehouse or advanced ETL pipeline for uploaded datasets.",
+    "Adding real-time upload progress via websockets or push notifications.",
+    "Changing existing analytics logic beyond what is necessary to ensure uploaded dataset rows become documents and charts can render from them."
   ],
   "imageRequirements": {
     "required": [],

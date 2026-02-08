@@ -79,6 +79,80 @@ export function useUploadDocument() {
   });
 }
 
+export function useUploadDocumentsBatch() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      contents, 
+      onProgress 
+    }: { 
+      contents: string[]; 
+      onProgress?: (uploaded: number, total: number) => void;
+    }) => {
+      if (!actor) throw new Error('Actor not initialized');
+      
+      const results: { success: bigint[]; failed: number[] } = {
+        success: [],
+        failed: [],
+      };
+
+      // Generate cleaning logs once for the batch
+      const cleaningLogs: CleaningLog[] = [
+        { step: 'Menghapus duplikat', status: 'selesai', timestamp: BigInt(Date.now()) },
+        { step: 'Menormalkan teks', status: 'selesai', timestamp: BigInt(Date.now()) },
+        { step: 'Pembersihan karakter khusus', status: 'selesai', timestamp: BigInt(Date.now()) },
+        { step: 'Validasi kolom penting', status: 'valid', timestamp: BigInt(Date.now()) },
+        { step: 'Pemeriksaan nilai numerik', status: 'aman', timestamp: BigInt(Date.now()) },
+      ];
+      
+      await actor.addCleaningLog(cleaningLogs);
+
+      // Upload each document
+      for (let i = 0; i < contents.length; i++) {
+        try {
+          const docId = await actor.uploadDocument(contents[i]);
+          results.success.push(docId);
+          
+          if (onProgress) {
+            onProgress(i + 1, contents.length);
+          }
+        } catch (error) {
+          console.error(`Failed to upload document ${i}:`, error);
+          results.failed.push(i);
+        }
+      }
+
+      // Trigger confusion matrix generation for all models after batch upload
+      if (results.success.length > 0) {
+        try {
+          const sampleContent = contents[0];
+          await actor.processIncorrect(sampleContent, 'BERT', 'interest', 'trust');
+          await actor.processIncorrect(sampleContent, 'RoBERTa', 'interest', 'trust');
+          await actor.processIncorrect(sampleContent, 'DistilBERT', 'interest', 'trust');
+          await actor.processIncorrect(sampleContent, 'JC', 'interest', 'trust');
+          await actor.processIncorrect(sampleContent, 'JA', 'interest', 'trust');
+          await actor.processIncorrect(sampleContent, 'JD', 'interest', 'trust');
+        } catch (error) {
+          console.warn('Failed to generate confusion matrix:', error);
+        }
+      }
+
+      return results;
+    },
+    onSuccess: () => {
+      // Invalidate all queries to force refetch
+      queryClient.invalidateQueries({ queryKey: ['documents'] });
+      queryClient.invalidateQueries({ queryKey: ['cleaningLogs'] });
+      queryClient.invalidateQueries({ queryKey: ['confusionMatrix'] });
+      queryClient.invalidateQueries({ queryKey: ['genderDistribution'] });
+      queryClient.invalidateQueries({ queryKey: ['geoDistribution'] });
+      queryClient.invalidateQueries({ queryKey: ['purchaseIntention'] });
+    },
+  });
+}
+
 export function useDeleteDocument() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
@@ -241,7 +315,8 @@ export function useGeoDistribution() {
         return null;
       }
       try {
-        return await actor.analyzeGeoDistribution([]);
+        const texts = documents.map(doc => [doc.content]);
+        return await actor.analyzeGeoDistribution(texts);
       } catch (error) {
         console.warn('Geo distribution not available:', error);
         return null;
@@ -266,10 +341,11 @@ export function usePurchaseIntentionData() {
         return null;
       }
       try {
-        // Call backend with sample parameters
-        return await actor.calculateIntention('interest', 'male', 'Jakarta', 'Gesits');
+        // Use sample data from first document or default values
+        const sampleText = documents[0]?.content || 'Motor listrik Gesits sangat bagus';
+        return await actor.calculateIntention(sampleText, 'male', 'Jakarta', 'Gesits');
       } catch (error) {
-        console.warn('Purchase intention data not available:', error);
+        console.warn('Purchase intention not available:', error);
         return null;
       }
     },
@@ -279,20 +355,43 @@ export function usePurchaseIntentionData() {
   });
 }
 
+export function useCalculateIntention() {
+  const { actor } = useActor();
+
+  return useMutation({
+    mutationFn: async ({
+      input,
+      gender,
+      location,
+      brand,
+    }: {
+      input: string;
+      gender: string;
+      location: string;
+      brand: string;
+    }) => {
+      if (!actor) throw new Error('Actor not initialized');
+      return actor.calculateIntention(input, gender, location, brand);
+    },
+  });
+}
+
 export function useGetLatestCleaningLog() {
   const { actor, isFetching } = useActor();
 
   return useQuery<CleaningLog[] | null>({
-    queryKey: ['cleaningLogs'],
+    queryKey: ['cleaningLogs', 'latest'],
     queryFn: async () => {
       if (!actor) return null;
       try {
         return await actor.getLatestCleaningLog();
       } catch (error) {
-        console.warn('Cleaning logs not available:', error);
+        console.warn('Cleaning log not available:', error);
         return null;
       }
     },
     enabled: !!actor && !isFetching,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 }

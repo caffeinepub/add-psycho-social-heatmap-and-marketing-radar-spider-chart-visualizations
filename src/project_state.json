@@ -1,16 +1,18 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 15,
+  "projectStateVersion": 17,
   "summary": "Build dashboard visualizations (Psycho-Social Heatmap and Radar charts—including Marketing Effectiveness and Marketing Mix) and provide an output report of strategic recommendations from the analysis for decision-makers.",
   "architectural_notes": [
     "Psycho-Social Heatmap dimensions should be based on UTAUT2: PE (Performance Expectancy/Harapan Kinerja), EE (Effort Expectancy/Harapan Usaha), SI (Social Influence/Pengaruh Sosial), HM (Hedonic Motivation/Motivasi Hedonis), FC (Facilitating Conditions/Kondisi Pendukung), PV (Price Value/Nilai Harga), H (Habit/Kebiasaan).",
-    "Add a Marketing Mix radar chart with the following axes/labels and short codes: Product—Innovative Product Strategy (PROD); Price—Innovative Pricing Architecture (PRICE); Place—Innovative Distribution Network (DIST); Promotion—Innovative Communication Strategy (COMM); People—Innovative Human Resource Development (HRD); Process—Innovative Customer Journey Design (CUSJ); Physical Evidence—Innovative Brand Experience Creation (BRAND); Collaboration Ecosystem Strategy (proposed)."
+    "Add a Marketing Mix radar chart with the following axes/labels and short codes: Product—Innovative Product Strategy (PROD); Price—Innovative Pricing Architecture (PRICE); Place—Innovative Distribution Network (DIST); Promotion—Innovative Communication Strategy (COMM); People—Innovative Human Resource Development (HRD); Process—Innovative Customer Journey Design (CUSJ); Physical Evidence—Innovative Brand Experience Creation (BRAND); Collaboration Ecosystem Strategy (proposed).",
+    "Upload pipeline should support schema mapping/normalization from incoming dataset headers (ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted) into the app’s internal document model used for downstream analysis/visualizations."
   ],
   "known_issues": [
     "Ensure all dashboard visualizations (charts/heatmap/radar/report) reliably render when valid input data is provided; potential rendering/state update issue after data input.",
-    "Emotion Distribution chart still displays even when the app is not currently analyzing data; should reflect correct analysis/loading/idle state (likely stale analysis state or dataset detection)."
+    "Emotion Distribution chart still displays even when the app is not currently analyzing data; should reflect correct analysis/loading/idle state (likely stale analysis state or dataset detection).",
+    "File upload can fail due to strict/incorrect dataset schema validation; current expected columns may not match real user datasets (e.g., ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted)."
   ],
-  "isFixRequest": false,
+  "isFixRequest": true,
   "existing_features": [
     {
       "id": "feature-create-a-new-psycho-social-heatmap-visualization-component-and-render-it-on-the-main-dashboard-page-below-the-existing-emotion-brand-charts",
@@ -179,6 +181,30 @@
         "REQ-21"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-update-the-file-upload-ingestion-flow-so-users-can-upload-datasets-whose-schema-is-exactly-id-date-region-source-user-text-aspect-category-keywords-extracted-without-the-upload-failing",
+      "title": "Update the file-upload ingestion flow so users can upload datasets whose schema is exactly: `ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted`, without the upload failing.",
+      "reqIds": [
+        "REQ-22"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-for-dataset-uploads-csv-json-that-follow-the-specified-schema-parse-the-file-into-multiple-documents-and-upload-each-row-as-a-separate-backend-document-using-the-row-s-text-value-as-document-content",
+      "title": "For dataset uploads (.csv/.json) that follow the specified schema, parse the file into multiple documents and upload each row as a separate backend document using the row’s `text` value as `Document.content`.",
+      "reqIds": [
+        "REQ-23"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-make-the-upload-experience-resilient-and-debuggable-by-reporting-parse-validation-errors-and-upload-progress-failures-clearly-in-the-ui",
+      "title": "Make the upload experience resilient and debuggable by reporting parse/validation errors and upload progress/failures clearly in the UI.",
+      "reqIds": [
+        "REQ-24"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -215,6 +241,12 @@
     {
       "id": "AR-6",
       "summary": "Add an additional Marketing Mix Radar Chart visualization with 8 factors (PROD, PRICE, DIST, COMM, HRD, CUSJ, BRAND, Collaboration Ecosystem Strategy).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-7",
+      "summary": "Update/relax upload file validation to accept the dataset column format: ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted (including mapping/normalization to the app’s required internal fields).",
       "reqIds": [],
       "status": "pending"
     }

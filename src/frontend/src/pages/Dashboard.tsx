@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Upload, Sparkles, TrendingUp, BarChart3, FileText } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useUploadDocument, useGetAllDocuments } from '../hooks/useQueries';
+import { useUploadDocument, useUploadDocumentsBatch, useGetAllDocuments } from '../hooks/useQueries';
 import { toast } from 'sonner';
 import { EmotionChart } from '../components/EmotionChart';
 import { RecentAnalysis } from '../components/RecentAnalysis';
@@ -16,11 +16,15 @@ import { EmotionDistributionChart } from '../components/EmotionDistributionChart
 import { PsychoSocialHeatmap } from '../components/PsychoSocialHeatmap';
 import { MarketingRadarChart } from '../components/MarketingRadarChart';
 import { MarketingMixRadarChart } from '../components/MarketingMixRadarChart';
+import { DatasetUploadStatus, DatasetUploadStatusProps } from '../components/DatasetUploadStatus';
+import { parseDatasetFile } from '../lib/datasetIngestion';
 
 export function Dashboard() {
   const [textInput, setTextInput] = useState('');
+  const [uploadStatus, setUploadStatus] = useState<DatasetUploadStatusProps>({ state: 'idle' });
   const navigate = useNavigate();
   const uploadMutation = useUploadDocument();
+  const batchUploadMutation = useUploadDocumentsBatch();
   const { data: documents = [], isLoading } = useGetAllDocuments();
 
   // Compute dataset status directly from documents
@@ -45,24 +49,132 @@ export function Dashboard() {
     }
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    const filename = file.name;
+    const extension = filename.toLowerCase().split('.').pop();
+
+    // Reset upload status
+    setUploadStatus({ state: 'idle' });
 
     const reader = new FileReader();
     reader.onload = async (e) => {
       const content = e.target?.result as string;
-      try {
-        await uploadMutation.mutateAsync(content);
-        toast.success('File berhasil diupload dan dianalisis!');
-        // Small delay to ensure queries refetch
-        setTimeout(() => {
-          navigate({ to: '/analysis' });
-        }, 100);
-      } catch (error) {
-        toast.error('Gagal mengupload file');
+
+      // Handle .txt files as before (single document upload)
+      if (extension === 'txt') {
+        try {
+          await uploadMutation.mutateAsync(content);
+          toast.success('File berhasil diupload dan dianalisis!');
+          setTimeout(() => {
+            navigate({ to: '/analysis' });
+          }, 100);
+        } catch (error) {
+          toast.error('Gagal mengupload file');
+        }
+        return;
       }
+
+      // Handle .csv and .json files (dataset upload)
+      if (extension === 'csv' || extension === 'json') {
+        // Step 1: Parse
+        setUploadStatus({ state: 'parsing' });
+        
+        const parseResult = parseDatasetFile(content, filename);
+
+        if (!parseResult.success) {
+          setUploadStatus({
+            state: 'error',
+            errorMessage: parseResult.error,
+          });
+          toast.error(parseResult.error || 'Gagal mem-parse file');
+          return;
+        }
+
+        // Step 2: Validate
+        setUploadStatus({ 
+          state: 'validating',
+          totalRows: parseResult.validCount,
+          skippedCount: parseResult.skippedCount,
+        });
+
+        if (parseResult.validCount === 0) {
+          setUploadStatus({
+            state: 'error',
+            errorMessage: 'Tidak ada baris valid untuk diupload',
+            skippedCount: parseResult.skippedCount,
+          });
+          toast.error('Tidak ada baris valid untuk diupload');
+          return;
+        }
+
+        // Step 3: Upload batch
+        setUploadStatus({
+          state: 'uploading',
+          totalRows: parseResult.validCount,
+          uploadedCount: 0,
+          skippedCount: parseResult.skippedCount,
+        });
+
+        try {
+          const contents = parseResult.rows.map(row => row.text);
+          
+          const results = await batchUploadMutation.mutateAsync({
+            contents,
+            onProgress: (uploaded, total) => {
+              setUploadStatus({
+                state: 'uploading',
+                totalRows: total,
+                uploadedCount: uploaded,
+                skippedCount: parseResult.skippedCount,
+              });
+            },
+          });
+
+          // Step 4: Done
+          setUploadStatus({
+            state: 'done',
+            totalRows: parseResult.validCount,
+            uploadedCount: results.success.length,
+            failedCount: results.failed.length,
+            skippedCount: parseResult.skippedCount,
+          });
+
+          if (results.success.length > 0) {
+            toast.success(`Dataset berhasil diupload! ${results.success.length} dokumen ditambahkan.`);
+            setTimeout(() => {
+              setUploadStatus({ state: 'idle' });
+              navigate({ to: '/analysis' });
+            }, 2000);
+          } else {
+            toast.error('Semua baris gagal diupload');
+          }
+        } catch (error) {
+          setUploadStatus({
+            state: 'error',
+            errorMessage: error instanceof Error ? error.message : 'Gagal mengupload dataset',
+            totalRows: parseResult.validCount,
+            skippedCount: parseResult.skippedCount,
+          });
+          toast.error('Gagal mengupload dataset');
+        }
+        return;
+      }
+
+      // Unsupported file type
+      toast.error('Format file tidak didukung. Gunakan .txt, .csv, atau .json');
     };
+
+    reader.onerror = () => {
+      setUploadStatus({
+        state: 'error',
+        errorMessage: 'Gagal membaca file',
+      });
+      toast.error('Gagal membaca file');
+    };
+
     reader.readAsText(file);
   };
 
@@ -112,7 +224,7 @@ export function Dashboard() {
               Analisis Cepat
             </CardTitle>
             <CardDescription>
-              Masukkan teks atau upload file untuk analisis emosi instan
+              Masukkan teks atau upload file (.txt, .csv, .json) untuk analisis emosi instan
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -128,7 +240,7 @@ export function Dashboard() {
               />
             </div>
             <div className="flex flex-wrap gap-3">
-              <Button onClick={handleAnalyze} disabled={uploadMutation.isPending}>
+              <Button onClick={handleAnalyze} disabled={uploadMutation.isPending || batchUploadMutation.isPending}>
                 {uploadMutation.isPending ? (
                   <>
                     <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
@@ -141,7 +253,7 @@ export function Dashboard() {
                   </>
                 )}
               </Button>
-              <Button variant="outline" asChild>
+              <Button variant="outline" asChild disabled={batchUploadMutation.isPending}>
                 <label htmlFor="file-upload" className="cursor-pointer">
                   <Upload className="mr-2 h-4 w-4" />
                   Upload File
@@ -151,6 +263,7 @@ export function Dashboard() {
                     accept=".txt,.csv,.json"
                     className="hidden"
                     onChange={handleFileUpload}
+                    disabled={batchUploadMutation.isPending}
                   />
                 </label>
               </Button>
@@ -158,6 +271,13 @@ export function Dashboard() {
           </CardContent>
         </Card>
       </section>
+
+      {/* Dataset Upload Status */}
+      {uploadStatus.state !== 'idle' && (
+        <section className="mb-12">
+          <DatasetUploadStatus {...uploadStatus} />
+        </section>
+      )}
 
       {/* Stats Overview */}
       <section className="mb-12 grid gap-4 md:grid-cols-3">

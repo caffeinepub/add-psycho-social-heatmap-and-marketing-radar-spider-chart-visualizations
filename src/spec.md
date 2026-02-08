@@ -1,11 +1,14 @@
 # Specification
 
 ## Summary
-**Goal:** Add a new Marketing Mix radar chart (8 fixed factors) to the Dashboard, computed deterministically on the frontend from uploaded documents.
+**Goal:** Allow users to upload CSV/JSON datasets with the exact schema `ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted` and ingest each row as a separate document reliably.
 
 **Planned changes:**
-- Add a deterministic frontend utility under `frontend/src/lib` to aggregate and normalize document-derived scores into exactly 8 ordered factors (PROD, PRICE, DIST, COMM, HRD, CUSJ, BRAND, COLLAB), each clamped to 0–100.
-- Create `frontend/src/components/MarketingMixRadarChart.tsx` to render the 8-factor radar chart and follow existing visualization states (empty/idle, insufficient data, ready) with all English UI text and factor code + full name exposed via tooltip/legend/help.
-- Integrate `MarketingMixRadarChart` into `frontend/src/pages/Dashboard.tsx` as a new section/card, wired to the existing `documents` and `hasActiveDataset` so it updates when documents change.
+- Update CSV upload validation to accept a header row matching `ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted` (case-insensitive, whitespace-tolerant) and show clear errors when parsing/validation fails.
+- Update JSON upload validation to accept an array of objects whose keys match `ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted` (case-insensitive) and show clear errors when parsing/validation fails.
+- For valid CSV/JSON uploads, split the dataset into multiple documents and upload one backend document per row using the row’s `text` as `Document.content`.
+- Enforce required `text` field/column: block upload with a clear error if missing; skip rows with empty `text` while completing the upload and show a warning with the number of skipped rows.
+- Improve debuggability of multi-row uploads by reporting per-upload success/failure counts (and not silently failing).
+- Preserve existing behavior: `.txt` uploads still create a single document; file input continues to allow `.txt`, `.csv`, `.json`.
 
-**User-visible outcome:** The Dashboard shows an additional Marketing Mix radar chart with 8 labeled axes (0–100) that updates immediately based on the currently uploaded documents and provides clear English explanations for each factor code.
+**User-visible outcome:** Users can upload properly formatted CSV/JSON datasets without unexpected failures; each valid row becomes its own document, dashboards update automatically, and the UI clearly reports parsing issues, validation errors, skipped rows, and partial upload failures.

@@ -1,41 +1,73 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T23:27:59.915Z",
-  "summary": "The diff adds the requested Marketing Mix computation module and a new MarketingMixRadarChart component, and updates Dashboard to import the new chart. However, some acceptance-criteria details (score clamping/determinism guarantees in the utility, tooltip/legend showing both code and full factor name, and the Dashboard re-render key pattern) are not fully verifiable from the truncated diff summary.",
+  "generatedAt": "2026-02-08T23:43:50.167Z",
+  "summary": "Diff adds frontend-only CSV/JSON dataset ingestion utilities, a UI component to display dataset upload progress/status, and updates Dashboard upload flow to parse CSV/JSON into multiple rows and upload in batch; it also modifies React Query behavior and upload mutations (including extra backend calls) to force dashboard refreshes.",
   "missing_requirements": [
     {
-      "id": "REQ-19",
-      "requirement": "Each factor score is a finite number clamped to the inclusive range 0–100 (no NaN/Infinity), and returned factor list is deterministic for identical inputs.",
-      "reason": "The new computation module exists, but the diff snippet does not show computeMarketingMixScores implementation nor any explicit clamping/NaN/Infinity handling inside the utility; only the component clamps values at render time.",
+      "id": "REQ-22",
+      "requirement": "CSV uploads with a header row containing exactly the required columns (case-insensitive, whitespace-tolerant) should succeed; schema should be validated against the full required set, not just presence of `text`.",
+      "reason": "The CSV parser shown only verifies that a `text` column exists and then maps any recognized columns; it does not validate that the header contains exactly the required 8 columns (or even all required columns besides `text`).",
       "evidence": [
-        "frontend/src/lib/marketingMixMetrics.ts",
-        "frontend/src/components/MarketingMixRadarChart.tsx"
+        "frontend/src/lib/datasetIngestion.ts (parseCSV checks only `textIndex` and maps optional fields)"
       ]
     },
     {
-      "id": "REQ-20",
-      "requirement": "Tooltip (or adjacent legend/help section) must expose both the factor code and its full English factor name.",
-      "reason": "The component prepares chart data containing both factor code and fullName, but the actual tooltip/legend rendering is truncated, so it is not verifiable that users can see both code and full English name.",
+      "id": "REQ-22",
+      "requirement": "JSON uploads should validate required keys (case-insensitive), show a clear error if required `text` is missing, and skip entries with empty `text` while succeeding for the rest (with warning).",
+      "reason": "The JSON parsing logic is truncated; the diff summary does not provide evidence that it enforces presence of `text`, performs case-insensitive key matching, or implements skip-empty-text behavior with a warning count for JSON.",
       "evidence": [
-        "frontend/src/components/MarketingMixRadarChart.tsx"
+        "frontend/src/lib/datasetIngestion.ts (parseJSON truncated)"
       ]
     },
     {
-      "id": "REQ-21",
-      "requirement": "Dashboard chart re-renders/refetches correctly when document count changes (e.g., via a key pattern consistent with other charts or equivalent reactive wiring).",
-      "reason": "Dashboard imports the new component, but the provided truncated Dashboard diff does not show the render section where MarketingMixRadarChart is placed nor any key/reactive wiring, so this AC cannot be confirmed from evidence shown.",
+      "id": "REQ-24",
+      "requirement": "If uploading one or more rows fails during a multi-row upload, the UI reports how many rows succeeded and how many failed.",
+      "reason": "A status component supports `failedCount`, but the Dashboard and batch upload implementation are truncated; there is no clear evidence that per-row failures are captured and surfaced to the UI as required.",
       "evidence": [
-        "frontend/src/pages/Dashboard.tsx"
+        "frontend/src/components/DatasetUploadStatus.tsx (supports failedCount display)",
+        "frontend/src/pages/Dashboard.tsx (dataset upload flow truncated before completion)",
+        "frontend/src/hooks/useQueries.ts (useUploadDocumentsBatch truncated)"
+      ]
+    },
+    {
+      "id": "REQ-24",
+      "requirement": "The file input allows `.txt`, `.csv`, `.json` as before.",
+      "reason": "Dashboard logic branches by extension, but the diff does not show the actual `<input accept=...>` attribute or other evidence that the chooser still restricts/allows `.txt,.csv,.json` as before.",
+      "evidence": [
+        "frontend/src/pages/Dashboard.tsx (handleFileUpload checks extensions, but input element not shown in truncated diff)"
       ]
     }
   ],
-  "hallucinated_features": [],
+  "hallucinated_features": [
+    {
+      "description": "Automatic generation/upload of \"cleaning logs\" to the backend during document upload (and batch upload) unrelated to dataset ingestion requirements.",
+      "reason": "Not requested by REQ-22/23/24; requirements focus on parsing/validating CSV/JSON and uploading rows as documents with clear UI reporting.",
+      "evidence": [
+        "frontend/src/hooks/useQueries.ts (useUploadDocument: actor.addCleaningLog(cleaningLogs); useUploadDocumentsBatch mentions generating cleaning logs)"
+      ]
+    },
+    {
+      "description": "Triggering confusion matrix generation by calling `processIncorrect` for multiple models after every upload.",
+      "reason": "Not requested; also conflicts with the non-goal of changing existing analytics logic beyond what’s necessary for uploaded rows to become documents and charts to render.",
+      "evidence": [
+        "frontend/src/hooks/useQueries.ts (useUploadDocument: calls actor.processIncorrect(... 'BERT' ...), 'RoBERTa', 'DistilBERT', 'JC', 'JA', 'JD')"
+      ]
+    },
+    {
+      "description": "Aggressive React Query refetch behavior changes for documents (staleTime=0, refetchOnMount/windowFocus) not explicitly requested.",
+      "reason": "REQ-23 asks charts update after upload without manual refresh; invalidating queries on success would satisfy this. Changing query policies globally is additional behavior not requested.",
+      "evidence": [
+        "frontend/src/hooks/useQueries.ts (useGetAllDocuments: staleTime: 0, refetchOnMount: true, refetchOnWindowFocus: true)"
+      ]
+    }
+  ],
   "confidence": 0.62,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/components/MarketingMixRadarChart.tsx",
-    "frontend/src/lib/marketingMixMetrics.ts",
+    "frontend/src/components/DatasetUploadStatus.tsx",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/lib/datasetIngestion.ts",
     "frontend/src/pages/Dashboard.tsx",
     "project_state.json"
   ]

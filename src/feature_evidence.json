@@ -2,47 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-create-deterministic-frontend-only-computation-utilities-for-a-marketing-mix-radar-chart-with-exactly-8-factors-1-prod-product-innovative-product-strategy-2-price-price-innovative-pricing-architecture-3-dist-place-innovative-distribution-network-4-comm-promotion-innovative-communication-strategy-5-hrd-people-innovative-human-resource-development-6-cusj-process-innovative-customer-journey-design-7-brand-physical-evidence-innovative-brand-experience-creation-8-collab-collaboration-ecosystem-strategy-proposed-the-utilities-must-aggregate-scores-across-the-currently-uploaded-documents-and-output-normalized-0-100-values-per-factor-stable-deterministic-for-the-same-inputs",
-      "featureTitle": "Create deterministic frontend-only computation utilities for a Marketing Mix radar chart with exactly 8 factors: (1) PROD — Product / Innovative Product Strategy, (2) PRICE — Price / Innovative Pricing Architecture, (3) DIST — Place / Innovative Distribution Network, (4) COMM — Promotion / Innovative Communication Strategy, (5) HRD — People / Innovative Human Resource Development, (6) CUSJ — Process / Innovative Customer Journey Design, (7) BRAND — Physical Evidence / Innovative Brand Experience Creation, (8) COLLAB — Collaboration Ecosystem Strategy (Proposed). The utilities must aggregate scores across the currently uploaded documents and output normalized 0–100 values per factor (stable/deterministic for the same inputs).",
+      "featureId": "feature-update-the-file-upload-ingestion-flow-so-users-can-upload-datasets-whose-schema-is-exactly-id-date-region-source-user-text-aspect-category-keywords-extracted-without-the-upload-failing",
+      "featureTitle": "Update the file-upload ingestion flow so users can upload datasets whose schema is exactly: `ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted`, without the upload failing.",
       "files": [
-        "frontend/src/lib/marketingMixMetrics.ts"
-      ],
-      "components": [
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-19"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-add-a-new-react-component-marketingmixradarchart-that-renders-the-marketing-mix-radar-chart-using-the-8-computed-factors-and-follows-the-existing-visualization-state-conventions-loading-empty-insufficient-ready-used-by-other-charts-e-g-getvisualizationstate-numeric-sanitization-clamping-all-user-facing-text-in-this-new-component-must-be-in-english-title-description-empty-insufficient-messages-labels-tooltips",
-      "featureTitle": "Add a new React component `MarketingMixRadarChart` that renders the Marketing Mix radar chart using the 8 computed factors and follows the existing visualization state conventions (loading/empty/insufficient/ready) used by other charts (e.g., `getVisualizationState`, numeric sanitization/clamping). All user-facing text in this new component must be in English (title, description, empty/insufficient messages, labels/tooltips).",
-      "files": [
-        "frontend/src/components/MarketingMixRadarChart.tsx"
-      ],
-      "components": [
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-20"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-integrate-the-new-marketingmixradarchart-into-the-main-dashboard-page-frontend-src-pages-dashboard-tsx-alongside-the-existing-visualizations-passing-the-currently-loaded-documents-and-hasactivedataset-so-it-updates-immediately-when-documents-are-uploaded-deleted",
-      "featureTitle": "Integrate the new `MarketingMixRadarChart` into the main Dashboard page (`frontend/src/pages/Dashboard.tsx`) alongside the existing visualizations, passing the currently loaded `documents` and `hasActiveDataset` so it updates immediately when documents are uploaded/deleted.",
-      "files": [
+        "frontend/src/lib/datasetIngestion.ts",
         "frontend/src/pages/Dashboard.tsx"
       ],
       "components": [
@@ -54,7 +17,48 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-21"
+        "REQ-22"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-for-dataset-uploads-csv-json-that-follow-the-specified-schema-parse-the-file-into-multiple-documents-and-upload-each-row-as-a-separate-backend-document-using-the-row-s-text-value-as-document-content",
+      "featureTitle": "For dataset uploads (.csv/.json) that follow the specified schema, parse the file into multiple documents and upload each row as a separate backend document using the row’s `text` value as `Document.content`.",
+      "files": [
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/Dashboard.tsx"
+      ],
+      "components": [
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-23"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-make-the-upload-experience-resilient-and-debuggable-by-reporting-parse-validation-errors-and-upload-progress-failures-clearly-in-the-ui",
+      "featureTitle": "Make the upload experience resilient and debuggable by reporting parse/validation errors and upload progress/failures clearly in the UI.",
+      "files": [
+        "frontend/src/components/DatasetUploadStatus.tsx",
+        "frontend/src/lib/datasetIngestion.ts",
+        "frontend/src/pages/Dashboard.tsx"
+      ],
+      "components": [
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-24"
       ],
       "confidence": "high"
     }

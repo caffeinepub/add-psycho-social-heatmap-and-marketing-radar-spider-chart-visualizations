@@ -1,58 +1,74 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Marketing Mix (8-factor) Radar Chart on Dashboard",
+  "title": "Resilient CSV/JSON dataset uploads mapped to per-row documents",
   "requirements": [
     {
-      "id": "REQ-19",
-      "summary": "Add deterministic frontend-only utilities to compute 8 Marketing Mix factor scores (0–100) aggregated across uploaded documents in a fixed order.",
+      "id": "REQ-22",
+      "summary": "Accept CSV/JSON dataset uploads with the exact required schema and validate required `text` before attempting any uploads.",
       "acceptanceCriteria": [
-        "A new reusable computation module exists under frontend/src/lib (or an extension of an existing lib module) that returns an ordered list/array of 8 factor scores for a given Document[] input.",
-        "Returned factor list order is exactly: PROD, PRICE, DIST, COMM, HRD, CUSJ, BRAND, COLLAB.",
-        "Each factor score is a finite number clamped to the inclusive range 0–100 (no NaN/Infinity).",
-        "For identical document contents, the computed factor scores are deterministic (no randomness, no time-based effects)."
+        "Uploading a .csv file with a header row containing exactly the columns `ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted` (case-insensitive, whitespace-tolerant) succeeds.",
+        "Uploading a .json file containing an array of objects with keys matching `ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted` (case-insensitive) succeeds.",
+        "If a CSV/JSON upload is missing the required `text` field/column, the UI shows a clear error message and does not attempt to upload any documents.",
+        "If a CSV/JSON upload has the required schema but contains some rows with empty `text`, those rows are skipped and the upload still succeeds for the remaining valid rows (with a clear warning message indicating how many rows were skipped)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/lib/marketingMixMetrics.ts",
+          "path": "frontend/src/lib/datasetIngestion.ts",
           "operation": "create",
-          "description": "Create deterministic Marketing Mix scoring utilities: define the 8-factor constant set (codes + full English names) and export a function that aggregates scores across Document[] and returns factor scores in the exact required order (PROD, PRICE, DIST, COMM, HRD, CUSJ, BRAND, COLLAB), with numeric sanitization and clamping to 0–100."
-        }
-      ]
-    },
-    {
-      "id": "REQ-20",
-      "summary": "Implement MarketingMixRadarChart React component with consistent visualization state handling and English-only UI text.",
-      "acceptanceCriteria": [
-        "A new file exists at frontend/src/components/MarketingMixRadarChart.tsx (or equivalent in the same components directory) exporting the chart component.",
-        "When `hasActiveDataset` is false or `documents.length === 0`, the component shows an empty/idle state (no radar rendered) with English messaging.",
-        "When a dataset exists but derived factor scores are all zero/uncomputable, the component shows an 'insufficient data' state with English messaging (no crash).",
-        "When valid factor data exists, the component renders a radar chart with 8 axes and values scaled 0–100.",
-        "The chart tooltip (or an adjacent legend/help section) exposes both the factor code and its full English factor name so users can interpret PROD/PRICE/DIST/COMM/HRD/CUSJ/BRAND/COLLAB.",
-        "The component does not modify any immutable UI component source paths listed in SYSTEM_CONTEXT."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/MarketingMixRadarChart.tsx",
-          "operation": "create",
-          "description": "Add MarketingMixRadarChart component that consumes {documents, hasActiveDataset} and renders a Recharts radar chart (0–100) driven by the Marketing Mix computation utilities; use existing visualization conventions (getVisualizationState, toFiniteNumber/clamp patterns) for loading/empty/insufficient/ready; ensure all user-facing strings (title/description/messages/labels/tooltips/legend) are English and include both factor code and full English factor name for interpretation."
-        }
-      ]
-    },
-    {
-      "id": "REQ-21",
-      "summary": "Wire MarketingMixRadarChart into Dashboard alongside existing visualizations using current documents and dataset state.",
-      "acceptanceCriteria": [
-        "Dashboard imports and renders `MarketingMixRadarChart` using the same document source as other charts (`useGetAllDocuments`).",
-        "The new chart appears as a distinct Dashboard section/card and uses consistent spacing/layout with existing Dashboard chart sections.",
-        "The chart re-renders/refetches correctly when document count changes (e.g., by using a `key` pattern consistent with other Dashboard charts or equivalent reactive wiring).",
-        "No backend changes are required for the new visualization to display."
-      ],
-      "file_operations": [
+          "description": "Add dataset parsing + schema validation utilities for .csv/.json uploads: normalize header/keys (case-insensitive, whitespace-tolerant), enforce required columns list, detect missing required `text`, extract per-row `text`, and compute skipped-empty-text counts. Ensure parser errors surface as typed/structured errors for UI display."
+        },
         {
           "path": "frontend/src/pages/Dashboard.tsx",
           "operation": "modify",
-          "description": "Import and render MarketingMixRadarChart within the existing Dashboard charts section, passing the current documents and hasActiveDataset derived from useGetAllDocuments; add a documents-length-based key consistent with other chart sections so it updates immediately when documents are uploaded/deleted, while preserving existing layout/spacing conventions."
+          "description": "Update the file upload handler to branch by file type: keep .txt behavior as single-document upload, and for .csv/.json use the new dataset ingestion utilities to validate the schema (including `text` presence) before starting any uploads; on validation failure, show a clear error message and abort without calling upload mutations."
+        }
+      ]
+    },
+    {
+      "id": "REQ-23",
+      "summary": "For valid dataset uploads, upload each row as a separate document using the row’s `text` value as Document.content and refresh visualizations automatically.",
+      "acceptanceCriteria": [
+        "A CSV with N valid rows (non-empty `text`) results in N new documents in `getAllDocuments()` (not 1 document containing the whole file).",
+        "A JSON array with N valid entries (non-empty `text`) results in N new documents in `getAllDocuments()`.",
+        "After a successful dataset upload, Dashboard visualizations update based on the new documents (no manual refresh needed)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Add a batch upload mutation (e.g., `useUploadDocumentsBatch`) that accepts an array of document contents and uploads them as multiple `uploadDocument` calls, with optional progress callbacks. Ensure React Query invalidations for documents/analytics occur once at the end so Dashboard visualizations refresh automatically without manual reload."
+        },
+        {
+          "path": "frontend/src/pages/Dashboard.tsx",
+          "operation": "modify",
+          "description": "Wire dataset parsing output (array of valid `text` rows) into the new batch upload mutation so each row becomes its own backend document; ensure empty `text` rows are not uploaded and success navigations (if any) only occur after the batch completes."
+        }
+      ]
+    },
+    {
+      "id": "REQ-24",
+      "summary": "Improve dataset upload UX with clear parse/validation errors, batch progress reporting, and per-row success/failure summaries while preserving .txt single-document uploads.",
+      "acceptanceCriteria": [
+        "If parsing fails (e.g., malformed CSV), the UI shows a clear error message describing that the file could not be parsed.",
+        "If uploading one or more rows fails during a multi-row upload, the UI reports how many rows succeeded and how many failed, and the operation does not silently fail.",
+        "The file input allows `.txt`, `.csv`, `.json` as before; `.txt` continues to upload as a single document (current behavior preserved)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/DatasetUploadStatus.tsx",
+          "operation": "create",
+          "description": "Create a presentational component to display dataset upload state (parsing/validating/uploading/done), including total rows, uploaded count, failed count, skipped-empty-text count, and the latest error message if present; use existing shadcn-ui components already in the project (do not modify `frontend/src/components/ui/*`). Verify the component's usage instructions before implementing."
+        },
+        {
+          "path": "frontend/src/pages/Dashboard.tsx",
+          "operation": "modify",
+          "description": "Add resilient UI state management around uploads: show parse/validation errors from dataset ingestion, show live upload progress during multi-row uploads, and on completion show a clear summary (succeeded/failed/skipped). Keep `.txt` flow unchanged (single upload using existing mutation) and ensure `.csv/.json` failures do not silently fail."
+        },
+        {
+          "path": "frontend/src/lib/datasetIngestion.ts",
+          "operation": "modify",
+          "description": "Extend ingestion utilities to produce debuggable error messages for malformed CSV/JSON and schema mismatches, plus row-level validation results that enable UI to summarize skipped/invalid rows without attempting uploads when schema is invalid."
         }
       ]
     }
