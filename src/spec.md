@@ -1,13 +1,11 @@
 # Specification
 
 ## Summary
-**Goal:** Add an English/Bahasa Indonesia toggle to the Strategic Recommendation Report so the entire report UI, generated narrative content, and exports can be switched between the two languages.
+**Goal:** Add a new Marketing Mix radar chart (8 fixed factors) to the Dashboard, computed deterministically on the frontend from uploaded documents.
 
 **Planned changes:**
-- Add an explicit language selection control (English / Bahasa Indonesia) on the StrategicRecommendationReportPage.
-- Localize all visible UI text on the Strategic Recommendation Report page (headings, descriptions, buttons, badges, notices, loading/empty states) based on the selected language.
-- Update report generation and export utilities to support a language/locale parameter for bilingual, deterministic report content and fully localized Markdown output (including priority labels).
-- Apply locale-appropriate date formatting for the “Generated on” timestamp based on the selected language, and ensure behavior is consistent across loading, empty, and data-present states.
-- Ensure Print and Copy-as-Markdown continue to work with the selected language without requiring a page refresh.
+- Add a deterministic frontend utility under `frontend/src/lib` to aggregate and normalize document-derived scores into exactly 8 ordered factors (PROD, PRICE, DIST, COMM, HRD, CUSJ, BRAND, COLLAB), each clamped to 0–100.
+- Create `frontend/src/components/MarketingMixRadarChart.tsx` to render the 8-factor radar chart and follow existing visualization states (empty/idle, insufficient data, ready) with all English UI text and factor code + full name exposed via tooltip/legend/help.
+- Integrate `MarketingMixRadarChart` into `frontend/src/pages/Dashboard.tsx` as a new section/card, wired to the existing `documents` and `hasActiveDataset` so it updates when documents change.
 
-**User-visible outcome:** Users can toggle the Strategic Recommendation Report between English and Bahasa Indonesia, with the entire on-page report, timestamps, and Markdown export updating immediately while print/copy features continue to work.
+**User-visible outcome:** The Dashboard shows an additional Marketing Mix radar chart with 8 labeled axes (0–100) that updates immediately based on the currently uploaded documents and provides clear English explanations for each factor code.

@@ -2,11 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-add-a-language-toggle-english-indonesian-on-the-strategic-recommendation-report-page-that-lets-the-user-switch-the-entire-report-ui-and-report-content-between-english-and-bahasa-indonesia",
-      "featureTitle": "Add a language toggle (English / Indonesian) on the Strategic Recommendation Report page that lets the user switch the entire report UI and report content between English and Bahasa Indonesia.",
+      "featureId": "feature-create-deterministic-frontend-only-computation-utilities-for-a-marketing-mix-radar-chart-with-exactly-8-factors-1-prod-product-innovative-product-strategy-2-price-price-innovative-pricing-architecture-3-dist-place-innovative-distribution-network-4-comm-promotion-innovative-communication-strategy-5-hrd-people-innovative-human-resource-development-6-cusj-process-innovative-customer-journey-design-7-brand-physical-evidence-innovative-brand-experience-creation-8-collab-collaboration-ecosystem-strategy-proposed-the-utilities-must-aggregate-scores-across-the-currently-uploaded-documents-and-output-normalized-0-100-values-per-factor-stable-deterministic-for-the-same-inputs",
+      "featureTitle": "Create deterministic frontend-only computation utilities for a Marketing Mix radar chart with exactly 8 factors: (1) PROD — Product / Innovative Product Strategy, (2) PRICE — Price / Innovative Pricing Architecture, (3) DIST — Place / Innovative Distribution Network, (4) COMM — Promotion / Innovative Communication Strategy, (5) HRD — People / Innovative Human Resource Development, (6) CUSJ — Process / Innovative Customer Journey Design, (7) BRAND — Physical Evidence / Innovative Brand Experience Creation, (8) COLLAB — Collaboration Ecosystem Strategy (Proposed). The utilities must aggregate scores across the currently uploaded documents and output normalized 0–100 values per factor (stable/deterministic for the same inputs).",
       "files": [
-        "frontend/src/lib/strategicReportLocale.ts",
-        "frontend/src/pages/StrategicRecommendationReportPage.tsx"
+        "frontend/src/lib/marketingMixMetrics.ts"
       ],
       "components": [
         "blob-storage@4.0.0",
@@ -17,16 +16,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-11"
+        "REQ-19"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-strategic-report-generation-and-markdown-export-utilities-to-support-bilingual-output-english-and-bahasa-indonesia-via-an-explicit-language-locale-parameter-while-keeping-report-generation-deterministic-for-a-given-dataset-and-selected-language",
-      "featureTitle": "Update strategic report generation and markdown export utilities to support bilingual output (English and Bahasa Indonesia) via an explicit language/locale parameter, while keeping report generation deterministic for a given dataset and selected language.",
+      "featureId": "feature-add-a-new-react-component-marketingmixradarchart-that-renders-the-marketing-mix-radar-chart-using-the-8-computed-factors-and-follows-the-existing-visualization-state-conventions-loading-empty-insufficient-ready-used-by-other-charts-e-g-getvisualizationstate-numeric-sanitization-clamping-all-user-facing-text-in-this-new-component-must-be-in-english-title-description-empty-insufficient-messages-labels-tooltips",
+      "featureTitle": "Add a new React component `MarketingMixRadarChart` that renders the Marketing Mix radar chart using the 8 computed factors and follows the existing visualization state conventions (loading/empty/insufficient/ready) used by other charts (e.g., `getVisualizationState`, numeric sanitization/clamping). All user-facing text in this new component must be in English (title, description, empty/insufficient messages, labels/tooltips).",
       "files": [
-        "frontend/src/lib/strategicReport.ts",
-        "frontend/src/lib/strategicReportLocale.ts"
+        "frontend/src/components/MarketingMixRadarChart.tsx"
       ],
       "components": [
         "blob-storage@4.0.0",
@@ -37,16 +35,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-12"
+        "REQ-20"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-ensure-the-language-toggle-works-consistently-across-all-strategic-recommendation-report-states-loading-empty-dataset-dataset-present-and-that-date-formatting-uses-an-appropriate-locale-for-the-selected-language",
-      "featureTitle": "Ensure the language toggle works consistently across all Strategic Recommendation Report states (loading, empty dataset, dataset present) and that date formatting uses an appropriate locale for the selected language.",
+      "featureId": "feature-integrate-the-new-marketingmixradarchart-into-the-main-dashboard-page-frontend-src-pages-dashboard-tsx-alongside-the-existing-visualizations-passing-the-currently-loaded-documents-and-hasactivedataset-so-it-updates-immediately-when-documents-are-uploaded-deleted",
+      "featureTitle": "Integrate the new `MarketingMixRadarChart` into the main Dashboard page (`frontend/src/pages/Dashboard.tsx`) alongside the existing visualizations, passing the currently loaded `documents` and `hasActiveDataset` so it updates immediately when documents are uploaded/deleted.",
       "files": [
-        "frontend/src/lib/strategicReport.ts",
-        "frontend/src/pages/StrategicRecommendationReportPage.tsx"
+        "frontend/src/pages/Dashboard.tsx"
       ],
       "components": [
         "blob-storage@4.0.0",
@@ -57,7 +54,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-13"
+        "REQ-21"
       ],
       "confidence": "high"
     }

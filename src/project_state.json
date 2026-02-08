@@ -1,10 +1,14 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 9,
-  "summary": "Build dashboard visualizations (Psycho-Social Heatmap and Marketing Radar chart) and provide an output report of strategic recommendations from the analysis for decision-makers.",
-  "architectural_notes": [],
+  "projectStateVersion": 15,
+  "summary": "Build dashboard visualizations (Psycho-Social Heatmap and Radar charts—including Marketing Effectiveness and Marketing Mix) and provide an output report of strategic recommendations from the analysis for decision-makers.",
+  "architectural_notes": [
+    "Psycho-Social Heatmap dimensions should be based on UTAUT2: PE (Performance Expectancy/Harapan Kinerja), EE (Effort Expectancy/Harapan Usaha), SI (Social Influence/Pengaruh Sosial), HM (Hedonic Motivation/Motivasi Hedonis), FC (Facilitating Conditions/Kondisi Pendukung), PV (Price Value/Nilai Harga), H (Habit/Kebiasaan).",
+    "Add a Marketing Mix radar chart with the following axes/labels and short codes: Product—Innovative Product Strategy (PROD); Price—Innovative Pricing Architecture (PRICE); Place—Innovative Distribution Network (DIST); Promotion—Innovative Communication Strategy (COMM); People—Innovative Human Resource Development (HRD); Process—Innovative Customer Journey Design (CUSJ); Physical Evidence—Innovative Brand Experience Creation (BRAND); Collaboration Ecosystem Strategy (proposed)."
+  ],
   "known_issues": [
-    "Ensure all dashboard visualizations (charts/heatmap/radar/report) reliably render when valid input data is provided; potential rendering/state update issue after data input."
+    "Ensure all dashboard visualizations (charts/heatmap/radar/report) reliably render when valid input data is provided; potential rendering/state update issue after data input.",
+    "Emotion Distribution chart still displays even when the app is not currently analyzing data; should reflect correct analysis/loading/idle state (likely stale analysis state or dataset detection)."
   ],
   "isFixRequest": false,
   "existing_features": [
@@ -111,6 +115,70 @@
         "REQ-13"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-update-the-emotion-distribution-visualization-behavior-so-it-does-not-show-a-populated-chart-when-the-app-has-no-analyzed-dataset-e-g-no-uploaded-analyzed-documents-and-instead-shows-an-appropriate-empty-idle-state",
+      "title": "Update the Emotion Distribution visualization behavior so it does not show a populated chart when the app has no analyzed dataset (e.g., no uploaded/analyzed documents) and instead shows an appropriate empty/idle state.",
+      "reqIds": [
+        "REQ-14"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-make-the-existing-emotionchart-component-currently-showing-hardcoded-counts-dataset-aware-so-it-reflects-the-actual-dataset-state-render-an-empty-idle-state-when-there-is-no-active-dataset-and-only-render-chart-data-when-documents-are-present",
+      "title": "Make the existing `EmotionChart` component (currently showing hardcoded counts) dataset-aware so it reflects the actual dataset state: render an empty/idle state when there is no active dataset and only render chart data when documents are present.",
+      "reqIds": [
+        "REQ-15"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-replace-the-current-psycho-social-dimensions-used-for-computation-with-utaut2-constructs-and-keep-them-deterministic-update-frontend-src-lib-psychosocialmetrics-ts-so-psycho-social-dimensions-becomes-exactly-pe-performance-expectancy-ee-effort-expectancy-si-social-influence-hm-hedonic-motivation-fc-facilitating-conditions-pv-price-value-h-habit-ensure-computepsychosocialmatrix-continues-to-return-a-matrix-with-shape-dimensions-x-emotions-and-remains-stable-deterministic-for-the-same-input-documents",
+      "title": "Replace the current psycho-social dimensions used for computation with UTAUT2 constructs and keep them deterministic. Update `frontend/src/lib/psychoSocialMetrics.ts` so `PSYCHO_SOCIAL_DIMENSIONS` becomes exactly: PE (Performance Expectancy), EE (Effort Expectancy), SI (Social Influence), HM (Hedonic Motivation), FC (Facilitating Conditions), PV (Price Value), H (Habit). Ensure `computePsychoSocialMatrix` continues to return a matrix with shape [dimensions x emotions] and remains stable/deterministic for the same input documents.",
+      "reqIds": [
+        "REQ-16"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-psycho-social-heatmap-visualization-to-display-the-utaut2-constructs-and-provide-the-provided-definitions-in-the-ui-in-frontend-src-components-psychosocialheatmap-tsx-replace-the-local-dimensions-list-so-its-length-order-matches-the-new-utaut2-dimension-list-add-user-visible-dimension-labels-and-hover-help-text-that-includes-the-definitions-provided-by-the-user-for-pe-performance-expectancy-harapan-kinerja-ee-effort-expectancy-harapan-usaha-si-social-influence-pengaruh-sosial-hm-hedonic-motivation-motivasi-hedonis-fc-facilitating-conditions-kondisi-pendukung-pv-price-value-nilai-harga-h-habit-kebiasaan",
+      "title": "Update the Psycho-Social Heatmap visualization to display the UTAUT2 constructs and provide the provided definitions in the UI. In `frontend/src/components/PsychoSocialHeatmap.tsx`, replace the local `dimensions` list so its length/order matches the new UTAUT2 dimension list. Add user-visible dimension labels and hover/help text that includes the definitions provided by the user for: PE (Performance Expectancy) / Harapan Kinerja; EE (Effort Expectancy) / Harapan Usaha; SI (Social Influence) / Pengaruh Sosial; HM (Hedonic Motivation) / Motivasi Hedonis; FC (Facilitating Conditions) / Kondisi Pendukung; PV (Price Value) / Nilai Harga; H (Habit) / Kebiasaan.",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-strategic-report-generation-to-align-with-the-new-utaut2-psycho-social-dimension-names-so-no-report-content-references-removed-dimensions-in-frontend-src-lib-strategicreport-ts-and-any-related-localized-templates-in-frontend-src-lib-strategicreportlocale-ts-if-needed-ensure-key-findings-and-recommendation-risk-logic-that-previously-depended-on-specific-old-dimension-strings-e-g-anxiety-risk-perception-self-efficacy-social-influence-is-updated-to-work-with-the-new-utaut2-constructs-pe-ee-si-hm-fc-pv-h",
+      "title": "Update strategic report generation to align with the new UTAUT2 psycho-social dimension names so no report content references removed dimensions. In `frontend/src/lib/strategicReport.ts` (and any related localized templates in `frontend/src/lib/strategicReportLocale.ts` if needed), ensure key findings and recommendation/risk logic that previously depended on specific old dimension strings (e.g., Anxiety, Risk Perception, Self-Efficacy, Social Influence) is updated to work with the new UTAUT2 constructs (PE, EE, SI, HM, FC, PV, H).",
+      "reqIds": [
+        "REQ-18"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-create-deterministic-frontend-only-computation-utilities-for-a-marketing-mix-radar-chart-with-exactly-8-factors-1-prod-product-innovative-product-strategy-2-price-price-innovative-pricing-architecture-3-dist-place-innovative-distribution-network-4-comm-promotion-innovative-communication-strategy-5-hrd-people-innovative-human-resource-development-6-cusj-process-innovative-customer-journey-design-7-brand-physical-evidence-innovative-brand-experience-creation-8-collab-collaboration-ecosystem-strategy-proposed-the-utilities-must-aggregate-scores-across-the-currently-uploaded-documents-and-output-normalized-0-100-values-per-factor-stable-deterministic-for-the-same-inputs",
+      "title": "Create deterministic frontend-only computation utilities for a Marketing Mix radar chart with exactly 8 factors: (1) PROD — Product / Innovative Product Strategy, (2) PRICE — Price / Innovative Pricing Architecture, (3) DIST — Place / Innovative Distribution Network, (4) COMM — Promotion / Innovative Communication Strategy, (5) HRD — People / Innovative Human Resource Development, (6) CUSJ — Process / Innovative Customer Journey Design, (7) BRAND — Physical Evidence / Innovative Brand Experience Creation, (8) COLLAB — Collaboration Ecosystem Strategy (Proposed). The utilities must aggregate scores across the currently uploaded documents and output normalized 0–100 values per factor (stable/deterministic for the same inputs).",
+      "reqIds": [
+        "REQ-19"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-new-react-component-marketingmixradarchart-that-renders-the-marketing-mix-radar-chart-using-the-8-computed-factors-and-follows-the-existing-visualization-state-conventions-loading-empty-insufficient-ready-used-by-other-charts-e-g-getvisualizationstate-numeric-sanitization-clamping-all-user-facing-text-in-this-new-component-must-be-in-english-title-description-empty-insufficient-messages-labels-tooltips",
+      "title": "Add a new React component `MarketingMixRadarChart` that renders the Marketing Mix radar chart using the 8 computed factors and follows the existing visualization state conventions (loading/empty/insufficient/ready) used by other charts (e.g., `getVisualizationState`, numeric sanitization/clamping). All user-facing text in this new component must be in English (title, description, empty/insufficient messages, labels/tooltips).",
+      "reqIds": [
+        "REQ-20"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-integrate-the-new-marketingmixradarchart-into-the-main-dashboard-page-frontend-src-pages-dashboard-tsx-alongside-the-existing-visualizations-passing-the-currently-loaded-documents-and-hasactivedataset-so-it-updates-immediately-when-documents-are-uploaded-deleted",
+      "title": "Integrate the new `MarketingMixRadarChart` into the main Dashboard page (`frontend/src/pages/Dashboard.tsx`) alongside the existing visualizations, passing the currently loaded `documents` and `hasActiveDataset` so it updates immediately when documents are uploaded/deleted.",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -135,6 +203,18 @@
     {
       "id": "AR-4",
       "summary": "Add bilingual (English/Indonesian) language toggle button on the Strategic Recommendation Report page.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-5",
+      "summary": "Revise the Psycho-Social Heatmap dimensions to use UTAUT2 constructs (PE, EE, SI, HM, FC, PV, H) with the provided Indonesian labels/definitions.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-6",
+      "summary": "Add an additional Marketing Mix Radar Chart visualization with 8 factors (PROD, PRICE, DIST, COMM, HRD, CUSJ, BRAND, Collaboration Ecosystem Strategy).",
       "reqIds": [],
       "status": "pending"
     }

@@ -1,44 +1,42 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-08T22:45:09.166Z",
-  "summary": "Diff adds a new strategic report localization module (EN/ID labels and templates), wires a locale state/toggle into StrategicRecommendationReportPage, and updates strategic report generation types/utilities to carry/accept a Locale. Some acceptance criteria (localized markdown headers/labels, localized generated-on date formatting, and deterministic guarantees) are not fully verifiable from the truncated diff.",
+  "generatedAt": "2026-02-08T23:27:59.915Z",
+  "summary": "The diff adds the requested Marketing Mix computation module and a new MarketingMixRadarChart component, and updates Dashboard to import the new chart. However, some acceptance-criteria details (score clamping/determinism guarantees in the utility, tooltip/legend showing both code and full factor name, and the Dashboard re-render key pattern) are not fully verifiable from the truncated diff summary.",
   "missing_requirements": [
     {
-      "id": "REQ-12",
-      "requirement": "reportToMarkdown outputs fully localized Markdown headers/labels and content in the selected language (or uses report.locale).",
-      "reason": "The page now calls `reportToMarkdown(report, locale)`, but the diff summary does not show the implementation changes for `reportToMarkdown` (localized headers/labels/content) due to truncation; only the call site is visible.",
+      "id": "REQ-19",
+      "requirement": "Each factor score is a finite number clamped to the inclusive range 0–100 (no NaN/Infinity), and returned factor list is deterministic for identical inputs.",
+      "reason": "The new computation module exists, but the diff snippet does not show computeMarketingMixScores implementation nor any explicit clamping/NaN/Infinity handling inside the utility; only the component clamps values at render time.",
       "evidence": [
-        "frontend/src/pages/StrategicRecommendationReportPage.tsx",
-        "frontend/src/lib/strategicReport.ts (truncated)"
+        "frontend/src/lib/marketingMixMetrics.ts",
+        "frontend/src/components/MarketingMixRadarChart.tsx"
       ]
     },
     {
-      "id": "REQ-13",
-      "requirement": "When documents are present, the 'Generated on' timestamp formatting uses a locale consistent with the selected language (e.g., en-US vs id-ID).",
-      "reason": "The diff shows localized label text for 'Generated on' vs 'Dibuat pada', but does not show any date formatting code in the report page or utilities (the relevant part of the page is truncated).",
+      "id": "REQ-20",
+      "requirement": "Tooltip (or adjacent legend/help section) must expose both the factor code and its full English factor name.",
+      "reason": "The component prepares chart data containing both factor code and fullName, but the actual tooltip/legend rendering is truncated, so it is not verifiable that users can see both code and full English name.",
       "evidence": [
-        "frontend/src/lib/strategicReportLocale.ts",
-        "frontend/src/pages/StrategicRecommendationReportPage.tsx (truncated)"
+        "frontend/src/components/MarketingMixRadarChart.tsx"
       ]
     },
     {
-      "id": "REQ-12",
-      "requirement": "For the same documents + same selected language, generated content remains deterministic (no randomness/time-dependent wording beyond generatedAt).",
-      "reason": "The report utilities are described as deterministic, but the diff summary does not include the full implementation of localized narrative generation (templates are truncated) or any explicit confirmation that no non-deterministic inputs were introduced.",
+      "id": "REQ-21",
+      "requirement": "Dashboard chart re-renders/refetches correctly when document count changes (e.g., via a key pattern consistent with other charts or equivalent reactive wiring).",
+      "reason": "Dashboard imports the new component, but the provided truncated Dashboard diff does not show the render section where MarketingMixRadarChart is placed nor any key/reactive wiring, so this AC cannot be confirmed from evidence shown.",
       "evidence": [
-        "frontend/src/lib/strategicReport.ts (truncated)",
-        "frontend/src/lib/strategicReportLocale.ts (truncated)"
+        "frontend/src/pages/Dashboard.tsx"
       ]
     }
   ],
   "hallucinated_features": [],
-  "confidence": 0.56,
+  "confidence": 0.62,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/lib/strategicReport.ts",
-    "frontend/src/lib/strategicReportLocale.ts",
-    "frontend/src/pages/StrategicRecommendationReportPage.tsx",
+    "frontend/src/components/MarketingMixRadarChart.tsx",
+    "frontend/src/lib/marketingMixMetrics.ts",
+    "frontend/src/pages/Dashboard.tsx",
     "project_state.json"
   ]
 }

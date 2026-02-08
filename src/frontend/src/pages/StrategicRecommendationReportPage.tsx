@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { FileText, Download, Printer, AlertTriangle, CheckCircle2, TrendingUp, Target, AlertCircle, Languages } from 'lucide-react';
 import { useGetAllDocuments } from '../hooks/useQueries';
-import { generateStrategicReport, reportToMarkdown } from '../lib/strategicReport';
+import { generateStrategicReport, exportReportAsMarkdown } from '../lib/strategicReport';
 import { type Locale, getUILabels, getPriorityLabel } from '../lib/strategicReportLocale';
 import { toast } from 'sonner';
 import { useMemo, useState } from 'react';
@@ -15,14 +15,14 @@ export function StrategicRecommendationReportPage() {
 
   // Generate report from current documents with selected locale
   const report = useMemo(() => {
-    return generateStrategicReport(documents, false, locale);
+    return generateStrategicReport(documents, locale);
   }, [documents, locale]);
 
   const labels = getUILabels(locale);
 
   const handleCopyMarkdown = async () => {
     try {
-      const markdown = reportToMarkdown(report, locale);
+      const markdown = exportReportAsMarkdown(report);
       await navigator.clipboard.writeText(markdown);
       toast.success(locale === 'id' ? 'Laporan disalin ke clipboard sebagai Markdown' : 'Report copied to clipboard as Markdown');
     } catch (error) {

@@ -141,15 +141,23 @@ interface ReportContentTemplates {
     title: string;
     rationale: (score: number) => string;
   };
-  mitigateRisk: {
-    title: string;
-    rationale: (dimension: string, score: number) => string;
-  };
   amplifySocialProof: {
     title: string;
     rationale: (score: number) => string;
   };
   simplifyUX: {
+    title: string;
+    rationale: (score: number) => string;
+  };
+  addressPriceValue: {
+    title: string;
+    rationale: (score: number) => string;
+  };
+  improveFacilitating: {
+    title: string;
+    rationale: (score: number) => string;
+  };
+  enhanceExperience: {
     title: string;
     rationale: (score: number) => string;
   };
@@ -164,7 +172,7 @@ interface ReportContentTemplates {
   
   // Risk templates
   highNegativeSentiment: (emotion: string, percentage: number) => string;
-  elevatedAnxiety: (dimension: string, score: number) => string;
+  lowUTAUT2Score: (dimension: string, score: number) => string;
   criticalGap: (metric: string, score: number) => string;
   limitedDataset: string;
   
@@ -181,7 +189,7 @@ const EN_TEMPLATES: ReportContentTemplates = {
   
   analyzedDocuments: (count) => `Analyzed ${count} consumer sentiment documents across electric motorcycle brands.`,
   dominantEmotions: (emotions) => `Dominant emotions: ${emotions}.`,
-  psychoSocialFactors: (factors) => `Key psycho-social factors: ${factors}.`,
+  psychoSocialFactors: (factors) => `Key UTAUT2 constructs: ${factors}.`,
   marketingFunnel: (strongest, strongestScore, weakest, weakestScore) =>
     `Marketing funnel: Strongest at ${strongest} (${strongestScore}/100), weakest at ${weakest} (${weakestScore}/100).`,
   
@@ -220,20 +228,30 @@ const EN_TEMPLATES: ReportContentTemplates = {
     rationale: (score) =>
       `Advocacy scores at ${score}/100 indicate limited word-of-mouth. Create owner communities, loyalty rewards, and referral incentives to transform satisfied customers into brand advocates.`,
   },
-  mitigateRisk: {
-    title: 'Mitigate Risk Perception with Comprehensive Support',
-    rationale: (dimension, score) =>
-      `High ${dimension} scores (${score}/100) indicate consumer uncertainty. Offer extended warranties, 24/7 customer support, and money-back guarantees to reduce perceived risk and build confidence.`,
-  },
   amplifySocialProof: {
     title: 'Amplify Social Proof and Community Engagement',
     rationale: (score) =>
-      `Strong Social Influence signals (${score}/100) show peer recommendations matter. Showcase user-generated content, customer reviews, and community events to leverage social validation.`,
+      `Strong Social Influence (SI) signals (${score}/100) show peer recommendations matter. Showcase user-generated content, customer reviews, and community events to leverage social validation.`,
   },
   simplifyUX: {
     title: 'Simplify User Experience and Onboarding',
     rationale: (score) =>
-      `Self-Efficacy scores (${score}/100) suggest consumers value ease of use. Provide comprehensive tutorials, intuitive interfaces, and hands-on training sessions to boost user confidence.`,
+      `Effort Expectancy (EE) scores (${score}/100) suggest consumers perceive complexity. Provide comprehensive tutorials, intuitive interfaces, and hands-on training sessions to boost user confidence.`,
+  },
+  addressPriceValue: {
+    title: 'Improve Price-Value Perception',
+    rationale: (score) =>
+      `Price Value (PV) scores (${score}/100) indicate cost concerns. Communicate total cost of ownership benefits, financing options, and long-term savings to improve perceived value.`,
+  },
+  improveFacilitating: {
+    title: 'Strengthen Infrastructure and Support Systems',
+    rationale: (score) =>
+      `Facilitating Conditions (FC) scores (${score}/100) reveal infrastructure concerns. Expand charging networks, service centers, and technical support to reduce adoption barriers.`,
+  },
+  enhanceExperience: {
+    title: 'Enhance User Experience and Enjoyment',
+    rationale: (score) =>
+      `Hedonic Motivation (HM) scores (${score}/100) suggest limited enjoyment. Focus on design aesthetics, driving experience, and lifestyle branding to increase emotional appeal.`,
   },
   focusMarketing: {
     title: 'Focus Marketing Resources on High-Engagement Brands',
@@ -247,8 +265,8 @@ const EN_TEMPLATES: ReportContentTemplates = {
   
   highNegativeSentiment: (emotion, percentage) =>
     `High negative sentiment (${emotion}: ${percentage}%) may slow adoption rates if not addressed promptly.`,
-  elevatedAnxiety: (dimension, score) =>
-    `Elevated ${dimension} (${score}/100) indicates consumers perceive significant barriers to adoption.`,
+  lowUTAUT2Score: (dimension, score) =>
+    `Low ${dimension} scores (${score}/100) indicate significant barriers to technology acceptance and adoption.`,
   criticalGap: (metric, score) =>
     `Critical gap in ${metric} (${score}/100) may limit market penetration and revenue growth.`,
   limitedDataset: 'Limited dataset size may not capture full market sentiment. Expand data collection to validate findings.',
@@ -270,7 +288,7 @@ const ID_TEMPLATES: ReportContentTemplates = {
   
   analyzedDocuments: (count) => `Menganalisis ${count} dokumen sentimen konsumen di berbagai merek sepeda motor listrik.`,
   dominantEmotions: (emotions) => `Emosi dominan: ${emotions}.`,
-  psychoSocialFactors: (factors) => `Faktor psiko-sosial utama: ${factors}.`,
+  psychoSocialFactors: (factors) => `Konstruk UTAUT2 utama: ${factors}.`,
   marketingFunnel: (strongest, strongestScore, weakest, weakestScore) =>
     `Corong pemasaran: Terkuat pada ${strongest} (${strongestScore}/100), terlemah pada ${weakest} (${weakestScore}/100).`,
   
@@ -309,20 +327,30 @@ const ID_TEMPLATES: ReportContentTemplates = {
     rationale: (score) =>
       `Skor advokasi pada ${score}/100 menunjukkan word-of-mouth yang terbatas. Ciptakan komunitas pemilik, hadiah loyalitas, dan insentif rujukan untuk mengubah pelanggan yang puas menjadi advokat merek.`,
   },
-  mitigateRisk: {
-    title: 'Kurangi Persepsi Risiko dengan Dukungan Komprehensif',
-    rationale: (dimension, score) =>
-      `Skor ${dimension} yang tinggi (${score}/100) menunjukkan ketidakpastian konsumen. Tawarkan garansi diperpanjang, dukungan pelanggan 24/7, dan jaminan uang kembali untuk mengurangi risiko yang dirasakan dan membangun kepercayaan.`,
-  },
   amplifySocialProof: {
     title: 'Perkuat Bukti Sosial dan Keterlibatan Komunitas',
     rationale: (score) =>
-      `Sinyal Pengaruh Sosial yang kuat (${score}/100) menunjukkan rekomendasi rekan penting. Tampilkan konten yang dibuat pengguna, ulasan pelanggan, dan acara komunitas untuk memanfaatkan validasi sosial.`,
+      `Sinyal Pengaruh Sosial (SI) yang kuat (${score}/100) menunjukkan rekomendasi rekan penting. Tampilkan konten yang dibuat pengguna, ulasan pelanggan, dan acara komunitas untuk memanfaatkan validasi sosial.`,
   },
   simplifyUX: {
     title: 'Sederhanakan Pengalaman Pengguna dan Onboarding',
     rationale: (score) =>
-      `Skor Self-Efficacy (${score}/100) menunjukkan konsumen menghargai kemudahan penggunaan. Sediakan tutorial komprehensif, antarmuka intuitif, dan sesi pelatihan langsung untuk meningkatkan kepercayaan pengguna.`,
+      `Skor Harapan Usaha (EE) (${score}/100) menunjukkan konsumen melihat kompleksitas. Sediakan tutorial komprehensif, antarmuka intuitif, dan sesi pelatihan langsung untuk meningkatkan kepercayaan pengguna.`,
+  },
+  addressPriceValue: {
+    title: 'Tingkatkan Persepsi Nilai Harga',
+    rationale: (score) =>
+      `Skor Nilai Harga (PV) (${score}/100) menunjukkan kekhawatiran biaya. Komunikasikan manfaat total biaya kepemilikan, opsi pembiayaan, dan penghematan jangka panjang untuk meningkatkan nilai yang dirasakan.`,
+  },
+  improveFacilitating: {
+    title: 'Perkuat Infrastruktur dan Sistem Dukungan',
+    rationale: (score) =>
+      `Skor Kondisi Pendukung (FC) (${score}/100) mengungkapkan kekhawatiran infrastruktur. Perluas jaringan pengisian daya, pusat layanan, dan dukungan teknis untuk mengurangi hambatan adopsi.`,
+  },
+  enhanceExperience: {
+    title: 'Tingkatkan Pengalaman dan Kesenangan Pengguna',
+    rationale: (score) =>
+      `Skor Motivasi Hedonis (HM) (${score}/100) menunjukkan kesenangan terbatas. Fokus pada estetika desain, pengalaman berkendara, dan branding gaya hidup untuk meningkatkan daya tarik emosional.`,
   },
   focusMarketing: {
     title: 'Fokuskan Sumber Daya Pemasaran pada Merek dengan Keterlibatan Tinggi',
@@ -336,8 +364,8 @@ const ID_TEMPLATES: ReportContentTemplates = {
   
   highNegativeSentiment: (emotion, percentage) =>
     `Sentimen negatif yang tinggi (${emotion}: ${percentage}%) dapat memperlambat tingkat adopsi jika tidak segera ditangani.`,
-  elevatedAnxiety: (dimension, score) =>
-    `${dimension} yang meningkat (${score}/100) menunjukkan konsumen melihat hambatan signifikan untuk adopsi.`,
+  lowUTAUT2Score: (dimension, score) =>
+    `Skor ${dimension} yang rendah (${score}/100) menunjukkan hambatan signifikan untuk penerimaan dan adopsi teknologi.`,
   criticalGap: (metric, score) =>
     `Kesenjangan kritis dalam ${metric} (${score}/100) dapat membatasi penetrasi pasar dan pertumbuhan pendapatan.`,
   limitedDataset: 'Ukuran dataset terbatas mungkin tidak menangkap sentimen pasar penuh. Perluas pengumpulan data untuk memvalidasi temuan.',
@@ -364,7 +392,6 @@ const EMOTION_TRANSLATIONS: Record<string, { en: string; id: string }> = {
   fear: { en: 'fear', id: 'ketakutan' },
   skepticism: { en: 'skepticism', id: 'skeptisisme' },
   satisfaction: { en: 'satisfaction', id: 'kepuasan' },
-  mixed: { en: 'mixed', id: 'campuran' },
 };
 
 export function translateEmotion(emotion: string, locale: Locale): string {

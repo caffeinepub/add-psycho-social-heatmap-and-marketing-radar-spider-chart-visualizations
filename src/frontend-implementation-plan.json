@@ -1,70 +1,58 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Bilingual (EN/ID) toggle for Strategic Recommendation Report",
+  "title": "Marketing Mix (8-factor) Radar Chart on Dashboard",
   "requirements": [
     {
-      "id": "REQ-11",
-      "summary": "Add an English/Bahasa Indonesia toggle on the Strategic Recommendation Report page and localize all visible UI text and report content without refresh.",
+      "id": "REQ-19",
+      "summary": "Add deterministic frontend-only utilities to compute 8 Marketing Mix factor scores (0–100) aggregated across uploaded documents in a fixed order.",
       "acceptanceCriteria": [
-        "StrategicRecommendationReportPage shows an explicit language selection control with two options: English and Bahasa Indonesia.",
-        "Switching the language updates all visible section headings, descriptions, buttons, badges, notices, and empty-state text on the page.",
-        "The selection updates the displayed report content (executive summary, key findings, recommendation titles/rationales, risks, next steps) to the chosen language without requiring a page refresh.",
-        "Language toggle does not break existing Print and Copy-as-Markdown functionality."
+        "A new reusable computation module exists under frontend/src/lib (or an extension of an existing lib module) that returns an ordered list/array of 8 factor scores for a given Document[] input.",
+        "Returned factor list order is exactly: PROD, PRICE, DIST, COMM, HRD, CUSJ, BRAND, COLLAB.",
+        "Each factor score is a finite number clamped to the inclusive range 0–100 (no NaN/Infinity).",
+        "For identical document contents, the computed factor scores are deterministic (no randomness, no time-based effects)."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/StrategicRecommendationReportPage.tsx",
-          "operation": "modify",
-          "description": "Add locale state ('en'|'id') and a visible language selection control (use shadcn-ui Button/Badge styling patterns for a segmented toggle; Verify the component's usage instructions before implementing). Pass the selected locale into report generation and markdown export utilities, and replace all hardcoded strings on this page (titles, section headers, descriptions, buttons, badges, notices) with locale-aware labels. Ensure Print and Copy-as-Markdown handlers continue to work with the localized content."
-        },
-        {
-          "path": "frontend/src/lib/strategicReportLocale.ts",
+          "path": "frontend/src/lib/marketingMixMetrics.ts",
           "operation": "create",
-          "description": "Create a report-scoped localization helper (no global i18n) that centralizes EN/ID UI labels used by StrategicRecommendationReportPage (e.g., headings, button text, empty-state, notices, and priority labels). Keep it limited to the Strategic Report feature area and structured for deterministic string selection."
+          "description": "Create deterministic Marketing Mix scoring utilities: define the 8-factor constant set (codes + full English names) and export a function that aggregates scores across Document[] and returns factor scores in the exact required order (PROD, PRICE, DIST, COMM, HRD, CUSJ, BRAND, COLLAB), with numeric sanitization and clamping to 0–100."
         }
       ]
     },
     {
-      "id": "REQ-12",
-      "summary": "Update strategic report generation and markdown export utilities to accept an explicit locale parameter and produce deterministic bilingual output including localized priority labels.",
+      "id": "REQ-20",
+      "summary": "Implement MarketingMixRadarChart React component with consistent visualization state handling and English-only UI text.",
       "acceptanceCriteria": [
-        "generateStrategicReport accepts a language/locale argument (e.g., 'en' | 'id') and returns a report whose narrative fields are in the requested language.",
-        "reportToMarkdown accepts the same language/locale (or uses the report’s language) and outputs fully localized Markdown headers/labels and content in the selected language.",
-        "Priority labels (HIGH/MEDIUM/LOW) are localized appropriately in the UI and in the Markdown export for Indonesian.",
-        "For the same documents + same selected language, the generated content remains deterministic (no randomness/time-dependent wording beyond the existing generatedAt timestamp)."
+        "A new file exists at frontend/src/components/MarketingMixRadarChart.tsx (or equivalent in the same components directory) exporting the chart component.",
+        "When `hasActiveDataset` is false or `documents.length === 0`, the component shows an empty/idle state (no radar rendered) with English messaging.",
+        "When a dataset exists but derived factor scores are all zero/uncomputable, the component shows an 'insufficient data' state with English messaging (no crash).",
+        "When valid factor data exists, the component renders a radar chart with 8 axes and values scaled 0–100.",
+        "The chart tooltip (or an adjacent legend/help section) exposes both the factor code and its full English factor name so users can interpret PROD/PRICE/DIST/COMM/HRD/CUSJ/BRAND/COLLAB.",
+        "The component does not modify any immutable UI component source paths listed in SYSTEM_CONTEXT."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/lib/strategicReport.ts",
-          "operation": "modify",
-          "description": "Introduce a Locale type ('en'|'id') and update generateStrategicReport to accept a locale parameter and generate all narrative fields (executiveSummary, keyFindings, recommendation titles/rationales, risks, nextSteps) in the requested language using deterministic template/translation maps. Update reportToMarkdown to accept locale (or derive from report) and localize all Markdown section headers/labels/content, including localized priority labels for Indonesian."
-        },
-        {
-          "path": "frontend/src/lib/strategicReportLocale.ts",
-          "operation": "modify",
-          "description": "Add deterministic translation maps/templates needed by strategic report generation and markdown export (e.g., section titles, boilerplate sentences, priority label mappings HIGH/MEDIUM/LOW => Indonesian equivalents) and export helpers consumed by strategicReport.ts and the report page."
+          "path": "frontend/src/components/MarketingMixRadarChart.tsx",
+          "operation": "create",
+          "description": "Add MarketingMixRadarChart component that consumes {documents, hasActiveDataset} and renders a Recharts radar chart (0–100) driven by the Marketing Mix computation utilities; use existing visualization conventions (getVisualizationState, toFiniteNumber/clamp patterns) for loading/empty/insufficient/ready; ensure all user-facing strings (title/description/messages/labels/tooltips/legend) are English and include both factor code and full English factor name for interpretation."
         }
       ]
     },
     {
-      "id": "REQ-13",
-      "summary": "Ensure the language toggle behaves consistently across loading/empty/data states and formats generated timestamps using the selected locale.",
+      "id": "REQ-21",
+      "summary": "Wire MarketingMixRadarChart into Dashboard alongside existing visualizations using current documents and dataset state.",
       "acceptanceCriteria": [
-        "When loading, the page shows the existing loading UI; language selection (if visible) does not cause runtime errors.",
-        "When documents.length === 0, the empty state text and CTA are localized based on the selected language.",
-        "When documents are present, the 'Generated on' timestamp formatting uses a locale consistent with the selected language (e.g., en-US for English, id-ID for Indonesian)."
+        "Dashboard imports and renders `MarketingMixRadarChart` using the same document source as other charts (`useGetAllDocuments`).",
+        "The new chart appears as a distinct Dashboard section/card and uses consistent spacing/layout with existing Dashboard chart sections.",
+        "The chart re-renders/refetches correctly when document count changes (e.g., by using a `key` pattern consistent with other Dashboard charts or equivalent reactive wiring).",
+        "No backend changes are required for the new visualization to display."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/pages/StrategicRecommendationReportPage.tsx",
+          "path": "frontend/src/pages/Dashboard.tsx",
           "operation": "modify",
-          "description": "Ensure locale state is initialized safely and can be interacted with (or at least rendered) without breaking the existing loading spinner state. Localize the empty-state content and CTA based on locale, and update the on-page generated timestamp formatting to use the appropriate locale (en-US vs id-ID) while keeping the current dateStyle/timeStyle behavior."
-        },
-        {
-          "path": "frontend/src/lib/strategicReport.ts",
-          "operation": "modify",
-          "description": "Update markdown timestamp formatting to use the requested locale (en-US vs id-ID) and ensure any locale-based labels used during export remain consistent with the page selection."
+          "description": "Import and render MarketingMixRadarChart within the existing Dashboard charts section, passing the current documents and hasActiveDataset derived from useGetAllDocuments; add a documents-length-based key consistent with other chart sections so it updates immediately when documents are uploaded/deleted, while preserving existing layout/spacing conventions."
         }
       ]
     }

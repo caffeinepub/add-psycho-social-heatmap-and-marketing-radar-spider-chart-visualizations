@@ -1,84 +1,77 @@
 {
   "kind": "build_request",
-  "title": "Add English/Indonesian language toggle to Strategic Recommendation Report",
+  "title": "Add Marketing Mix Radar Chart (8 factors) visualization to Dashboard",
   "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-11",
-      "text": "Add a language toggle (English / Indonesian) on the Strategic Recommendation Report page that lets the user switch the entire report UI and report content between English and Bahasa Indonesia.",
+      "id": "REQ-19",
+      "text": "Create deterministic frontend-only computation utilities for a Marketing Mix radar chart with exactly 8 factors: (1) PROD — Product / Innovative Product Strategy, (2) PRICE — Price / Innovative Pricing Architecture, (3) DIST — Place / Innovative Distribution Network, (4) COMM — Promotion / Innovative Communication Strategy, (5) HRD — People / Innovative Human Resource Development, (6) CUSJ — Process / Innovative Customer Journey Design, (7) BRAND — Physical Evidence / Innovative Brand Experience Creation, (8) COLLAB — Collaboration Ecosystem Strategy (Proposed). The utilities must aggregate scores across the currently uploaded documents and output normalized 0–100 values per factor (stable/deterministic for the same inputs).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-19"
+          "msg-4"
         ],
         "quotes": [
-          "pada Strategic Recommendation Report, buatkan dalam 2 bahasa yaitu: Bahasa Inggris dan Bahasa Indonesia, ada tombol pilihannya"
+          "buatkan tambahan visualisasi radar chart Marketing Mix dengan faktor berikut: 1.Product Innovative Product Strategy - PROD\n2.Price Innovative Pricing Architecture-PRICE\n3.Place Innovative Distribution Network-DIST\n4.Promotion (Innovative Communication Strategy-COMM)\n5. People (Innovative Human Resource Development-HRD)\n6. Process (Innovative Customer Journey Design-CUSJ)\n7. Physical Evidence (Innovative Brand Experience Creation-BRAND)\n8.Collaboration Ecosystem Strategy (Usulan)"
         ]
       },
       "acceptanceCriteria": [
-        "StrategicRecommendationReportPage shows an explicit language selection control with two options: English and Bahasa Indonesia.",
-        "Switching the language updates all visible section headings, descriptions, buttons, badges, notices, and empty-state text on the page.",
-        "The selection updates the displayed report content (executive summary, key findings, recommendation titles/rationales, risks, next steps) to the chosen language without requiring a page refresh.",
-        "Language toggle does not break existing Print and Copy-as-Markdown functionality."
+        "A new reusable computation module exists under frontend/src/lib (or an extension of an existing lib module) that returns an ordered list/array of 8 factor scores for a given Document[] input.",
+        "Returned factor list order is exactly: PROD, PRICE, DIST, COMM, HRD, CUSJ, BRAND, COLLAB.",
+        "Each factor score is a finite number clamped to the inclusive range 0–100 (no NaN/Infinity).",
+        "For identical document contents, the computed factor scores are deterministic (no randomness, no time-based effects)."
       ]
     },
     {
-      "id": "REQ-12",
-      "text": "Update strategic report generation and markdown export utilities to support bilingual output (English and Bahasa Indonesia) via an explicit language/locale parameter, while keeping report generation deterministic for a given dataset and selected language.",
+      "id": "REQ-20",
+      "text": "Add a new React component `MarketingMixRadarChart` that renders the Marketing Mix radar chart using the 8 computed factors and follows the existing visualization state conventions (loading/empty/insufficient/ready) used by other charts (e.g., `getVisualizationState`, numeric sanitization/clamping). All user-facing text in this new component must be in English (title, description, empty/insufficient messages, labels/tooltips).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-19"
+          "msg-4"
         ],
         "quotes": [
-          "buatkan dalam 2 bahasa yaitu: Bahasa Inggris dan Bahasa Indonesia"
+          "buatkan tambahan visualisasi radar chart Marketing Mix ..."
         ]
       },
       "acceptanceCriteria": [
-        "generateStrategicReport accepts a language/locale argument (e.g., 'en' | 'id') and returns a report whose narrative fields are in the requested language.",
-        "reportToMarkdown accepts the same language/locale (or uses the report’s language) and outputs fully localized Markdown headers/labels and content in the selected language.",
-        "Priority labels (HIGH/MEDIUM/LOW) are localized appropriately in the UI and in the Markdown export for Indonesian.",
-        "For the same documents + same selected language, the generated content remains deterministic (no randomness/time-dependent wording beyond the existing generatedAt timestamp)."
+        "A new file exists at frontend/src/components/MarketingMixRadarChart.tsx (or equivalent in the same components directory) exporting the chart component.",
+        "When `hasActiveDataset` is false or `documents.length === 0`, the component shows an empty/idle state (no radar rendered) with English messaging.",
+        "When a dataset exists but derived factor scores are all zero/uncomputable, the component shows an 'insufficient data' state with English messaging (no crash).",
+        "When valid factor data exists, the component renders a radar chart with 8 axes and values scaled 0–100.",
+        "The chart tooltip (or an adjacent legend/help section) exposes both the factor code and its full English factor name so users can interpret PROD/PRICE/DIST/COMM/HRD/CUSJ/BRAND/COLLAB.",
+        "The component does not modify any immutable UI component source paths listed in SYSTEM_CONTEXT."
       ]
     },
     {
-      "id": "REQ-13",
-      "text": "Ensure the language toggle works consistently across all Strategic Recommendation Report states (loading, empty dataset, dataset present) and that date formatting uses an appropriate locale for the selected language.",
+      "id": "REQ-21",
+      "text": "Integrate the new `MarketingMixRadarChart` into the main Dashboard page (`frontend/src/pages/Dashboard.tsx`) alongside the existing visualizations, passing the currently loaded `documents` and `hasActiveDataset` so it updates immediately when documents are uploaded/deleted.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-19"
+          "msg-4"
         ]
       },
       "acceptanceCriteria": [
-        "When loading, the page shows the existing loading UI; language selection (if visible) does not cause runtime errors.",
-        "When documents.length === 0, the empty state text and CTA are localized based on the selected language.",
-        "When documents are present, the 'Generated on' timestamp formatting uses a locale consistent with the selected language (e.g., en-US for English, id-ID for Indonesian)."
+        "Dashboard imports and renders `MarketingMixRadarChart` using the same document source as other charts (`useGetAllDocuments`).",
+        "The new chart appears as a distinct Dashboard section/card and uses consistent spacing/layout with existing Dashboard chart sections.",
+        "The chart re-renders/refetches correctly when document count changes (e.g., by using a `key` pattern consistent with other Dashboard charts or equivalent reactive wiring).",
+        "No backend changes are required for the new visualization to display."
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files under frontend/src/components/ui (immutable UI component sources).",
-    "Do not modify immutable hook files listed in SYSTEM_CONTEXT (e.g., frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, frontend/src/main.tsx).",
-    "Keep backend architecture unchanged (single Motoko actor); this change should be implemented entirely on the frontend/report generation utilities unless strictly necessary."
+    "Frontend immutable paths must not be edited: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui/*.",
+    "Respect existing visualization state handling patterns (no runtime errors on empty/insufficient datasets).",
+    "Backend must remain single-actor; do not introduce additional backend services or external databases."
   ],
   "nonGoals": [
-    "Adding additional languages beyond English and Bahasa Indonesia.",
-    "Implementing a global app-wide i18n system across all pages (scope is Strategic Recommendation Report only).",
-    "Changing the underlying analysis logic or metrics computation beyond what is needed to provide translated narrative output."
+    "Do not change the existing Marketing Effectiveness radar chart behavior (`MarketingRadarChart`) except where necessary to avoid shared-type conflicts.",
+    "Do not add third-party auth providers or external analytics services.",
+    "Do not require new backend endpoints for Marketing Mix scoring; compute from existing `documents` on the frontend."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

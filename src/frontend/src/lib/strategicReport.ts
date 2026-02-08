@@ -79,7 +79,7 @@ function analyzeBrandMentions(documents: Document[]): Record<string, number> {
 }
 
 /**
- * Get dominant psycho-social dimensions
+ * Get dominant UTAUT2 constructs
  */
 function getDominantPsychoSocialDimensions(documents: Document[]): Array<{ dimension: string; score: number }> {
   const matrix = computePsychoSocialMatrix(documents);
@@ -131,6 +131,7 @@ function generateRecommendations(
   psychoSocialDimensions: Array<{ dimension: string; score: number }>,
   marketingAnalysis: { weakest: { metric: string; score: number } | null; strongest: { metric: string; score: number } | null },
   brandMentions: Record<string, number>,
+  documentCount: number,
   locale: Locale
 ): StrategicRecommendation[] {
   const recommendations: StrategicRecommendation[] = [];
@@ -192,47 +193,69 @@ function generateRecommendations(
     }
   }
   
-  // Recommendation 3: Based on psycho-social dimensions
+  // Recommendation 3: Based on UTAUT2 constructs
   if (psychoSocialDimensions.length > 0) {
     const topDimension = psychoSocialDimensions[0];
     
-    if (topDimension.dimension === 'Anxiety' || topDimension.dimension === 'Risk Perception') {
+    // Low EE (Effort Expectancy) - ease of use concerns
+    if (topDimension.dimension === 'EE' && topDimension.score < 60) {
       recommendations.push({
-        title: templates.mitigateRisk.title,
-        rationale: templates.mitigateRisk.rationale(topDimension.dimension, topDimension.score),
+        title: templates.simplifyUX.title,
+        rationale: templates.simplifyUX.rationale(topDimension.score),
         priority: 'high',
       });
-    } else if (topDimension.dimension === 'Social Influence') {
+    }
+    
+    // High SI (Social Influence) - leverage peer recommendations
+    if (topDimension.dimension === 'SI' && topDimension.score >= 70) {
       recommendations.push({
         title: templates.amplifySocialProof.title,
         rationale: templates.amplifySocialProof.rationale(topDimension.score),
         priority: 'medium',
       });
-    } else if (topDimension.dimension === 'Self-Efficacy') {
+    }
+    
+    // Low PV (Price Value) - address cost concerns
+    if (topDimension.dimension === 'PV' && topDimension.score < 60) {
       recommendations.push({
-        title: templates.simplifyUX.title,
-        rationale: templates.simplifyUX.rationale(topDimension.score),
+        title: templates.addressPriceValue.title,
+        rationale: templates.addressPriceValue.rationale(topDimension.score),
+        priority: 'high',
+      });
+    }
+    
+    // Low FC (Facilitating Conditions) - infrastructure concerns
+    if (topDimension.dimension === 'FC' && topDimension.score < 60) {
+      recommendations.push({
+        title: templates.improveFacilitating.title,
+        rationale: templates.improveFacilitating.rationale(topDimension.score),
+        priority: 'high',
+      });
+    }
+    
+    // Low HM (Hedonic Motivation) - enjoyment concerns
+    if (topDimension.dimension === 'HM' && topDimension.score < 60) {
+      recommendations.push({
+        title: templates.enhanceExperience.title,
+        rationale: templates.enhanceExperience.rationale(topDimension.score),
         priority: 'medium',
       });
     }
   }
   
-  // Recommendation 4: Based on brand distribution
-  const topBrands = Object.entries(brandMentions)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3);
-  
-  if (topBrands.length > 0) {
-    const [topBrand, mentions] = topBrands[0];
+  // Recommendation 4: Based on brand mentions
+  const brandEntries = Object.entries(brandMentions).sort((a, b) => b[1] - a[1]);
+  if (brandEntries.length > 0) {
+    const topBrand = brandEntries[0];
     recommendations.push({
       title: templates.focusMarketing.title,
-      rationale: templates.focusMarketing.rationale(topBrand, mentions),
+      rationale: templates.focusMarketing.rationale(topBrand[0], topBrand[1]),
       priority: 'medium',
     });
   }
   
-  // Ensure at least 3 recommendations
-  if (recommendations.length < 3) {
+  // Recommendation 5: Data collection (always relevant)
+  if (documentCount < 50) {
     recommendations.push({
       title: templates.expandDataCollection.title,
       rationale: templates.expandDataCollection.rationale,
@@ -240,95 +263,44 @@ function generateRecommendations(
     });
   }
   
-  return recommendations.slice(0, 5); // Return top 5 recommendations
+  return recommendations;
 }
 
 /**
- * Generate key findings from analysis
- */
-function generateKeyFindings(
-  documents: Document[],
-  topEmotions: Array<{ emotion: string; count: number; percentage: number }>,
-  psychoSocialDimensions: Array<{ dimension: string; score: number }>,
-  marketingAnalysis: { weakest: { metric: string; score: number } | null; strongest: { metric: string; score: number } | null },
-  locale: Locale
-): string[] {
-  const findings: string[] = [];
-  const templates = getReportTemplates(locale);
-  
-  findings.push(templates.analyzedDocuments(documents.length));
-  
-  if (topEmotions.length > 0) {
-    const top3 = topEmotions.slice(0, 3);
-    findings.push(
-      templates.dominantEmotions(top3.map(e => `${translateEmotion(e.emotion, locale)} (${e.percentage}%)`).join(', '))
-    );
-  }
-  
-  if (psychoSocialDimensions.length > 0) {
-    const top2 = psychoSocialDimensions.slice(0, 2);
-    findings.push(
-      templates.psychoSocialFactors(top2.map(d => `${d.dimension} (${d.score}/100)`).join(', '))
-    );
-  }
-  
-  if (marketingAnalysis.strongest && marketingAnalysis.weakest) {
-    findings.push(
-      templates.marketingFunnel(
-        marketingAnalysis.strongest.metric,
-        marketingAnalysis.strongest.score,
-        marketingAnalysis.weakest.metric,
-        marketingAnalysis.weakest.score
-      )
-    );
-  }
-  
-  return findings;
-}
-
-/**
- * Generate risk and watchout items
+ * Generate risk items based on analysis signals
  */
 function generateRisks(
   topEmotions: Array<{ emotion: string; count: number; percentage: number }>,
   psychoSocialDimensions: Array<{ dimension: string; score: number }>,
   marketingAnalysis: { weakest: { metric: string; score: number } | null },
+  documents: Document[],
   locale: Locale
 ): string[] {
   const risks: string[] = [];
   const templates = getReportTemplates(locale);
   
-  // Risk based on negative emotions
-  const negativeEmotions = topEmotions.filter(e => 
-    e.emotion === 'fear' || e.emotion === 'skepticism'
-  );
-  
-  if (negativeEmotions.length > 0 && negativeEmotions[0].percentage > 20) {
-    risks.push(
-      templates.highNegativeSentiment(translateEmotion(negativeEmotions[0].emotion, locale), negativeEmotions[0].percentage)
-    );
+  // Risk 1: High negative sentiment
+  if (topEmotions.length > 0) {
+    const topEmotion = topEmotions[0];
+    if ((topEmotion.emotion === 'fear' || topEmotion.emotion === 'skepticism') && topEmotion.percentage > 30) {
+      risks.push(templates.highNegativeSentiment(translateEmotion(topEmotion.emotion, locale), topEmotion.percentage));
+    }
   }
   
-  // Risk based on psycho-social dimensions
-  const highAnxiety = psychoSocialDimensions.find(d => 
-    (d.dimension === 'Anxiety' || d.dimension === 'Risk Perception') && d.score > 70
-  );
+  // Risk 2: Low UTAUT2 construct scores
+  psychoSocialDimensions.forEach(dim => {
+    if (dim.score < 50) {
+      risks.push(templates.lowUTAUT2Score(dim.dimension, dim.score));
+    }
+  });
   
-  if (highAnxiety) {
-    risks.push(
-      templates.elevatedAnxiety(highAnxiety.dimension, highAnxiety.score)
-    );
+  // Risk 3: Critical marketing funnel gap
+  if (marketingAnalysis.weakest && marketingAnalysis.weakest.score < 40) {
+    risks.push(templates.criticalGap(marketingAnalysis.weakest.metric, marketingAnalysis.weakest.score));
   }
   
-  // Risk based on marketing gaps
-  if (marketingAnalysis.weakest && marketingAnalysis.weakest.score < 50) {
-    risks.push(
-      templates.criticalGap(marketingAnalysis.weakest.metric, marketingAnalysis.weakest.score)
-    );
-  }
-  
-  // Default risk if none identified
-  if (risks.length === 0) {
+  // Risk 4: Limited dataset
+  if (documents.length < 20) {
     risks.push(templates.limitedDataset);
   }
   
@@ -336,49 +308,14 @@ function generateRisks(
 }
 
 /**
- * Generate next steps
+ * Generate strategic report from documents
  */
-function generateNextSteps(locale: Locale): string[] {
-  const templates = getReportTemplates(locale);
-  return templates.nextSteps;
-}
-
-/**
- * Generate executive summary
- */
-function generateExecutiveSummary(
-  documents: Document[],
-  topEmotions: Array<{ emotion: string; count: number; percentage: number }>,
-  recommendations: StrategicRecommendation[],
-  locale: Locale
-): string {
-  const templates = getReportTemplates(locale);
-  const highPriorityCount = recommendations.filter(r => r.priority === 'high').length;
-  const dominantEmotion = topEmotions.length > 0 ? translateEmotion(topEmotions[0].emotion, locale) : translateEmotion('mixed', locale);
-  
-  return templates.executiveSummaryTemplate(
-    documents.length,
-    dominantEmotion,
-    recommendations.length,
-    highPriorityCount
-  );
-}
-
-/**
- * Generate complete strategic report from documents
- */
-export function generateStrategicReport(
-  documents: Document[],
-  hasPurchaseIntentionData: boolean = false,
-  locale: Locale = 'en'
-): StrategicReport {
-  const generatedAt = new Date().toISOString();
+export function generateStrategicReport(documents: Document[], locale: Locale = 'en'): StrategicReport {
   const templates = getReportTemplates(locale);
   
-  // If no documents, return empty report
   if (documents.length === 0) {
     return {
-      generatedAt,
+      generatedAt: new Date().toISOString(),
       executiveSummary: templates.noDataSummary,
       keyFindings: [],
       recommendations: [],
@@ -394,153 +331,158 @@ export function generateStrategicReport(
     };
   }
   
-  // Analyze all signals
+  // Analyze data
   const emotionCounts = analyzeEmotionDistribution(documents);
-  const topEmotions = getTopEmotions(emotionCounts, 5);
-  const brandMentions = analyzeBrandMentions(documents);
+  const topEmotions = getTopEmotions(emotionCounts, 3);
   const psychoSocialDimensions = getDominantPsychoSocialDimensions(documents);
   const marketingAnalysis = analyzeMarketingMetrics(documents);
+  const brandMentions = analyzeBrandMentions(documents);
   
-  // Generate report sections
+  // Generate recommendations
   const recommendations = generateRecommendations(
     topEmotions,
     psychoSocialDimensions,
     marketingAnalysis,
     brandMentions,
+    documents.length,
     locale
   );
   
-  const keyFindings = generateKeyFindings(
-    documents,
-    topEmotions,
-    psychoSocialDimensions,
-    marketingAnalysis,
-    locale
-  );
-  
+  // Generate risks
   const risks = generateRisks(
     topEmotions,
     psychoSocialDimensions,
     marketingAnalysis,
+    documents,
     locale
   );
   
-  const nextSteps = generateNextSteps(locale);
+  // Build key findings
+  const keyFindings: string[] = [];
   
-  const executiveSummary = generateExecutiveSummary(
-    documents,
-    topEmotions,
-    recommendations,
-    locale
+  keyFindings.push(templates.analyzedDocuments(documents.length));
+  
+  if (topEmotions.length > 0) {
+    const emotionList = topEmotions
+      .map(e => `${translateEmotion(e.emotion, locale)} (${e.percentage}%)`)
+      .join(', ');
+    keyFindings.push(templates.dominantEmotions(emotionList));
+  }
+  
+  if (psychoSocialDimensions.length > 0) {
+    const topFactors = psychoSocialDimensions
+      .slice(0, 3)
+      .map(d => `${d.dimension} (${d.score}/100)`)
+      .join(', ');
+    keyFindings.push(templates.psychoSocialFactors(topFactors));
+  }
+  
+  if (marketingAnalysis.strongest && marketingAnalysis.weakest) {
+    keyFindings.push(
+      templates.marketingFunnel(
+        marketingAnalysis.strongest.metric,
+        marketingAnalysis.strongest.score,
+        marketingAnalysis.weakest.metric,
+        marketingAnalysis.weakest.score
+      )
+    );
+  }
+  
+  // Build executive summary
+  const dominantEmotionText = topEmotions.length > 0 
+    ? translateEmotion(topEmotions[0].emotion, locale)
+    : (locale === 'id' ? 'emosi campuran' : 'mixed emotions');
+  
+  const highPriorityCount = recommendations.filter(r => r.priority === 'high').length;
+  
+  const executiveSummary = templates.executiveSummaryTemplate(
+    documents.length,
+    dominantEmotionText,
+    recommendations.length,
+    highPriorityCount
   );
   
   return {
-    generatedAt,
+    generatedAt: new Date().toISOString(),
     executiveSummary,
     keyFindings,
     recommendations,
     risks,
-    nextSteps,
+    nextSteps: templates.nextSteps,
     dataAvailability: {
       hasEmotionData: true,
       hasPsychoSocialData: psychoSocialDimensions.length > 0,
       hasMarketingData: marketingAnalysis.all.length > 0,
-      hasPurchaseIntentionData,
+      hasPurchaseIntentionData: false,
     },
     locale,
   };
 }
 
 /**
- * Convert report to Markdown format for export
+ * Export report as Markdown
  */
-export function reportToMarkdown(report: StrategicReport, locale?: Locale): string {
-  const lines: string[] = [];
-  const effectiveLocale = locale || report.locale || 'en';
-  const templates = getReportTemplates(effectiveLocale);
-  const uiLabels = effectiveLocale === 'id' 
-    ? { 
-        title: 'Laporan Rekomendasi Strategis',
-        generated: 'Dibuat',
+export function exportReportAsMarkdown(report: StrategicReport): string {
+  const labels = getReportTemplates(report.locale);
+  const uiLabels = report.locale === 'id' 
+    ? {
+        reportTitle: 'Laporan Rekomendasi Strategis',
+        generatedOn: 'Dibuat pada',
+        documentsAnalyzed: 'Dokumen Dianalisis',
         executiveSummary: 'Ringkasan Eksekutif',
         keyFindings: 'Temuan Utama',
         recommendations: 'Rekomendasi Strategis',
-        priority: 'Prioritas',
         risks: 'Risiko & Perhatian',
         nextSteps: 'Langkah Selanjutnya',
-        footer: 'Laporan ini dibuat menggunakan analisis sentimen dan wawasan strategis berbasis AI.'
+        priority: 'Prioritas',
       }
     : {
-        title: 'Strategic Recommendation Report',
-        generated: 'Generated',
+        reportTitle: 'Strategic Recommendation Report',
+        generatedOn: 'Generated on',
+        documentsAnalyzed: 'Documents Analyzed',
         executiveSummary: 'Executive Summary',
         keyFindings: 'Key Findings',
         recommendations: 'Strategic Recommendations',
-        priority: 'Priority',
         risks: 'Risks & Watchouts',
         nextSteps: 'Next Steps',
-        footer: 'This report was generated using AI-powered sentiment analysis and strategic insights.'
+        priority: 'Priority',
       };
   
-  lines.push(`# ${uiLabels.title}`);
-  lines.push('');
-  lines.push(`**${uiLabels.generated}:** ${new Date(report.generatedAt).toLocaleString(effectiveLocale === 'id' ? 'id-ID' : 'en-US', {
-    dateStyle: 'full',
-    timeStyle: 'short',
-  })}`);
-  lines.push('');
+  let markdown = `# ${uiLabels.reportTitle}\n\n`;
+  markdown += `**${uiLabels.generatedOn}:** ${new Date(report.generatedAt).toLocaleString()}\n\n`;
+  markdown += `**${uiLabels.documentsAnalyzed}:** ${report.keyFindings[0] || 'N/A'}\n\n`;
   
-  lines.push(`## ${uiLabels.executiveSummary}`);
-  lines.push('');
-  lines.push(report.executiveSummary);
-  lines.push('');
+  markdown += `## ${uiLabels.executiveSummary}\n\n${report.executiveSummary}\n\n`;
   
-  if (report.keyFindings.length > 0) {
-    lines.push(`## ${uiLabels.keyFindings}`);
-    lines.push('');
-    report.keyFindings.forEach((finding, idx) => {
-      lines.push(`${idx + 1}. ${finding}`);
-    });
-    lines.push('');
-  }
+  markdown += `## ${uiLabels.keyFindings}\n\n`;
+  report.keyFindings.forEach(finding => {
+    markdown += `- ${finding}\n`;
+  });
+  markdown += '\n';
   
-  if (report.recommendations.length > 0) {
-    lines.push(`## ${uiLabels.recommendations}`);
-    lines.push('');
-    report.recommendations.forEach((rec, idx) => {
-      lines.push(`### ${idx + 1}. ${rec.title}`);
-      lines.push('');
-      const priorityLabel = effectiveLocale === 'id' 
-        ? (rec.priority === 'high' ? 'TINGGI' : rec.priority === 'medium' ? 'SEDANG' : 'RENDAH')
-        : rec.priority.toUpperCase();
-      lines.push(`**${uiLabels.priority}:** ${priorityLabel}`);
-      lines.push('');
-      lines.push(rec.rationale);
-      lines.push('');
-    });
-  }
+  markdown += `## ${uiLabels.recommendations}\n\n`;
+  report.recommendations.forEach((rec, idx) => {
+    markdown += `### ${idx + 1}. ${rec.title} [${uiLabels.priority}: ${rec.priority.toUpperCase()}]\n\n`;
+    markdown += `${rec.rationale}\n\n`;
+  });
   
   if (report.risks.length > 0) {
-    lines.push(`## ${uiLabels.risks}`);
-    lines.push('');
-    report.risks.forEach((risk, idx) => {
-      lines.push(`${idx + 1}. ${risk}`);
+    markdown += `## ${uiLabels.risks}\n\n`;
+    report.risks.forEach(risk => {
+      markdown += `- ${risk}\n`;
     });
-    lines.push('');
+    markdown += '\n';
   }
   
-  if (report.nextSteps.length > 0) {
-    lines.push(`## ${uiLabels.nextSteps}`);
-    lines.push('');
-    report.nextSteps.forEach((step, idx) => {
-      lines.push(`${idx + 1}. ${step}`);
-    });
-    lines.push('');
-  }
+  markdown += `## ${uiLabels.nextSteps}\n\n`;
+  report.nextSteps.forEach(step => {
+    markdown += `- ${step}\n`;
+  });
   
-  lines.push('---');
-  lines.push('');
-  lines.push(`*${uiLabels.footer}*`);
-  
-  return lines.join('\n');
+  return markdown;
 }
+
+/**
+ * Alias for backward compatibility
+ */
+export const reportToMarkdown = exportReportAsMarkdown;

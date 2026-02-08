@@ -56,22 +56,22 @@ export function EmotionDistributionChart({ documents, hasActiveDataset = true }:
   const vizState = getVisualizationState(
     hasActiveDataset && documents.length > 0,
     emotionData.length > 0 && total > 0,
-    'Tidak ada emosi terdeteksi dalam dokumen'
+    'No emotions detected in documents'
   );
 
   const chartConfig = {
     count: {
-      label: 'Jumlah',
+      label: 'Count',
     },
   };
 
   // Show empty state if no dataset or insufficient data
   if (vizState.status !== 'ready') {
     const message = vizState.status === 'no-dataset' 
-      ? 'Upload dataset untuk melihat distribusi emosi'
+      ? 'No analyzed data yet. Upload text or a file to begin.'
       : (vizState.status === 'insufficient-data' && vizState.message) 
         ? vizState.message 
-        : 'Data tidak mencukupi untuk visualisasi';
+        : 'Insufficient data for visualization';
 
     return (
       <Card>
@@ -87,7 +87,7 @@ export function EmotionDistributionChart({ documents, hasActiveDataset = true }:
             <AlertCircle className="h-12 w-12 text-muted-foreground/50" />
             <div>
               <p className="text-lg font-semibold text-muted-foreground">
-                {vizState.status === 'no-dataset' ? 'Tidak ada data aktif' : 'Data tidak mencukupi'}
+                {vizState.status === 'no-dataset' ? 'No Active Data' : 'Insufficient Data'}
               </p>
               <p className="text-sm text-muted-foreground/70">
                 {message}

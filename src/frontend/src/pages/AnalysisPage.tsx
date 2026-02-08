@@ -196,7 +196,11 @@ export function AnalysisPage() {
         </TabsList>
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
-            <EmotionChart key={`emotion-chart-${documents.length}`} />
+            <EmotionChart 
+              key={`emotion-chart-analysis-${filteredDocuments.length}-${documents.length}`}
+              documents={filteredDocuments}
+              hasActiveDataset={hasActiveDataset}
+            />
             <EmotionDistributionChart 
               key={`emotion-dist-analysis-${filteredDocuments.length}-${documents.length}`}
               documents={filteredDocuments} 

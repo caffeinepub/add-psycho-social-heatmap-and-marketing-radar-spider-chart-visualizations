@@ -1,19 +1,20 @@
 /**
  * Psycho-social metrics computation for heatmap visualization
- * Deterministic, frontend-only helpers for classifying emotions and scoring psycho-social dimensions
+ * Deterministic, frontend-only helpers for classifying emotions and scoring UTAUT2 constructs
  */
 
 import type { Document } from '../backend';
 import { mockEmotionAnalysis } from './mockData';
 
-// Psycho-social dimensions to analyze
+// UTAUT2 constructs for technology acceptance analysis
 export const PSYCHO_SOCIAL_DIMENSIONS = [
-  'Trust',
-  'Anxiety',
-  'Excitement',
-  'Social Influence',
-  'Self-Efficacy',
-  'Risk Perception',
+  'PE', // Performance Expectancy
+  'EE', // Effort Expectancy
+  'SI', // Social Influence
+  'HM', // Hedonic Motivation
+  'FC', // Facilitating Conditions
+  'PV', // Price Value
+  'H',  // Habit
 ] as const;
 
 // Emotion categories for classification
@@ -54,7 +55,7 @@ export function classifyEmotionCategory(content: string): EmotionCategory {
 }
 
 /**
- * Score a single psycho-social dimension for a document
+ * Score a single UTAUT2 construct for a document
  * Returns normalized value 0-100
  */
 function scoreDimension(content: string, dimension: PsychoSocialDimension): number {
@@ -62,40 +63,58 @@ function scoreDimension(content: string, dimension: PsychoSocialDimension): numb
   let score = 50; // Base score
   
   switch (dimension) {
-    case 'Trust':
-      if (lowerText.includes('percaya') || lowerText.includes('yakin')) score += 30;
-      if (lowerText.includes('aman') || lowerText.includes('terpercaya')) score += 20;
-      if (lowerText.includes('ragu') || lowerText.includes('skeptis')) score -= 25;
+    case 'PE': // Performance Expectancy - belief that technology improves performance/productivity
+      if (lowerText.includes('efisien') || lowerText.includes('produktif')) score += 30;
+      if (lowerText.includes('cepat') || lowerText.includes('hemat')) score += 25;
+      if (lowerText.includes('membantu') || lowerText.includes('meningkat')) score += 20;
+      if (lowerText.includes('lambat') || lowerText.includes('tidak efektif')) score -= 25;
       break;
       
-    case 'Anxiety':
-      if (lowerText.includes('takut') || lowerText.includes('khawatir')) score += 35;
-      if (lowerText.includes('bahaya') || lowerText.includes('risiko')) score += 25;
-      if (lowerText.includes('tenang') || lowerText.includes('aman')) score -= 30;
+    case 'EE': // Effort Expectancy - ease of use
+      if (lowerText.includes('mudah') || lowerText.includes('gampang')) score += 30;
+      if (lowerText.includes('sederhana') || lowerText.includes('praktis')) score += 25;
+      if (lowerText.includes('intuitif') || lowerText.includes('nyaman')) score += 20;
+      if (lowerText.includes('sulit') || lowerText.includes('susah')) score -= 30;
+      if (lowerText.includes('rumit') || lowerText.includes('ribet')) score -= 25;
       break;
       
-    case 'Excitement':
-      if (lowerText.includes('tertarik') || lowerText.includes('menarik')) score += 30;
-      if (lowerText.includes('senang') || lowerText.includes('suka')) score += 25;
-      if (lowerText.includes('bosan') || lowerText.includes('biasa')) score -= 20;
-      break;
-      
-    case 'Social Influence':
+    case 'SI': // Social Influence - belief that important others think they should use it
       if (lowerText.includes('teman') || lowerText.includes('orang lain')) score += 25;
       if (lowerText.includes('rekomendasi') || lowerText.includes('saran')) score += 30;
+      if (lowerText.includes('keluarga') || lowerText.includes('kolega')) score += 25;
+      if (lowerText.includes('populer') || lowerText.includes('banyak yang')) score += 20;
       if (lowerText.includes('sendiri') || lowerText.includes('pribadi')) score -= 15;
       break;
       
-    case 'Self-Efficacy':
-      if (lowerText.includes('bisa') || lowerText.includes('mampu')) score += 30;
-      if (lowerText.includes('mudah') || lowerText.includes('gampang')) score += 25;
-      if (lowerText.includes('sulit') || lowerText.includes('susah')) score -= 30;
+    case 'HM': // Hedonic Motivation - pleasure/enjoyment from using technology
+      if (lowerText.includes('senang') || lowerText.includes('suka')) score += 30;
+      if (lowerText.includes('menyenangkan') || lowerText.includes('menarik')) score += 25;
+      if (lowerText.includes('tertarik') || lowerText.includes('excited')) score += 25;
+      if (lowerText.includes('bosan') || lowerText.includes('membosankan')) score -= 25;
+      if (lowerText.includes('tidak menarik')) score -= 20;
       break;
       
-    case 'Risk Perception':
-      if (lowerText.includes('risiko') || lowerText.includes('bahaya')) score += 35;
-      if (lowerText.includes('takut') || lowerText.includes('khawatir')) score += 25;
-      if (lowerText.includes('aman') || lowerText.includes('terjamin')) score -= 30;
+    case 'FC': // Facilitating Conditions - belief that infrastructure/support is available
+      if (lowerText.includes('tersedia') || lowerText.includes('ada')) score += 25;
+      if (lowerText.includes('dukungan') || lowerText.includes('support')) score += 30;
+      if (lowerText.includes('infrastruktur') || lowerText.includes('fasilitas')) score += 25;
+      if (lowerText.includes('tidak ada') || lowerText.includes('kurang')) score -= 30;
+      if (lowerText.includes('terbatas') || lowerText.includes('minim')) score -= 25;
+      break;
+      
+    case 'PV': // Price Value - perceived benefits vs. cost
+      if (lowerText.includes('murah') || lowerText.includes('terjangkau')) score += 30;
+      if (lowerText.includes('hemat') || lowerText.includes('ekonomis')) score += 25;
+      if (lowerText.includes('worth') || lowerText.includes('sepadan')) score += 25;
+      if (lowerText.includes('mahal') || lowerText.includes('expensive')) score -= 30;
+      if (lowerText.includes('tidak worth') || lowerText.includes('rugi')) score -= 25;
+      break;
+      
+    case 'H': // Habit - automatic behavior due to learning
+      if (lowerText.includes('biasa') || lowerText.includes('terbiasa')) score += 30;
+      if (lowerText.includes('rutin') || lowerText.includes('sering')) score += 25;
+      if (lowerText.includes('otomatis') || lowerText.includes('kebiasaan')) score += 30;
+      if (lowerText.includes('jarang') || lowerText.includes('baru')) score -= 20;
       break;
   }
   
@@ -104,7 +123,7 @@ function scoreDimension(content: string, dimension: PsychoSocialDimension): numb
 }
 
 /**
- * Compute psycho-social scores for all documents
+ * Compute UTAUT2 construct scores for all documents
  * Returns a matrix: dimensions x emotions with normalized scores
  */
 export function computePsychoSocialMatrix(documents: Document[]): number[][] {

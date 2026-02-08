@@ -15,6 +15,7 @@ import { GeoEmotionMap } from '../components/GeoEmotionMap';
 import { EmotionDistributionChart } from '../components/EmotionDistributionChart';
 import { PsychoSocialHeatmap } from '../components/PsychoSocialHeatmap';
 import { MarketingRadarChart } from '../components/MarketingRadarChart';
+import { MarketingMixRadarChart } from '../components/MarketingMixRadarChart';
 
 export function Dashboard() {
   const [textInput, setTextInput] = useState('');
@@ -195,7 +196,11 @@ export function Dashboard() {
       {/* Charts and Recent Analysis */}
       <section className="space-y-6">
         <div className="grid gap-6 lg:grid-cols-2">
-          <EmotionChart />
+          <EmotionChart 
+            key={`emotion-chart-${documents.length}`}
+            documents={documents}
+            hasActiveDataset={hasActiveDataset}
+          />
           <RecentAnalysis documents={documents.slice(0, 5)} />
         </div>
         
@@ -225,12 +230,19 @@ export function Dashboard() {
           hasActiveDataset={hasActiveDataset} 
         />
         
-        {/* Marketing Radar Chart - key ensures re-render on document count change */}
-        <MarketingRadarChart 
-          key={`marketing-${documents.length}`}
-          documents={documents} 
-          hasActiveDataset={hasActiveDataset} 
-        />
+        {/* Marketing Radar Charts - key ensures re-render on document count change */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <MarketingRadarChart 
+            key={`marketing-${documents.length}`}
+            documents={documents} 
+            hasActiveDataset={hasActiveDataset} 
+          />
+          <MarketingMixRadarChart 
+            key={`marketing-mix-${documents.length}`}
+            documents={documents} 
+            hasActiveDataset={hasActiveDataset} 
+          />
+        </div>
       </section>
     </div>
   );
