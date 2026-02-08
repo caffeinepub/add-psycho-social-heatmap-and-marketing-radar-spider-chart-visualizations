@@ -1,0 +1,78 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-audit-and-fix-all-dashboard-visualizations-so-they-render-reliably-when-there-is-at-least-one-uploaded-document-and-never-get-stuck-in-an-empty-state-due-to-stale-incorrect-dataset-detection",
+      "featureTitle": "Audit and fix all dashboard visualizations so they render reliably when there is at least one uploaded document, and never get stuck in an empty-state due to stale/incorrect dataset detection.",
+      "files": [
+        "frontend/src/components/BrandEmotionChart.tsx",
+        "frontend/src/components/EmotionDistributionChart.tsx",
+        "frontend/src/components/GenderEmotionChart.tsx",
+        "frontend/src/components/GeoEmotionMap.tsx",
+        "frontend/src/components/MarketingRadarChart.tsx",
+        "frontend/src/components/PsychoSocialHeatmap.tsx",
+        "frontend/src/pages/AnalysisPage.tsx",
+        "frontend/src/pages/Dashboard.tsx"
+      ],
+      "components": [
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-8"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-standardize-dataset-availability-and-data-shape-validation-across-all-visualization-components-so-each-chart-heatmap-radar-handles-1-loading-2-empty-dataset-3-dataset-present-but-derived-metric-not-computable-and-4-valid-derived-metric-states-without-throwing-errors",
+      "featureTitle": "Standardize dataset-availability and data-shape validation across all visualization components so each chart/heatmap/radar handles: (1) loading, (2) empty dataset, (3) dataset present but derived metric not computable, and (4) valid derived metric states without throwing errors.",
+      "files": [
+        "frontend/src/components/BrandEmotionChart.tsx",
+        "frontend/src/components/EmotionDistributionChart.tsx",
+        "frontend/src/components/GenderEmotionChart.tsx",
+        "frontend/src/components/GeoEmotionMap.tsx",
+        "frontend/src/components/MarketingRadarChart.tsx",
+        "frontend/src/components/PsychoSocialHeatmap.tsx",
+        "frontend/src/lib/visualizationState.ts"
+      ],
+      "components": [
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-9"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-react-query-cache-invalidation-refetch-behavior-results-in-immediate-consistent-ui-updates-across-all-pages-that-show-visualizations-when-new-documents-are-uploaded-or-deleted-dashboard-analysis-metrics-purchase-intention-strategic-recommendation-report",
+      "featureTitle": "Ensure React Query cache invalidation/refetch behavior results in immediate, consistent UI updates across all pages that show visualizations when new documents are uploaded or deleted (Dashboard, Analysis, Metrics, Purchase Intention, Strategic Recommendation Report).",
+      "files": [
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/AnalysisPage.tsx",
+        "frontend/src/pages/Dashboard.tsx",
+        "frontend/src/pages/PurchaseIntentionPage.tsx"
+      ],
+      "components": [
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-10"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

@@ -1,2 +1,3 @@
-# add-psycho-social-heatmap-and-marketing-radar-spider-chart-visualizations
-Exported from Caffeine project: Add Psycho-Social Heatmap and Marketing Radar (Spider) Chart visualizations
+## 
+
+To run app build and run docker image: `docker build -t app . docker run -it --network host app`

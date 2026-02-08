@@ -1,0 +1,64 @@
+{
+  "kind": "spec_vs_diff_report",
+  "version": "1.0",
+  "generatedAt": "2026-02-08T18:17:01.338Z",
+  "summary": "Diff adds shared visualization-state utilities and updates several dashboard visualization components to use deterministic guards/sanitization, plus adjusts React Query behavior (staleTime/refetch + broader invalidations on upload/delete). However, evidence is insufficient that Strategic Recommendation Report updates reliably after uploads, and some implemented behaviors (geo region filtering and confusion-matrix generation/cleaning logs on upload) are not requested.",
+  "missing_requirements": [
+    {
+      "id": "REQ-10",
+      "requirement": "Navigating to the Strategic Recommendation Report after uploading documents generates and renders the report content without requiring additional user actions or page reloads.",
+      "reason": "The diff shows query invalidation for documents/derived queries and page changes for Dashboard/Analysis/Purchase Intention, but there is no evidence of report-page query invalidation/refetch wiring or any report page changes ensuring immediate render after upload/navigation.",
+      "evidence": [
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/Dashboard.tsx",
+        "frontend-file-summaries.txt"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Hard-coded whitelist/exclusion filtering of geographic regions (VALID_INDONESIAN_REGIONS + explicit excluded countries) in GeoEmotionMap.",
+      "reason": "REQ-8/9/10 focus on reliable rendering and state guards, not changing/curating the geographic dataset by introducing region allow/deny lists.",
+      "evidence": [
+        "frontend/src/components/GeoEmotionMap.tsx"
+      ]
+    },
+    {
+      "description": "Upload mutation now generates and uploads synthetic 'cleaning logs' prior to uploading the document.",
+      "reason": "Not requested by REQ-8/9/10; these requirements are about visualization rendering and query refresh, not adding new upload-side behavior/log generation.",
+      "evidence": [
+        "frontend/src/hooks/useQueries.ts"
+      ]
+    },
+    {
+      "description": "Upload mutation triggers confusion-matrix generation via multiple actor.processIncorrect calls for several models after each upload.",
+      "reason": "Not part of REQ-8/9/10; introduces additional backend processing side effects unrelated to visualization state guarding/caching requirements.",
+      "evidence": [
+        "frontend/src/hooks/useQueries.ts"
+      ]
+    },
+    {
+      "description": "Post-upload navigation uses setTimeout delay (100ms) before routing to /analysis.",
+      "reason": "REQ-10 asks for correct cache invalidation/refetch for immediate consistent updates; adding time-based delays is an extra behavior not explicitly requested.",
+      "evidence": [
+        "frontend/src/pages/Dashboard.tsx"
+      ]
+    }
+  ],
+  "confidence": 0.66,
+  "changed_files": [
+    "frontend-file-summaries.txt",
+    "frontend/src/components/BrandEmotionChart.tsx",
+    "frontend/src/components/EmotionDistributionChart.tsx",
+    "frontend/src/components/GenderEmotionChart.tsx",
+    "frontend/src/components/GeoEmotionMap.tsx",
+    "frontend/src/components/MarketingRadarChart.tsx",
+    "frontend/src/components/PsychoSocialHeatmap.tsx",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/lib/visualizationState.ts",
+    "frontend/src/pages/AnalysisPage.tsx",
+    "frontend/src/pages/Dashboard.tsx",
+    "frontend/src/pages/PurchaseIntentionPage.tsx",
+    "project_state.json"
+  ]
+}

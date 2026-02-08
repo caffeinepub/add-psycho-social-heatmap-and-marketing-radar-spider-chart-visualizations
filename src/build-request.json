@@ -1,0 +1,78 @@
+{
+  "kind": "build_request",
+  "title": "Ensure all charts and visualizations reliably render when input data exists",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-8",
+      "text": "Audit and fix all dashboard visualizations so they render reliably when there is at least one uploaded document, and never get stuck in an empty-state due to stale/incorrect dataset detection.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4",
+          "msg-10"
+        ],
+        "quotes": [
+          "pastikan semua grafik/visualisasi tampil dengan baik apabila terdapat data yang diinput"
+        ]
+      },
+      "acceptanceCriteria": [
+        "After uploading a document from the Dashboard, each visualization on the Dashboard (EmotionDistributionChart, BrandEmotionChart, GenderEmotionChart, GeoEmotionMap, PsychoSocialHeatmap, MarketingRadarChart) displays a non-empty visualization state (or a clear 'insufficient data' message if the uploaded content truly cannot produce that metric), and does not incorrectly show 'No active data' / equivalent empty-state messaging.",
+        "No visualization remains blank due to missing props, incorrect hasActiveDataset logic, or stale query/cache state after upload.",
+        "No runtime errors occur when rendering these visualizations with valid non-empty documents."
+      ]
+    },
+    {
+      "id": "REQ-9",
+      "text": "Standardize dataset-availability and data-shape validation across all visualization components so each chart/heatmap/radar handles: (1) loading, (2) empty dataset, (3) dataset present but derived metric not computable, and (4) valid derived metric states without throwing errors.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4",
+          "msg-10"
+        ],
+        "quotes": [
+          "pastikan semua grafik/visualisasi tampil dengan baik apabila terdapat data yang diinput"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Each visualization component has deterministic guards for undefined/null/empty inputs and does not index into arrays/objects without checking bounds/availability first (e.g., heatmap matrix row/col access).",
+        "For derived computations (e.g., marketing metrics, psycho-social matrix), components render a stable UI when the computed result is empty even though documents exist, using a distinct message from the 'no dataset uploaded' empty state.",
+        "Console shows no React rendering errors or warnings caused by invalid Recharts inputs (e.g., undefined values, NaN, missing keys) after uploading documents."
+      ]
+    },
+    {
+      "id": "REQ-10",
+      "text": "Ensure React Query cache invalidation/refetch behavior results in immediate, consistent UI updates across all pages that show visualizations when new documents are uploaded or deleted (Dashboard, Analysis, Metrics, Purchase Intention, Strategic Recommendation Report).",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-4",
+          "msg-10"
+        ],
+        "quotes": [
+          "pastikan semua grafik/visualisasi tampil dengan baik apabila terdapat data yang diinput"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Uploading a document triggers the relevant queries/derived-data views to update without requiring a manual refresh (including gender/geo/purchase intention queries and any charts that depend on documents).",
+        "Deleting documents down to an empty dataset transitions all affected visualizations back to their empty states without crashes or stale rendered data.",
+        "Navigating to the Strategic Recommendation Report after uploading documents generates and renders the report content without requiring additional user actions or page reloads."
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not modify any files under frontend/src/components/ui (immutable UI component sources).",
+    "Do not modify any files listed in SYSTEM_CONTEXT.frontend.immutablePaths.",
+    "Backend must remain a single-actor Motoko canister; only add migration logic if state schema changes (not expected for this request)."
+  ],
+  "nonGoals": [
+    "Adding new types of charts/visualizations beyond what already exists.",
+    "Introducing real-time communication (WebSockets) or external databases/services.",
+    "Changing authentication providers (Internet Identity remains the only auth)."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}
