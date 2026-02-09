@@ -107,4 +107,14 @@
     box-shadow: none !important;
     border: 1px solid oklch(88% 0.01 270) !important;
   }
+
+  /* Ensure proper badge rendering */
+  .badge {
+    border: 1px solid currentColor;
+  }
+
+  /* Optimize list rendering */
+  ul, ol {
+    page-break-inside: avoid;
+  }
 }

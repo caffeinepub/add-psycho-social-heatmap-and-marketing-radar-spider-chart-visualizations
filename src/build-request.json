@@ -1,77 +1,80 @@
 {
   "kind": "build_request",
-  "title": "Accept CSV/JSON uploads with dataset columns ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted",
+  "title": "Fix dataset upload failures by handling stopped-canister (IC0508) errors and improving upload resilience",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-22",
-      "text": "Update the file-upload ingestion flow so users can upload datasets whose schema is exactly: `ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted`, without the upload failing.",
+      "id": "REQ-28",
+      "text": "Make the dataset upload flow resilient to backend failures by preventing a failed `addCleaningLog` call from crashing the entire upload operation, and by surfacing a clear, actionable error when the backend canister is stopped (IC0508). Update both single upload (`useUploadDocument`) and batch upload (`useUploadDocumentsBatch`) to (a) wrap `actor.addCleaningLog(...)` in try/catch, (b) if logging fails, continue with `uploadDocument` when possible, and (c) if the failure is an IC replica/canister-stopped rejection (e.g., reject_message includes \"is stopped\" / error_code IC0508), throw an Error with an English message that explicitly states the backend canister is stopped and the upload cannot proceed until it is started/redeployed.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages"
+          "msg-4"
         ],
         "quotes": [
-          "datasetnya berikut ini untuk dijadikan format dalam upload file: ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted"
+          "The replica returned a rejection error... Reject text: Canister 33tw5-ziaaa-aaaai-q5roq-cai is stopped ... Method name: addCleaningLog ... terjadi eror dalam upload data, tolong perbaiki"
         ]
       },
       "acceptanceCriteria": [
-        "Uploading a .csv file with a header row containing exactly the columns `ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted` (case-insensitive, whitespace-tolerant) succeeds.",
-        "Uploading a .json file containing an array of objects with keys matching `ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted` (case-insensitive) succeeds.",
-        "If a CSV/JSON upload is missing the required `text` field/column, the UI shows a clear error message and does not attempt to upload any documents.",
-        "If a CSV/JSON upload has the required schema but contains some rows with empty `text`, those rows are skipped and the upload still succeeds for the remaining valid rows (with a clear warning message indicating how many rows were skipped)."
+        "Uploading a .txt file does not fail solely because `addCleaningLog` fails; the document upload still proceeds when the backend is otherwise available.",
+        "Uploading a .csv/.json dataset does not fail solely because `addCleaningLog` fails; batch upload still proceeds when the backend is otherwise available.",
+        "When the backend canister is stopped (IC0508 / reject_message contains \"is stopped\"), the upload mutation rejects with a clear English error message indicating the canister is stopped and must be started/redeployed before uploads can work.",
+        "No unhandled promise rejections occur during upload when `addCleaningLog` fails."
       ]
     },
     {
-      "id": "REQ-23",
-      "text": "For dataset uploads (.csv/.json) that follow the specified schema, parse the file into multiple documents and upload each row as a separate backend document using the row’s `text` value as `Document.content`.",
+      "id": "REQ-29",
+      "text": "Update the Dashboard upload UI to display backend replica rejection details in a user-friendly, English error state. When an upload fails, ensure `DatasetUploadStatus` (error state) and the toast error message show an English summary and include the underlying error message (e.g., reject_message) so the issue is debuggable.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages"
+          "msg-4"
         ],
         "quotes": [
-          "datasetnya berikut ini untuk dijadikan format dalam upload file: ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted"
+          "The replica returned a rejection error... reject_message: \"Canister 33tw5-ziaaa-aaaai-q5roq-cai is stopped\""
         ]
       },
       "acceptanceCriteria": [
-        "A CSV with N valid rows (non-empty `text`) results in N new documents in `getAllDocuments()` (not 1 document containing the whole file).",
-        "A JSON array with N valid entries (non-empty `text`) results in N new documents in `getAllDocuments()`.",
-        "After a successful dataset upload, Dashboard visualizations update based on the new documents (no manual refresh needed)."
+        "If an upload fails due to IC0508/canister stopped, the Dashboard shows an error status card and a toast with English text; the displayed error includes the underlying reject message (or a mapped English explanation) so it is actionable.",
+        "If an upload fails for a non-IC0508 reason, the UI still shows a clear English error message and preserves the original error message for debugging.",
+        "The upload status card does not remain stuck in \"uploading\" after any failure; it transitions to the \"error\" state reliably."
       ]
     },
     {
-      "id": "REQ-24",
-      "text": "Make the upload experience resilient and debuggable by reporting parse/validation errors and upload progress/failures clearly in the UI.",
+      "id": "REQ-30",
+      "text": "Ensure all newly introduced user-facing strings related to the canister-stopped/upload-failure handling are in English (including mapped error titles, descriptions, and call-to-action guidance).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "recent-messages"
-        ],
-        "quotes": [
-          "kenapa gagal upload file? tolong perbaiki agar tidak gagal proses upload file",
-          "pastikan perbaikan pada upload file apakah sudah diperbaiki?"
+          "msg-4"
         ]
       },
       "acceptanceCriteria": [
-        "If parsing fails (e.g., malformed CSV), the UI shows a clear error message describing that the file could not be parsed.",
-        "If uploading one or more rows fails during a multi-row upload, the UI reports how many rows succeeded and how many failed, and the operation does not silently fail.",
-        "The file input allows `.txt`, `.csv`, `.json` as before; `.txt` continues to upload as a single document (current behavior preserved)."
+        "All new strings added as part of the upload error handling (including IC0508 mapping) are English.",
+        "No Indonesian text is introduced for any new error-handling UI added in this change."
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files under `frontend/src/components/ui` or other immutable paths listed in SYSTEM_CONTEXT.",
-    "Keep the backend as a single Motoko actor in `backend/main.mo`; do not introduce additional backend services or external databases.",
-    "Prefer frontend-only schema mapping/parsing; do not change the backend `Document` type/schema unless strictly required for the upload to succeed."
+    "Do not modify any files under `frontend/src/components/ui` or any other paths listed in `frontend.immutablePaths`.",
+    "Backend remains a single Motoko actor in `backend/main.mo`; do not add additional backend services."
   ],
   "nonGoals": [
-    "Implementing a full data warehouse or advanced ETL pipeline for uploaded datasets.",
-    "Adding real-time upload progress via websockets or push notifications.",
-    "Changing existing analytics logic beyond what is necessary to ensure uploaded dataset rows become documents and charts can render from them."
+    "Starting/redeploying/stopping the canister from within the application (operational action outside app scope).",
+    "Changing the dataset parsing/validation rules beyond what is required to improve error handling for backend upload failures."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

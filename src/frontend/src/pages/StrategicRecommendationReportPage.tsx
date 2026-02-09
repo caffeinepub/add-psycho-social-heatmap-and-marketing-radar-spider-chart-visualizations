@@ -2,10 +2,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { FileText, Download, Printer, AlertTriangle, CheckCircle2, TrendingUp, Target, AlertCircle, Languages } from 'lucide-react';
+import { FileText, Download, Printer, AlertTriangle, CheckCircle2, TrendingUp, Target, AlertCircle, FileDown } from 'lucide-react';
 import { useGetAllDocuments } from '../hooks/useQueries';
 import { generateStrategicReport, exportReportAsMarkdown } from '../lib/strategicReport';
 import { type Locale, getUILabels, getPriorityLabel } from '../lib/strategicReportLocale';
+import { exportReportAsPdf } from '../lib/reportPdfExport';
 import { toast } from 'sonner';
 import { useMemo, useState } from 'react';
 
@@ -32,6 +33,21 @@ export function StrategicRecommendationReportPage() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPdf = () => {
+    const reportContainer = document.querySelector('.report-container');
+    if (!reportContainer) {
+      toast.error(locale === 'id' ? 'Konten laporan tidak tersedia' : 'Report content not available');
+      return;
+    }
+
+    exportReportAsPdf({
+      filename: locale === 'id' ? 'laporan-rekomendasi-strategis' : 'strategic-recommendation-report',
+      locale,
+    });
+
+    toast.success(locale === 'id' ? 'Membuka dialog cetak untuk ekspor PDF' : 'Opening print dialog for PDF export');
   };
 
   if (isLoading) {
@@ -131,6 +147,10 @@ export function StrategicRecommendationReportPage() {
               <Button variant="outline" onClick={handleCopyMarkdown}>
                 <Download className="mr-2 h-4 w-4" />
                 {labels.copyMarkdown}
+              </Button>
+              <Button variant="outline" onClick={handleDownloadPdf}>
+                <FileDown className="mr-2 h-4 w-4" />
+                {labels.downloadPdf}
               </Button>
               <Button onClick={handlePrint}>
                 <Printer className="mr-2 h-4 w-4" />

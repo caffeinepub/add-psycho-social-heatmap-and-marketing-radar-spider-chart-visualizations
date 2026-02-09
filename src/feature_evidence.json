@@ -2,31 +2,11 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-file-upload-ingestion-flow-so-users-can-upload-datasets-whose-schema-is-exactly-id-date-region-source-user-text-aspect-category-keywords-extracted-without-the-upload-failing",
-      "featureTitle": "Update the file-upload ingestion flow so users can upload datasets whose schema is exactly: `ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted`, without the upload failing.",
-      "files": [
-        "frontend/src/lib/datasetIngestion.ts",
-        "frontend/src/pages/Dashboard.tsx"
-      ],
-      "components": [
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-22"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-for-dataset-uploads-csv-json-that-follow-the-specified-schema-parse-the-file-into-multiple-documents-and-upload-each-row-as-a-separate-backend-document-using-the-row-s-text-value-as-document-content",
-      "featureTitle": "For dataset uploads (.csv/.json) that follow the specified schema, parse the file into multiple documents and upload each row as a separate backend document using the row’s `text` value as `Document.content`.",
+      "featureId": "feature-make-the-dataset-upload-flow-resilient-to-backend-failures-by-preventing-a-failed-addcleaninglog-call-from-crashing-the-entire-upload-operation-and-by-surfacing-a-clear-actionable-error-when-the-backend-canister-is-stopped-ic0508-update-both-single-upload-useuploaddocument-and-batch-upload-useuploaddocumentsbatch-to-a-wrap-actor-addcleaninglog-in-try-catch-b-if-logging-fails-continue-with-uploaddocument-when-possible-and-c-if-the-failure-is-an-ic-replica-canister-stopped-rejection-e-g-reject-message-includes-is-stopped-error-code-ic0508-throw-an-error-with-an-english-message-that-explicitly-states-the-backend-canister-is-stopped-and-the-upload-cannot-proceed-until-it-is-started-redeployed",
+      "featureTitle": "Make the dataset upload flow resilient to backend failures by preventing a failed `addCleaningLog` call from crashing the entire upload operation, and by surfacing a clear, actionable error when the backend canister is stopped (IC0508). Update both single upload (`useUploadDocument`) and batch upload (`useUploadDocumentsBatch`) to (a) wrap `actor.addCleaningLog(...)` in try/catch, (b) if logging fails, continue with `uploadDocument` when possible, and (c) if the failure is an IC replica/canister-stopped rejection (e.g., reject_message includes \"is stopped\" / error_code IC0508), throw an Error with an English message that explicitly states the backend canister is stopped and the upload cannot proceed until it is started/redeployed.",
       "files": [
         "frontend/src/hooks/useQueries.ts",
-        "frontend/src/pages/Dashboard.tsx"
+        "frontend/src/lib/icReplicaErrors.ts"
       ],
       "components": [
         "blob-storage@4.0.0",
@@ -37,16 +17,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-23"
+        "REQ-28"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-make-the-upload-experience-resilient-and-debuggable-by-reporting-parse-validation-errors-and-upload-progress-failures-clearly-in-the-ui",
-      "featureTitle": "Make the upload experience resilient and debuggable by reporting parse/validation errors and upload progress/failures clearly in the UI.",
+      "featureId": "feature-update-the-dashboard-upload-ui-to-display-backend-replica-rejection-details-in-a-user-friendly-english-error-state-when-an-upload-fails-ensure-datasetuploadstatus-error-state-and-the-toast-error-message-show-an-english-summary-and-include-the-underlying-error-message-e-g-reject-message-so-the-issue-is-debuggable",
+      "featureTitle": "Update the Dashboard upload UI to display backend replica rejection details in a user-friendly, English error state. When an upload fails, ensure `DatasetUploadStatus` (error state) and the toast error message show an English summary and include the underlying error message (e.g., reject_message) so the issue is debuggable.",
       "files": [
         "frontend/src/components/DatasetUploadStatus.tsx",
-        "frontend/src/lib/datasetIngestion.ts",
         "frontend/src/pages/Dashboard.tsx"
       ],
       "components": [
@@ -58,7 +37,28 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-24"
+        "REQ-29"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-all-newly-introduced-user-facing-strings-related-to-the-canister-stopped-upload-failure-handling-are-in-english-including-mapped-error-titles-descriptions-and-call-to-action-guidance",
+      "featureTitle": "Ensure all newly introduced user-facing strings related to the canister-stopped/upload-failure handling are in English (including mapped error titles, descriptions, and call-to-action guidance).",
+      "files": [
+        "frontend/src/components/DatasetUploadStatus.tsx",
+        "frontend/src/lib/icReplicaErrors.ts",
+        "frontend/src/pages/Dashboard.tsx"
+      ],
+      "components": [
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-30"
       ],
       "confidence": "high"
     }

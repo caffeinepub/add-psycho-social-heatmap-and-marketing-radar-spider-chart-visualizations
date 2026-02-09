@@ -1,16 +1,18 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 17,
-  "summary": "Build dashboard visualizations (Psycho-Social Heatmap and Radar charts—including Marketing Effectiveness and Marketing Mix) and provide an output report of strategic recommendations from the analysis for decision-makers.",
+  "projectStateVersion": 21,
+  "summary": "Build dashboard visualizations (Psycho-Social Heatmap and Radar charts—including Marketing Effectiveness and Marketing Mix) and generate a more comprehensive Strategic Recommendation Report that analyzes outputs from each visualization, with an in-app PDF download button for decision-makers.",
   "architectural_notes": [
     "Psycho-Social Heatmap dimensions should be based on UTAUT2: PE (Performance Expectancy/Harapan Kinerja), EE (Effort Expectancy/Harapan Usaha), SI (Social Influence/Pengaruh Sosial), HM (Hedonic Motivation/Motivasi Hedonis), FC (Facilitating Conditions/Kondisi Pendukung), PV (Price Value/Nilai Harga), H (Habit/Kebiasaan).",
     "Add a Marketing Mix radar chart with the following axes/labels and short codes: Product—Innovative Product Strategy (PROD); Price—Innovative Pricing Architecture (PRICE); Place—Innovative Distribution Network (DIST); Promotion—Innovative Communication Strategy (COMM); People—Innovative Human Resource Development (HRD); Process—Innovative Customer Journey Design (CUSJ); Physical Evidence—Innovative Brand Experience Creation (BRAND); Collaboration Ecosystem Strategy (proposed).",
-    "Upload pipeline should support schema mapping/normalization from incoming dataset headers (ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted) into the app’s internal document model used for downstream analysis/visualizations."
+    "Upload pipeline should support schema mapping/normalization from incoming dataset headers (ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted) into the app’s internal document model used for downstream analysis/visualizations.",
+    "Strategic Recommendation Report should include a dedicated section that synthesizes insights from each dashboard visualization (emotion distribution, UTAUT2 heatmap, marketing mix radar, purchase intention where available) into actionable recommendations, and support generating a PDF for download."
   ],
   "known_issues": [
     "Ensure all dashboard visualizations (charts/heatmap/radar/report) reliably render when valid input data is provided; potential rendering/state update issue after data input.",
     "Emotion Distribution chart still displays even when the app is not currently analyzing data; should reflect correct analysis/loading/idle state (likely stale analysis state or dataset detection).",
-    "File upload can fail due to strict/incorrect dataset schema validation; current expected columns may not match real user datasets (e.g., ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted)."
+    "File upload can fail due to strict/incorrect dataset schema validation; current expected columns may not match real user datasets (e.g., ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted).",
+    "Dataset upload can fail with IC0508 (reject_code 5) because backend canister 33tw5-ziaaa-aaaai-q5roq-cai is stopped; observed during addCleaningLog call."
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -205,6 +207,54 @@
         "REQ-24"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-add-a-user-visible-download-pdf-button-to-the-strategic-recommendation-report-page-that-lets-the-user-download-the-currently-rendered-report-as-a-pdf-for-the-currently-selected-language-locale-and-current-dataset",
+      "title": "Add a user-visible \"Download PDF\" button to the Strategic Recommendation Report page that lets the user download the currently rendered report as a PDF (for the currently selected language/locale and current dataset).",
+      "reqIds": [
+        "REQ-25"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-strategic-report-ui-localization-so-the-new-pdf-download-action-has-appropriate-labels-for-both-locales-and-ensure-all-new-user-facing-strings-for-this-feature-are-in-english-for-the-english-locale",
+      "title": "Update strategic report UI localization so the new PDF download action has appropriate labels for both locales, and ensure all new user-facing strings for this feature are in English for the English locale.",
+      "reqIds": [
+        "REQ-26"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-the-pdf-download-behavior-works-consistently-across-report-states-loading-empty-dataset-dataset-present-without-throwing-runtime-errors",
+      "title": "Ensure the PDF download behavior works consistently across report states (loading, empty dataset, dataset present) without throwing runtime errors.",
+      "reqIds": [
+        "REQ-27"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-make-the-dataset-upload-flow-resilient-to-backend-failures-by-preventing-a-failed-addcleaninglog-call-from-crashing-the-entire-upload-operation-and-by-surfacing-a-clear-actionable-error-when-the-backend-canister-is-stopped-ic0508-update-both-single-upload-useuploaddocument-and-batch-upload-useuploaddocumentsbatch-to-a-wrap-actor-addcleaninglog-in-try-catch-b-if-logging-fails-continue-with-uploaddocument-when-possible-and-c-if-the-failure-is-an-ic-replica-canister-stopped-rejection-e-g-reject-message-includes-is-stopped-error-code-ic0508-throw-an-error-with-an-english-message-that-explicitly-states-the-backend-canister-is-stopped-and-the-upload-cannot-proceed-until-it-is-started-redeployed",
+      "title": "Make the dataset upload flow resilient to backend failures by preventing a failed `addCleaningLog` call from crashing the entire upload operation, and by surfacing a clear, actionable error when the backend canister is stopped (IC0508). Update both single upload (`useUploadDocument`) and batch upload (`useUploadDocumentsBatch`) to (a) wrap `actor.addCleaningLog(...)` in try/catch, (b) if logging fails, continue with `uploadDocument` when possible, and (c) if the failure is an IC replica/canister-stopped rejection (e.g., reject_message includes \"is stopped\" / error_code IC0508), throw an Error with an English message that explicitly states the backend canister is stopped and the upload cannot proceed until it is started/redeployed.",
+      "reqIds": [
+        "REQ-28"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-dashboard-upload-ui-to-display-backend-replica-rejection-details-in-a-user-friendly-english-error-state-when-an-upload-fails-ensure-datasetuploadstatus-error-state-and-the-toast-error-message-show-an-english-summary-and-include-the-underlying-error-message-e-g-reject-message-so-the-issue-is-debuggable",
+      "title": "Update the Dashboard upload UI to display backend replica rejection details in a user-friendly, English error state. When an upload fails, ensure `DatasetUploadStatus` (error state) and the toast error message show an English summary and include the underlying error message (e.g., reject_message) so the issue is debuggable.",
+      "reqIds": [
+        "REQ-29"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-all-newly-introduced-user-facing-strings-related-to-the-canister-stopped-upload-failure-handling-are-in-english-including-mapped-error-titles-descriptions-and-call-to-action-guidance",
+      "title": "Ensure all newly introduced user-facing strings related to the canister-stopped/upload-failure handling are in English (including mapped error titles, descriptions, and call-to-action guidance).",
+      "reqIds": [
+        "REQ-30"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -247,6 +297,12 @@
     {
       "id": "AR-7",
       "summary": "Update/relax upload file validation to accept the dataset column format: ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted (including mapping/normalization to the app’s required internal fields).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-8",
+      "summary": "Add an in-report button to download/export the Strategic Recommendation Report as a PDF (professional layout).",
       "reqIds": [],
       "status": "pending"
     }

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
 import type { Document, ConfusionMatrixResult, GenderDistribution, GeoLocationDistribution, IntentionResult, CleaningLog } from '../backend';
+import { isCanisterStopped, getCanisterStoppedMessage } from '../lib/icReplicaErrors';
 
 export function useGetAllDocuments() {
   const { actor, isFetching } = useActor();
@@ -48,9 +49,20 @@ export function useUploadDocument() {
         { step: 'Pemeriksaan nilai numerik', status: 'aman', timestamp: BigInt(Date.now()) },
       ];
       
-      // Add cleaning logs to backend
-      await actor.addCleaningLog(cleaningLogs);
+      // Try to add cleaning logs, but don't fail the upload if logging fails
+      // (unless the canister is stopped, in which case we must fail)
+      try {
+        await actor.addCleaningLog(cleaningLogs);
+      } catch (logError) {
+        // If canister is stopped, we cannot proceed with upload
+        if (isCanisterStopped(logError)) {
+          throw new Error(getCanisterStoppedMessage());
+        }
+        // Otherwise, log the error but continue with upload
+        console.warn('Failed to add cleaning log (continuing with upload):', logError);
+      }
       
+      // Proceed with document upload
       const docId = await actor.uploadDocument(content);
       
       // Trigger confusion matrix generation for all models after upload
@@ -107,7 +119,18 @@ export function useUploadDocumentsBatch() {
         { step: 'Pemeriksaan nilai numerik', status: 'aman', timestamp: BigInt(Date.now()) },
       ];
       
-      await actor.addCleaningLog(cleaningLogs);
+      // Try to add cleaning logs, but don't fail the batch upload if logging fails
+      // (unless the canister is stopped, in which case we must fail)
+      try {
+        await actor.addCleaningLog(cleaningLogs);
+      } catch (logError) {
+        // If canister is stopped, we cannot proceed with batch upload
+        if (isCanisterStopped(logError)) {
+          throw new Error(getCanisterStoppedMessage());
+        }
+        // Otherwise, log the error but continue with batch upload
+        console.warn('Failed to add cleaning log (continuing with batch upload):', logError);
+      }
 
       // Upload each document
       for (let i = 0; i < contents.length; i++) {

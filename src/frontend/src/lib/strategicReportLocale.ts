@@ -10,6 +10,7 @@ interface UILabels {
   pageDescription: string;
   copyMarkdown: string;
   print: string;
+  downloadPdf: string;
   reportMetadata: string;
   generatedOn: string;
   documentsAnalyzed: string;
@@ -35,6 +36,7 @@ const EN_LABELS: UILabels = {
   pageDescription: 'Executive-ready insights and actionable recommendations for decision-makers',
   copyMarkdown: 'Copy as Markdown',
   print: 'Print',
+  downloadPdf: 'Download PDF',
   reportMetadata: 'Report Metadata',
   generatedOn: 'Generated on',
   documentsAnalyzed: 'Documents Analyzed',
@@ -60,6 +62,7 @@ const ID_LABELS: UILabels = {
   pageDescription: 'Wawasan siap eksekutif dan rekomendasi yang dapat ditindaklanjuti untuk pengambil keputusan',
   copyMarkdown: 'Salin sebagai Markdown',
   print: 'Cetak',
+  downloadPdf: 'Unduh PDF',
   reportMetadata: 'Metadata Laporan',
   generatedOn: 'Dibuat pada',
   documentsAnalyzed: 'Dokumen Dianalisis',
@@ -189,213 +192,221 @@ const EN_TEMPLATES: ReportContentTemplates = {
   
   analyzedDocuments: (count) => `Analyzed ${count} consumer sentiment documents across electric motorcycle brands.`,
   dominantEmotions: (emotions) => `Dominant emotions: ${emotions}.`,
-  psychoSocialFactors: (factors) => `Key UTAUT2 constructs: ${factors}.`,
+  psychoSocialFactors: (factors) => `Key UTAUT2 constructs requiring attention: ${factors}.`,
   marketingFunnel: (strongest, strongestScore, weakest, weakestScore) =>
-    `Marketing funnel: Strongest at ${strongest} (${strongestScore}/100), weakest at ${weakest} (${weakestScore}/100).`,
+    `Marketing funnel analysis shows ${strongest} (${strongestScore}%) as the strongest stage and ${weakest} (${weakestScore}%) requiring improvement.`,
   
   addressConcerns: {
-    title: 'Address Consumer Concerns Through Transparency',
+    title: 'Address Consumer Concerns and Barriers',
     rationale: (percentage, emotion) =>
-      `${percentage}% of sentiment shows ${emotion}, indicating significant consumer hesitation. Implement trust-building campaigns focusing on safety certifications, warranty programs, and real customer testimonials to reduce anxiety.`,
+      `${percentage.toFixed(1)}% of analyzed sentiment shows ${emotion}, indicating significant consumer hesitation. Implement targeted communication campaigns addressing specific concerns about battery life, charging infrastructure, and total cost of ownership.`,
   },
   capitalizePositive: {
-    title: 'Capitalize on Positive Sentiment with Conversion Campaigns',
+    title: 'Capitalize on Positive Sentiment',
     rationale: (percentage, emotion) =>
-      `${percentage}% of sentiment reflects ${emotion}, showing strong market receptivity. Launch targeted conversion campaigns with limited-time offers and test-ride programs to convert interest into purchases.`,
+      `${percentage.toFixed(1)}% of consumers express ${emotion}. Leverage this positive sentiment through testimonial campaigns, referral programs, and community-building initiatives to accelerate word-of-mouth adoption.`,
   },
   leverageTrust: {
-    title: 'Leverage Trust for Brand Advocacy Programs',
+    title: 'Leverage Trust for Conversion',
     rationale: (percentage) =>
-      `${percentage}% of sentiment demonstrates trust, a valuable asset. Develop referral programs and brand ambassador initiatives to amplify positive word-of-mouth and expand market reach.`,
+      `${percentage.toFixed(1)}% trust signals present opportunity for conversion optimization. Strengthen credibility through certifications, warranties, and transparent performance data.`,
   },
   increaseBrandVisibility: {
-    title: 'Increase Brand Visibility Through Multi-Channel Campaigns',
+    title: 'Increase Brand Awareness',
     rationale: (score) =>
-      `Awareness scores at ${score}/100 indicate low brand recognition. Invest in digital advertising, influencer partnerships, and public events to increase top-of-mind awareness among target demographics.`,
+      `Current awareness score of ${score.toFixed(0)}% indicates room for growth. Invest in multi-channel brand campaigns targeting early adopters and environmentally conscious consumers.`,
   },
   strengthenProductInfo: {
-    title: 'Strengthen Product Information and Comparison Tools',
+    title: 'Strengthen Product Information',
     rationale: (score) =>
-      `Consideration scores at ${score}/100 suggest consumers need more information. Develop detailed comparison guides, interactive product configurators, and educational content to support decision-making.`,
+      `Consideration stage score of ${score.toFixed(0)}% suggests information gaps. Develop comprehensive comparison tools, detailed specifications, and educational content addressing common questions.`,
   },
   implementIncentives: {
-    title: 'Implement Purchase Incentive Programs',
+    title: 'Implement Purchase Incentives',
     rationale: (score) =>
-      `Intent scores at ${score}/100 reveal a conversion gap. Introduce financing options, trade-in programs, and early-adopter discounts to lower purchase barriers and accelerate decision-making.`,
+      `Intent score of ${score.toFixed(0)}% shows conversion opportunity. Introduce time-limited promotions, trade-in programs, and financing options to reduce purchase barriers.`,
   },
   buildCommunity: {
-    title: 'Build Community and Loyalty Programs',
+    title: 'Build Advocacy Community',
     rationale: (score) =>
-      `Advocacy scores at ${score}/100 indicate limited word-of-mouth. Create owner communities, loyalty rewards, and referral incentives to transform satisfied customers into brand advocates.`,
+      `Advocacy score of ${score.toFixed(0)}% indicates untapped potential. Create owner communities, ambassador programs, and social sharing incentives to amplify positive experiences.`,
   },
   amplifySocialProof: {
-    title: 'Amplify Social Proof and Community Engagement',
+    title: 'Amplify Social Influence',
     rationale: (score) =>
-      `Strong Social Influence (SI) signals (${score}/100) show peer recommendations matter. Showcase user-generated content, customer reviews, and community events to leverage social validation.`,
+      `Social Influence (UTAUT2) score of ${score.toFixed(0)}% shows peer influence matters. Showcase user testimonials, influencer partnerships, and community success stories prominently.`,
   },
   simplifyUX: {
-    title: 'Simplify User Experience and Onboarding',
+    title: 'Simplify User Experience',
     rationale: (score) =>
-      `Effort Expectancy (EE) scores (${score}/100) suggest consumers perceive complexity. Provide comprehensive tutorials, intuitive interfaces, and hands-on training sessions to boost user confidence.`,
+      `Effort Expectancy score of ${score.toFixed(0)}% suggests usability concerns. Streamline purchase process, improve dealer experience, and provide clear setup guidance.`,
   },
   addressPriceValue: {
-    title: 'Improve Price-Value Perception',
+    title: 'Communicate Value Proposition',
     rationale: (score) =>
-      `Price Value (PV) scores (${score}/100) indicate cost concerns. Communicate total cost of ownership benefits, financing options, and long-term savings to improve perceived value.`,
+      `Price Value perception at ${score.toFixed(0)}% needs strengthening. Highlight total cost of ownership savings, government incentives, and long-term benefits through transparent cost calculators.`,
   },
   improveFacilitating: {
-    title: 'Strengthen Infrastructure and Support Systems',
+    title: 'Improve Facilitating Conditions',
     rationale: (score) =>
-      `Facilitating Conditions (FC) scores (${score}/100) reveal infrastructure concerns. Expand charging networks, service centers, and technical support to reduce adoption barriers.`,
+      `Facilitating Conditions score of ${score.toFixed(0)}% indicates infrastructure concerns. Partner with charging networks, provide home installation support, and communicate service availability.`,
   },
   enhanceExperience: {
-    title: 'Enhance User Experience and Enjoyment',
+    title: 'Enhance Hedonic Experience',
     rationale: (score) =>
-      `Hedonic Motivation (HM) scores (${score}/100) suggest limited enjoyment. Focus on design aesthetics, driving experience, and lifestyle branding to increase emotional appeal.`,
+      `Hedonic Motivation at ${score.toFixed(0)}% shows opportunity to emphasize enjoyment. Highlight performance, design aesthetics, and the premium riding experience in marketing materials.`,
   },
   focusMarketing: {
-    title: 'Focus Marketing Resources on High-Engagement Brands',
+    title: 'Focus Marketing on High-Engagement Brands',
     rationale: (brand, mentions) =>
-      `${brand} dominates conversation with ${mentions} mentions. Allocate marketing budget proportionally to high-engagement brands while investigating why others receive less attention.`,
+      `${brand} shows ${mentions} mentions, indicating strong consumer interest. Allocate marketing resources to capitalize on existing brand momentum and awareness.`,
   },
   expandDataCollection: {
-    title: 'Expand Data Collection for Deeper Insights',
-    rationale: 'Current dataset provides limited signals. Implement systematic feedback collection across customer touchpoints to enable more granular strategic analysis and targeted interventions.',
+    title: 'Expand Data Collection',
+    rationale: 'Current analysis is based on limited data points. Implement systematic feedback collection, surveys, and social listening to enhance insight accuracy and coverage.',
   },
   
   highNegativeSentiment: (emotion, percentage) =>
-    `High negative sentiment (${emotion}: ${percentage}%) may slow adoption rates if not addressed promptly.`,
+    `High ${emotion} sentiment (${percentage.toFixed(1)}%) may slow adoption if not addressed through targeted communication and product improvements.`,
   lowUTAUT2Score: (dimension, score) =>
-    `Low ${dimension} scores (${score}/100) indicate significant barriers to technology acceptance and adoption.`,
+    `Low ${dimension} score (${score.toFixed(0)}%) represents a critical barrier to adoption requiring immediate strategic attention.`,
   criticalGap: (metric, score) =>
-    `Critical gap in ${metric} (${score}/100) may limit market penetration and revenue growth.`,
-  limitedDataset: 'Limited dataset size may not capture full market sentiment. Expand data collection to validate findings.',
+    `${metric} gap (${score.toFixed(0)}%) indicates a weak point in the customer journey that competitors may exploit.`,
+  limitedDataset: 'Analysis based on limited dataset may not capture full market dynamics. Expand data collection for more robust insights.',
   
   nextSteps: [
-    'Present findings to marketing and product teams for strategic alignment.',
-    'Develop detailed action plans for each high-priority recommendation with timelines and KPIs.',
-    'Establish monitoring dashboard to track sentiment changes and campaign effectiveness.',
-    'Schedule quarterly reviews to reassess strategy based on updated market data.',
-    'Allocate budget and resources to address identified gaps in the marketing funnel.',
+    'Conduct deep-dive analysis on high-priority recommendations to develop detailed implementation plans.',
+    'Establish KPIs and tracking mechanisms for each strategic initiative.',
+    'Allocate budget and resources based on recommendation priorities.',
+    'Launch pilot programs for high-impact, low-effort recommendations.',
+    'Schedule monthly review cycles to monitor sentiment shifts and adjust strategies.',
+    'Expand data collection through surveys, focus groups, and social listening tools.',
   ],
   
-  noDataSummary: 'No data available for analysis. Upload documents to generate strategic recommendations.',
+  noDataSummary: 'No consumer sentiment data available for analysis. Please upload documents to generate strategic recommendations.',
 };
 
 const ID_TEMPLATES: ReportContentTemplates = {
   executiveSummaryTemplate: (docCount, dominantEmotion, recCount, highPriorityCount) =>
-    `Analisis ${docCount} dokumen sentimen konsumen mengungkapkan ${dominantEmotion} sebagai respons emosional dominan terhadap merek sepeda motor listrik. Laporan ini mengidentifikasi ${recCount} rekomendasi strategis, termasuk ${highPriorityCount} tindakan prioritas tinggi, untuk mengoptimalkan posisi pasar dan mempercepat adopsi. Peluang utama ada dalam mengatasi kekhawatiran konsumen, memperkuat efektivitas pemasaran, dan memanfaatkan sentimen positif untuk pertumbuhan.`,
+    `Analisis terhadap ${docCount} dokumen sentimen konsumen mengungkapkan ${dominantEmotion} sebagai respons emosional dominan terhadap merek sepeda motor listrik. Laporan ini mengidentifikasi ${recCount} rekomendasi strategis, termasuk ${highPriorityCount} tindakan prioritas tinggi, untuk mengoptimalkan posisi pasar dan mempercepat adopsi. Peluang utama ada dalam mengatasi kekhawatiran konsumen, memperkuat efektivitas pemasaran, dan memanfaatkan sentimen positif untuk pertumbuhan.`,
   
   analyzedDocuments: (count) => `Menganalisis ${count} dokumen sentimen konsumen di berbagai merek sepeda motor listrik.`,
   dominantEmotions: (emotions) => `Emosi dominan: ${emotions}.`,
-  psychoSocialFactors: (factors) => `Konstruk UTAUT2 utama: ${factors}.`,
+  psychoSocialFactors: (factors) => `Konstruk UTAUT2 utama yang memerlukan perhatian: ${factors}.`,
   marketingFunnel: (strongest, strongestScore, weakest, weakestScore) =>
-    `Corong pemasaran: Terkuat pada ${strongest} (${strongestScore}/100), terlemah pada ${weakest} (${weakestScore}/100).`,
+    `Analisis corong pemasaran menunjukkan ${strongest} (${strongestScore}%) sebagai tahap terkuat dan ${weakest} (${weakestScore}%) memerlukan perbaikan.`,
   
   addressConcerns: {
-    title: 'Atasi Kekhawatiran Konsumen Melalui Transparansi',
+    title: 'Atasi Kekhawatiran dan Hambatan Konsumen',
     rationale: (percentage, emotion) =>
-      `${percentage}% sentimen menunjukkan ${emotion}, mengindikasikan keraguan konsumen yang signifikan. Terapkan kampanye membangun kepercayaan yang berfokus pada sertifikasi keamanan, program garansi, dan testimoni pelanggan nyata untuk mengurangi kecemasan.`,
+      `${percentage.toFixed(1)}% dari sentimen yang dianalisis menunjukkan ${emotion}, mengindikasikan keraguan konsumen yang signifikan. Terapkan kampanye komunikasi terarah yang mengatasi kekhawatiran spesifik tentang daya tahan baterai, infrastruktur pengisian, dan total biaya kepemilikan.`,
   },
   capitalizePositive: {
-    title: 'Manfaatkan Sentimen Positif dengan Kampanye Konversi',
+    title: 'Manfaatkan Sentimen Positif',
     rationale: (percentage, emotion) =>
-      `${percentage}% sentimen mencerminkan ${emotion}, menunjukkan penerimaan pasar yang kuat. Luncurkan kampanye konversi yang ditargetkan dengan penawaran terbatas dan program uji coba untuk mengubah minat menjadi pembelian.`,
+      `${percentage.toFixed(1)}% konsumen mengekspresikan ${emotion}. Manfaatkan sentimen positif ini melalui kampanye testimoni, program rujukan, dan inisiatif membangun komunitas untuk mempercepat adopsi dari mulut ke mulut.`,
   },
   leverageTrust: {
-    title: 'Manfaatkan Kepercayaan untuk Program Advokasi Merek',
+    title: 'Manfaatkan Kepercayaan untuk Konversi',
     rationale: (percentage) =>
-      `${percentage}% sentimen menunjukkan kepercayaan, aset yang berharga. Kembangkan program rujukan dan inisiatif duta merek untuk memperkuat word-of-mouth positif dan memperluas jangkauan pasar.`,
+      `${percentage.toFixed(1)}% sinyal kepercayaan menghadirkan peluang untuk optimasi konversi. Perkuat kredibilitas melalui sertifikasi, garansi, dan data kinerja yang transparan.`,
   },
   increaseBrandVisibility: {
-    title: 'Tingkatkan Visibilitas Merek Melalui Kampanye Multi-Saluran',
+    title: 'Tingkatkan Kesadaran Merek',
     rationale: (score) =>
-      `Skor kesadaran pada ${score}/100 menunjukkan pengenalan merek yang rendah. Investasikan dalam iklan digital, kemitraan influencer, dan acara publik untuk meningkatkan kesadaran top-of-mind di antara demografi target.`,
+      `Skor kesadaran saat ini sebesar ${score.toFixed(0)}% menunjukkan ruang untuk pertumbuhan. Investasikan dalam kampanye merek multi-saluran yang menargetkan early adopter dan konsumen yang peduli lingkungan.`,
   },
   strengthenProductInfo: {
-    title: 'Perkuat Informasi Produk dan Alat Perbandingan',
+    title: 'Perkuat Informasi Produk',
     rationale: (score) =>
-      `Skor pertimbangan pada ${score}/100 menunjukkan konsumen membutuhkan lebih banyak informasi. Kembangkan panduan perbandingan terperinci, konfigurator produk interaktif, dan konten edukatif untuk mendukung pengambilan keputusan.`,
+      `Skor tahap pertimbangan sebesar ${score.toFixed(0)}% menunjukkan kesenjangan informasi. Kembangkan alat perbandingan komprehensif, spesifikasi detail, dan konten edukatif yang menjawab pertanyaan umum.`,
   },
   implementIncentives: {
-    title: 'Terapkan Program Insentif Pembelian',
+    title: 'Terapkan Insentif Pembelian',
     rationale: (score) =>
-      `Skor niat pada ${score}/100 mengungkapkan kesenjangan konversi. Perkenalkan opsi pembiayaan, program tukar tambah, dan diskon early-adopter untuk menurunkan hambatan pembelian dan mempercepat pengambilan keputusan.`,
+      `Skor niat sebesar ${score.toFixed(0)}% menunjukkan peluang konversi. Perkenalkan promosi terbatas waktu, program tukar tambah, dan opsi pembiayaan untuk mengurangi hambatan pembelian.`,
   },
   buildCommunity: {
-    title: 'Bangun Komunitas dan Program Loyalitas',
+    title: 'Bangun Komunitas Advokasi',
     rationale: (score) =>
-      `Skor advokasi pada ${score}/100 menunjukkan word-of-mouth yang terbatas. Ciptakan komunitas pemilik, hadiah loyalitas, dan insentif rujukan untuk mengubah pelanggan yang puas menjadi advokat merek.`,
+      `Skor advokasi sebesar ${score.toFixed(0)}% menunjukkan potensi yang belum dimanfaatkan. Ciptakan komunitas pemilik, program duta, dan insentif berbagi sosial untuk memperkuat pengalaman positif.`,
   },
   amplifySocialProof: {
-    title: 'Perkuat Bukti Sosial dan Keterlibatan Komunitas',
+    title: 'Perkuat Pengaruh Sosial',
     rationale: (score) =>
-      `Sinyal Pengaruh Sosial (SI) yang kuat (${score}/100) menunjukkan rekomendasi rekan penting. Tampilkan konten yang dibuat pengguna, ulasan pelanggan, dan acara komunitas untuk memanfaatkan validasi sosial.`,
+      `Skor Pengaruh Sosial (UTAUT2) sebesar ${score.toFixed(0)}% menunjukkan pengaruh rekan penting. Tampilkan testimoni pengguna, kemitraan influencer, dan kisah sukses komunitas secara menonjol.`,
   },
   simplifyUX: {
-    title: 'Sederhanakan Pengalaman Pengguna dan Onboarding',
+    title: 'Sederhanakan Pengalaman Pengguna',
     rationale: (score) =>
-      `Skor Harapan Usaha (EE) (${score}/100) menunjukkan konsumen melihat kompleksitas. Sediakan tutorial komprehensif, antarmuka intuitif, dan sesi pelatihan langsung untuk meningkatkan kepercayaan pengguna.`,
+      `Skor Ekspektasi Usaha sebesar ${score.toFixed(0)}% menunjukkan kekhawatiran kegunaan. Sederhanakan proses pembelian, tingkatkan pengalaman dealer, dan berikan panduan pengaturan yang jelas.`,
   },
   addressPriceValue: {
-    title: 'Tingkatkan Persepsi Nilai Harga',
+    title: 'Komunikasikan Proposisi Nilai',
     rationale: (score) =>
-      `Skor Nilai Harga (PV) (${score}/100) menunjukkan kekhawatiran biaya. Komunikasikan manfaat total biaya kepemilikan, opsi pembiayaan, dan penghematan jangka panjang untuk meningkatkan nilai yang dirasakan.`,
+      `Persepsi Nilai Harga pada ${score.toFixed(0)}% perlu diperkuat. Soroti penghematan total biaya kepemilikan, insentif pemerintah, dan manfaat jangka panjang melalui kalkulator biaya yang transparan.`,
   },
   improveFacilitating: {
-    title: 'Perkuat Infrastruktur dan Sistem Dukungan',
+    title: 'Tingkatkan Kondisi Fasilitasi',
     rationale: (score) =>
-      `Skor Kondisi Pendukung (FC) (${score}/100) mengungkapkan kekhawatiran infrastruktur. Perluas jaringan pengisian daya, pusat layanan, dan dukungan teknis untuk mengurangi hambatan adopsi.`,
+      `Skor Kondisi Fasilitasi sebesar ${score.toFixed(0)}% menunjukkan kekhawatiran infrastruktur. Bermitra dengan jaringan pengisian, berikan dukungan instalasi rumah, dan komunikasikan ketersediaan layanan.`,
   },
   enhanceExperience: {
-    title: 'Tingkatkan Pengalaman dan Kesenangan Pengguna',
+    title: 'Tingkatkan Pengalaman Hedonis',
     rationale: (score) =>
-      `Skor Motivasi Hedonis (HM) (${score}/100) menunjukkan kesenangan terbatas. Fokus pada estetika desain, pengalaman berkendara, dan branding gaya hidup untuk meningkatkan daya tarik emosional.`,
+      `Motivasi Hedonis pada ${score.toFixed(0)}% menunjukkan peluang untuk menekankan kenikmatan. Soroti kinerja, estetika desain, dan pengalaman berkendara premium dalam materi pemasaran.`,
   },
   focusMarketing: {
-    title: 'Fokuskan Sumber Daya Pemasaran pada Merek dengan Keterlibatan Tinggi',
+    title: 'Fokuskan Pemasaran pada Merek dengan Keterlibatan Tinggi',
     rationale: (brand, mentions) =>
-      `${brand} mendominasi percakapan dengan ${mentions} penyebutan. Alokasikan anggaran pemasaran secara proporsional ke merek dengan keterlibatan tinggi sambil menyelidiki mengapa yang lain menerima perhatian lebih sedikit.`,
+      `${brand} menunjukkan ${mentions} penyebutan, mengindikasikan minat konsumen yang kuat. Alokasikan sumber daya pemasaran untuk memanfaatkan momentum dan kesadaran merek yang ada.`,
   },
   expandDataCollection: {
-    title: 'Perluas Pengumpulan Data untuk Wawasan yang Lebih Dalam',
-    rationale: 'Dataset saat ini memberikan sinyal terbatas. Terapkan pengumpulan umpan balik sistematis di seluruh titik sentuh pelanggan untuk memungkinkan analisis strategis yang lebih granular dan intervensi yang ditargetkan.',
+    title: 'Perluas Pengumpulan Data',
+    rationale: 'Analisis saat ini didasarkan pada titik data terbatas. Terapkan pengumpulan umpan balik sistematis, survei, dan pemantauan sosial untuk meningkatkan akurasi dan cakupan wawasan.',
   },
   
   highNegativeSentiment: (emotion, percentage) =>
-    `Sentimen negatif yang tinggi (${emotion}: ${percentage}%) dapat memperlambat tingkat adopsi jika tidak segera ditangani.`,
+    `Sentimen ${emotion} yang tinggi (${percentage.toFixed(1)}%) dapat memperlambat adopsi jika tidak diatasi melalui komunikasi terarah dan perbaikan produk.`,
   lowUTAUT2Score: (dimension, score) =>
-    `Skor ${dimension} yang rendah (${score}/100) menunjukkan hambatan signifikan untuk penerimaan dan adopsi teknologi.`,
+    `Skor ${dimension} yang rendah (${score.toFixed(0)}%) merupakan hambatan kritis untuk adopsi yang memerlukan perhatian strategis segera.`,
   criticalGap: (metric, score) =>
-    `Kesenjangan kritis dalam ${metric} (${score}/100) dapat membatasi penetrasi pasar dan pertumbuhan pendapatan.`,
-  limitedDataset: 'Ukuran dataset terbatas mungkin tidak menangkap sentimen pasar penuh. Perluas pengumpulan data untuk memvalidasi temuan.',
+    `Kesenjangan ${metric} (${score.toFixed(0)}%) menunjukkan titik lemah dalam perjalanan pelanggan yang dapat dimanfaatkan pesaing.`,
+  limitedDataset: 'Analisis berdasarkan dataset terbatas mungkin tidak menangkap dinamika pasar penuh. Perluas pengumpulan data untuk wawasan yang lebih kuat.',
   
   nextSteps: [
-    'Presentasikan temuan kepada tim pemasaran dan produk untuk penyelarasan strategis.',
-    'Kembangkan rencana aksi terperinci untuk setiap rekomendasi prioritas tinggi dengan timeline dan KPI.',
-    'Buat dashboard pemantauan untuk melacak perubahan sentimen dan efektivitas kampanye.',
-    'Jadwalkan tinjauan triwulanan untuk menilai kembali strategi berdasarkan data pasar yang diperbarui.',
-    'Alokasikan anggaran dan sumber daya untuk mengatasi kesenjangan yang teridentifikasi dalam corong pemasaran.',
+    'Lakukan analisis mendalam pada rekomendasi prioritas tinggi untuk mengembangkan rencana implementasi detail.',
+    'Tetapkan KPI dan mekanisme pelacakan untuk setiap inisiatif strategis.',
+    'Alokasikan anggaran dan sumber daya berdasarkan prioritas rekomendasi.',
+    'Luncurkan program percontohan untuk rekomendasi berdampak tinggi dan upaya rendah.',
+    'Jadwalkan siklus tinjauan bulanan untuk memantau pergeseran sentimen dan menyesuaikan strategi.',
+    'Perluas pengumpulan data melalui survei, kelompok fokus, dan alat pemantauan sosial.',
   ],
   
-  noDataSummary: 'Tidak ada data tersedia untuk analisis. Unggah dokumen untuk menghasilkan rekomendasi strategis.',
+  noDataSummary: 'Tidak ada data sentimen konsumen yang tersedia untuk analisis. Silakan unggah dokumen untuk menghasilkan rekomendasi strategis.',
 };
 
 export function getReportTemplates(locale: Locale): ReportContentTemplates {
   return locale === 'id' ? ID_TEMPLATES : EN_TEMPLATES;
 }
 
-// Emotion translation map
-const EMOTION_TRANSLATIONS: Record<string, { en: string; id: string }> = {
-  interest: { en: 'interest', id: 'minat' },
-  trust: { en: 'trust', id: 'kepercayaan' },
-  fear: { en: 'fear', id: 'ketakutan' },
-  skepticism: { en: 'skepticism', id: 'skeptisisme' },
-  satisfaction: { en: 'satisfaction', id: 'kepuasan' },
-};
-
+// Emotion translations
 export function translateEmotion(emotion: string, locale: Locale): string {
-  const translation = EMOTION_TRANSLATIONS[emotion.toLowerCase()];
-  if (!translation) return emotion;
-  return locale === 'id' ? translation.id : translation.en;
+  if (locale === 'en') return emotion;
+  
+  const translations: Record<string, string> = {
+    'interest': 'minat',
+    'trust': 'kepercayaan',
+    'fear': 'ketakutan',
+    'skepticism': 'skeptisisme',
+    'satisfaction': 'kepuasan',
+    'joy': 'kegembiraan',
+    'anticipation': 'antisipasi',
+    'surprise': 'kejutan',
+    'sadness': 'kesedihan',
+    'disgust': 'jijik',
+    'anger': 'kemarahan',
+  };
+  
+  return translations[emotion.toLowerCase()] || emotion;
 }

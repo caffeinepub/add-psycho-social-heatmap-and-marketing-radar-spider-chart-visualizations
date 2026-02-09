@@ -1,14 +1,12 @@
 # Specification
 
 ## Summary
-**Goal:** Allow users to upload CSV/JSON datasets with the exact schema `ID, Date, Region, Source, User, text, Aspect_Category, Keywords_Extracted` and ingest each row as a separate document reliably.
+**Goal:** Make dataset uploads more resilient to backend failures by preventing `addCleaningLog` errors from crashing uploads and by showing clear, actionable English errors when the backend canister is stopped (IC0508).
 
 **Planned changes:**
-- Update CSV upload validation to accept a header row matching `ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted` (case-insensitive, whitespace-tolerant) and show clear errors when parsing/validation fails.
-- Update JSON upload validation to accept an array of objects whose keys match `ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted` (case-insensitive) and show clear errors when parsing/validation fails.
-- For valid CSV/JSON uploads, split the dataset into multiple documents and upload one backend document per row using the row’s `text` as `Document.content`.
-- Enforce required `text` field/column: block upload with a clear error if missing; skip rows with empty `text` while completing the upload and show a warning with the number of skipped rows.
-- Improve debuggability of multi-row uploads by reporting per-upload success/failure counts (and not silently failing).
-- Preserve existing behavior: `.txt` uploads still create a single document; file input continues to allow `.txt`, `.csv`, `.json`.
+- Update single (`useUploadDocument`) and batch (`useUploadDocumentsBatch`) upload flows to wrap `actor.addCleaningLog(...)` in try/catch so logging failures do not cause unhandled rejections or crash the overall upload.
+- Detect canister-stopped replica rejections (e.g., IC0508 / reject message contains “is stopped”) and fail the upload with a clear English error stating the backend canister is stopped and must be started/redeployed before uploads can proceed.
+- Improve Dashboard upload error UI so `DatasetUploadStatus` and toast errors show an English summary and include the underlying replica rejection/error message for debugging, and ensure the status reliably transitions to an error state after failures.
+- Ensure all newly introduced user-facing strings for these upload-failure cases are in English.
 
-**User-visible outcome:** Users can upload properly formatted CSV/JSON datasets without unexpected failures; each valid row becomes its own document, dashboards update automatically, and the UI clearly reports parsing issues, validation errors, skipped rows, and partial upload failures.
+**User-visible outcome:** Uploads no longer fail solely due to `addCleaningLog` issues; when uploads do fail (including canister-stopped cases), the Dashboard clearly shows an English error with the underlying rejection details and does not get stuck in “uploading”.

@@ -1,74 +1,73 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Resilient CSV/JSON dataset uploads mapped to per-row documents",
+  "title": "Resilient dataset uploads with IC0508 (canister stopped) error handling and debuggable UI errors",
   "requirements": [
     {
-      "id": "REQ-22",
-      "summary": "Accept CSV/JSON dataset uploads with the exact required schema and validate required `text` before attempting any uploads.",
+      "id": "REQ-28",
+      "summary": "Make single and batch dataset uploads resilient by isolating addCleaningLog failures and mapping canister-stopped (IC0508) rejections to a clear, actionable error.",
       "acceptanceCriteria": [
-        "Uploading a .csv file with a header row containing exactly the columns `ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted` (case-insensitive, whitespace-tolerant) succeeds.",
-        "Uploading a .json file containing an array of objects with keys matching `ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted` (case-insensitive) succeeds.",
-        "If a CSV/JSON upload is missing the required `text` field/column, the UI shows a clear error message and does not attempt to upload any documents.",
-        "If a CSV/JSON upload has the required schema but contains some rows with empty `text`, those rows are skipped and the upload still succeeds for the remaining valid rows (with a clear warning message indicating how many rows were skipped)."
+        "Uploading a .txt file does not fail solely because `addCleaningLog` fails; the document upload still proceeds when the backend is otherwise available.",
+        "Uploading a .csv/.json dataset does not fail solely because `addCleaningLog` fails; batch upload still proceeds when the backend is otherwise available.",
+        "When the backend canister is stopped (IC0508 / reject_message contains \"is stopped\"), the upload mutation rejects with a clear English error message indicating the canister is stopped and must be started/redeployed before uploads can work.",
+        "No unhandled promise rejections occur during upload when `addCleaningLog` fails."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/lib/datasetIngestion.ts",
+          "path": "frontend/src/lib/icReplicaErrors.ts",
           "operation": "create",
-          "description": "Add dataset parsing + schema validation utilities for .csv/.json uploads: normalize header/keys (case-insensitive, whitespace-tolerant), enforce required columns list, detect missing required `text`, extract per-row `text`, and compute skipped-empty-text counts. Ensure parser errors surface as typed/structured errors for UI display."
+          "description": "Add shared helpers to (1) extract replica rejection details from unknown errors, (2) detect canister-stopped failures (e.g., error_code IC0508 and/or reject_message including \"is stopped\"), and (3) produce an English, actionable error message for canister-stopped upload failures."
         },
-        {
-          "path": "frontend/src/pages/Dashboard.tsx",
-          "operation": "modify",
-          "description": "Update the file upload handler to branch by file type: keep .txt behavior as single-document upload, and for .csv/.json use the new dataset ingestion utilities to validate the schema (including `text` presence) before starting any uploads; on validation failure, show a clear error message and abort without calling upload mutations."
-        }
-      ]
-    },
-    {
-      "id": "REQ-23",
-      "summary": "For valid dataset uploads, upload each row as a separate document using the row’s `text` value as Document.content and refresh visualizations automatically.",
-      "acceptanceCriteria": [
-        "A CSV with N valid rows (non-empty `text`) results in N new documents in `getAllDocuments()` (not 1 document containing the whole file).",
-        "A JSON array with N valid entries (non-empty `text`) results in N new documents in `getAllDocuments()`.",
-        "After a successful dataset upload, Dashboard visualizations update based on the new documents (no manual refresh needed)."
-      ],
-      "file_operations": [
         {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Add a batch upload mutation (e.g., `useUploadDocumentsBatch`) that accepts an array of document contents and uploads them as multiple `uploadDocument` calls, with optional progress callbacks. Ensure React Query invalidations for documents/analytics occur once at the end so Dashboard visualizations refresh automatically without manual reload."
-        },
-        {
-          "path": "frontend/src/pages/Dashboard.tsx",
-          "operation": "modify",
-          "description": "Wire dataset parsing output (array of valid `text` rows) into the new batch upload mutation so each row becomes its own backend document; ensure empty `text` rows are not uploaded and success navigations (if any) only occur after the batch completes."
+          "description": "Update `useUploadDocument` and `useUploadDocumentsBatch` to wrap `actor.addCleaningLog(...)` in try/catch; if logging fails and is NOT canister-stopped, continue with `uploadDocument` when possible; if it IS canister-stopped (IC0508 / message contains \"is stopped\"), throw an Error with an explicit English message stating the backend canister is stopped and uploads cannot proceed until it is started/redeployed. Ensure all promises are awaited/handled to avoid unhandled rejections."
         }
       ]
     },
     {
-      "id": "REQ-24",
-      "summary": "Improve dataset upload UX with clear parse/validation errors, batch progress reporting, and per-row success/failure summaries while preserving .txt single-document uploads.",
+      "id": "REQ-29",
+      "summary": "Update the Dashboard upload UI to show English, user-friendly error states that include underlying replica rejection details for debugging.",
       "acceptanceCriteria": [
-        "If parsing fails (e.g., malformed CSV), the UI shows a clear error message describing that the file could not be parsed.",
-        "If uploading one or more rows fails during a multi-row upload, the UI reports how many rows succeeded and how many failed, and the operation does not silently fail.",
-        "The file input allows `.txt`, `.csv`, `.json` as before; `.txt` continues to upload as a single document (current behavior preserved)."
+        "If an upload fails due to IC0508/canister stopped, the Dashboard shows an error status card and a toast with English text; the displayed error includes the underlying reject message (or a mapped English explanation) so it is actionable.",
+        "If an upload fails for a non-IC0508 reason, the UI still shows a clear English error message and preserves the original error message for debugging.",
+        "The upload status card does not remain stuck in \"uploading\" after any failure; it transitions to the \"error\" state reliably."
       ],
       "file_operations": [
         {
+          "path": "frontend/src/pages/Dashboard.tsx",
+          "operation": "modify",
+          "description": "Use the shared replica error helpers to build an English toast error summary and include underlying error details (e.g., reject message) on failures for both single (.txt) and batch (.csv/.json) uploads; ensure the `DatasetUploadStatus` error state receives the debuggable error detail string so the status card reliably transitions to 'error' and is not stuck in 'uploading'."
+        },
+        {
           "path": "frontend/src/components/DatasetUploadStatus.tsx",
-          "operation": "create",
-          "description": "Create a presentational component to display dataset upload state (parsing/validating/uploading/done), including total rows, uploaded count, failed count, skipped-empty-text count, and the latest error message if present; use existing shadcn-ui components already in the project (do not modify `frontend/src/components/ui/*`). Verify the component's usage instructions before implementing."
+          "operation": "modify",
+          "description": "Adjust the error-state copy to be English and explicitly present a clear summary plus the provided underlying error detail (when available), so replica rejection messages (e.g., canister stopped) are visible and actionable."
+        }
+      ]
+    },
+    {
+      "id": "REQ-30",
+      "summary": "Ensure all newly introduced canister-stopped/upload-failure strings are English (titles, descriptions, and call-to-action guidance).",
+      "acceptanceCriteria": [
+        "All new strings added as part of the upload error handling (including IC0508 mapping) are English.",
+        "No Indonesian text is introduced for any new error-handling UI added in this change."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/lib/icReplicaErrors.ts",
+          "operation": "modify",
+          "description": "Ensure all user-facing strings produced by the new error mapping helpers (including IC0508/canister-stopped guidance) are written in English."
         },
         {
           "path": "frontend/src/pages/Dashboard.tsx",
           "operation": "modify",
-          "description": "Add resilient UI state management around uploads: show parse/validation errors from dataset ingestion, show live upload progress during multi-row uploads, and on completion show a clear summary (succeeded/failed/skipped). Keep `.txt` flow unchanged (single upload using existing mutation) and ensure `.csv/.json` failures do not silently fail."
+          "description": "Ensure any newly added toast/status messaging related to upload failures and canister-stopped handling is English-only while preserving underlying technical error text for debugging."
         },
         {
-          "path": "frontend/src/lib/datasetIngestion.ts",
+          "path": "frontend/src/components/DatasetUploadStatus.tsx",
           "operation": "modify",
-          "description": "Extend ingestion utilities to produce debuggable error messages for malformed CSV/JSON and schema mismatches, plus row-level validation results that enable UI to summarize skipped/invalid rows without attempting uploads when schema is invalid."
+          "description": "Ensure any newly added/updated error-state labels and descriptions introduced for improved upload failure handling are English-only."
         }
       ]
     }

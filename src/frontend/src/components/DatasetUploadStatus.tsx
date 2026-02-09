@@ -33,40 +33,40 @@ export function DatasetUploadStatus({
           {state === 'parsing' && (
             <>
               <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              Mem-parse File...
+              Parsing File...
             </>
           )}
           {state === 'validating' && (
             <>
               <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              Memvalidasi Data...
+              Validating Data...
             </>
           )}
           {state === 'uploading' && (
             <>
               <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              Mengupload Dataset...
+              Uploading Dataset...
             </>
           )}
           {state === 'done' && (
             <>
               <CheckCircle2 className="h-5 w-5 text-green-600" />
-              Upload Selesai
+              Upload Complete
             </>
           )}
           {state === 'error' && (
             <>
               <XCircle className="h-5 w-5 text-destructive" />
-              Upload Gagal
+              Upload Failed
             </>
           )}
         </CardTitle>
         <CardDescription>
-          {state === 'parsing' && 'Membaca dan mem-parse isi file...'}
-          {state === 'validating' && 'Memeriksa struktur dan kolom yang diperlukan...'}
-          {state === 'uploading' && `Mengupload ${uploadedCount} dari ${totalRows} baris...`}
-          {state === 'done' && 'Dataset berhasil diupload dan siap dianalisis'}
-          {state === 'error' && 'Terjadi kesalahan saat memproses file'}
+          {state === 'parsing' && 'Reading and parsing file contents...'}
+          {state === 'validating' && 'Checking structure and required columns...'}
+          {state === 'uploading' && `Uploading ${uploadedCount} of ${totalRows} rows...`}
+          {state === 'done' && 'Dataset successfully uploaded and ready for analysis'}
+          {state === 'error' && 'An error occurred while processing the file'}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -74,7 +74,7 @@ export function DatasetUploadStatus({
           <div className="space-y-2">
             <Progress value={progress} className="h-2" />
             <div className="flex justify-between text-sm text-muted-foreground">
-              <span>{uploadedCount} / {totalRows} baris</span>
+              <span>{uploadedCount} / {totalRows} rows</span>
               <span>{Math.round(progress)}%</span>
             </div>
           </div>
@@ -86,11 +86,11 @@ export function DatasetUploadStatus({
               <CheckCircle2 className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-900 dark:text-green-100">
                 <div className="space-y-1">
-                  <div className="font-medium">Upload berhasil!</div>
+                  <div className="font-medium">Upload successful!</div>
                   <div className="text-sm">
-                    • {uploadedCount} baris berhasil diupload
-                    {skippedCount > 0 && ` • ${skippedCount} baris dilewati (text kosong)`}
-                    {failedCount > 0 && ` • ${failedCount} baris gagal`}
+                    • {uploadedCount} rows uploaded successfully
+                    {skippedCount > 0 && ` • ${skippedCount} rows skipped (empty text)`}
+                    {failedCount > 0 && ` • ${failedCount} rows failed`}
                   </div>
                 </div>
               </AlertDescription>
@@ -102,9 +102,11 @@ export function DatasetUploadStatus({
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              <div className="space-y-1">
-                <div className="font-medium">Error:</div>
-                <div className="text-sm">{errorMessage}</div>
+              <div className="space-y-2">
+                <div className="font-medium">Error Details:</div>
+                <div className="whitespace-pre-wrap font-mono text-xs bg-destructive/10 p-2 rounded border border-destructive/20">
+                  {errorMessage}
+                </div>
               </div>
             </AlertDescription>
           </Alert>
@@ -114,7 +116,7 @@ export function DatasetUploadStatus({
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
-              {skippedCount} baris dilewati karena kolom "text" kosong
+              {skippedCount} rows skipped due to empty "text" column
             </AlertDescription>
           </Alert>
         )}

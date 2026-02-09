@@ -18,6 +18,7 @@ import { MarketingRadarChart } from '../components/MarketingRadarChart';
 import { MarketingMixRadarChart } from '../components/MarketingMixRadarChart';
 import { DatasetUploadStatus, DatasetUploadStatusProps } from '../components/DatasetUploadStatus';
 import { parseDatasetFile } from '../lib/datasetIngestion';
+import { mapUploadError } from '../lib/icReplicaErrors';
 
 export function Dashboard() {
   const [textInput, setTextInput] = useState('');
@@ -45,7 +46,9 @@ export function Dashboard() {
         navigate({ to: '/analysis' });
       }, 100);
     } catch (error) {
-      toast.error('Gagal menganalisis teks');
+      const { summary, details } = mapUploadError(error);
+      toast.error(summary);
+      console.error('Upload error:', details);
     }
   };
 
@@ -72,7 +75,9 @@ export function Dashboard() {
             navigate({ to: '/analysis' });
           }, 100);
         } catch (error) {
-          toast.error('Gagal mengupload file');
+          const { summary, details } = mapUploadError(error);
+          toast.error(summary);
+          console.error('Upload error:', details);
         }
         return;
       }
@@ -89,7 +94,7 @@ export function Dashboard() {
             state: 'error',
             errorMessage: parseResult.error,
           });
-          toast.error(parseResult.error || 'Gagal mem-parse file');
+          toast.error(parseResult.error || 'Failed to parse file');
           return;
         }
 
@@ -103,10 +108,10 @@ export function Dashboard() {
         if (parseResult.validCount === 0) {
           setUploadStatus({
             state: 'error',
-            errorMessage: 'Tidak ada baris valid untuk diupload',
+            errorMessage: 'No valid rows to upload',
             skippedCount: parseResult.skippedCount,
           });
-          toast.error('Tidak ada baris valid untuk diupload');
+          toast.error('No valid rows to upload');
           return;
         }
 
@@ -121,7 +126,7 @@ export function Dashboard() {
         try {
           const contents = parseResult.rows.map(row => row.text);
           
-          const results = await batchUploadMutation.mutateAsync({
+          const result = await batchUploadMutation.mutateAsync({
             contents,
             onProgress: (uploaded, total) => {
               setUploadStatus({
@@ -137,233 +142,311 @@ export function Dashboard() {
           setUploadStatus({
             state: 'done',
             totalRows: parseResult.validCount,
-            uploadedCount: results.success.length,
-            failedCount: results.failed.length,
+            uploadedCount: result.success.length,
+            failedCount: result.failed.length,
             skippedCount: parseResult.skippedCount,
           });
 
-          if (results.success.length > 0) {
-            toast.success(`Dataset berhasil diupload! ${results.success.length} dokumen ditambahkan.`);
-            setTimeout(() => {
-              setUploadStatus({ state: 'idle' });
-              navigate({ to: '/analysis' });
-            }, 2000);
-          } else {
-            toast.error('Semua baris gagal diupload');
-          }
+          toast.success(`Dataset uploaded successfully! ${result.success.length} rows uploaded.`);
+          
+          // Navigate to analysis page after a short delay
+          setTimeout(() => {
+            navigate({ to: '/analysis' });
+          }, 2000);
         } catch (error) {
+          const { summary, details } = mapUploadError(error);
+          
           setUploadStatus({
             state: 'error',
-            errorMessage: error instanceof Error ? error.message : 'Gagal mengupload dataset',
+            errorMessage: `${summary}\n\nTechnical details: ${details}`,
             totalRows: parseResult.validCount,
+            uploadedCount: 0,
             skippedCount: parseResult.skippedCount,
           });
-          toast.error('Gagal mengupload dataset');
+          
+          toast.error(summary);
+          console.error('Batch upload error:', details);
         }
         return;
       }
 
       // Unsupported file type
-      toast.error('Format file tidak didukung. Gunakan .txt, .csv, atau .json');
-    };
-
-    reader.onerror = () => {
-      setUploadStatus({
-        state: 'error',
-        errorMessage: 'Gagal membaca file',
-      });
-      toast.error('Gagal membaca file');
+      toast.error('Unsupported file type. Please upload .txt, .csv, or .json files.');
     };
 
     reader.readAsText(file);
   };
 
   return (
-    <div className="container py-8">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* Hero Section */}
-      <section className="mb-12 grid gap-6 lg:grid-cols-2">
-        <div className="flex flex-col justify-center space-y-4">
-          <div className="inline-flex w-fit items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
-            <Sparkles className="h-4 w-4" />
-            Powered by Transformer Ensemble
-          </div>
-          <h1 className="text-4xl font-bold tracking-tight lg:text-5xl">
-            Analisis Emosi Konsumen Motor Listrik
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            Gunakan teknologi AI ensemble (BERT, RoBERTa, DistilBERT) dengan framework Condorcet's Jury
-            Theorem untuk menganalisis sentimen dan emosi dari komentar media sosial.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <Button size="lg" onClick={() => navigate({ to: '/analysis' })}>
-              <BarChart3 className="mr-2 h-5 w-5" />
-              Lihat Analisis
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate({ to: '/metrics' })}>
-              <TrendingUp className="mr-2 h-5 w-5" />
-              Metrik Performa
-            </Button>
-          </div>
-        </div>
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-chart-1/20 to-chart-2/20 blur-3xl" />
-          <img
-            src="/assets/generated/electric-motorcycle-hero.dim_800x600.png"
-            alt="Electric Motorcycle"
-            className="relative rounded-2xl shadow-2xl"
-          />
-        </div>
-      </section>
-
-      {/* Quick Analysis Section */}
-      <section className="mb-12">
-        <Card className="border-2">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              Analisis Cepat
-            </CardTitle>
-            <CardDescription>
-              Masukkan teks atau upload file (.txt, .csv, .json) untuk analisis emosi instan
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="text-input">Input Teks</Label>
-              <Textarea
-                id="text-input"
-                placeholder="Contoh: Motor listrik Gesits ini sangat bagus, saya sangat puas dengan performanya..."
-                value={textInput}
-                onChange={(e) => setTextInput(e.target.value)}
-                rows={4}
-                className="resize-none"
-              />
+      <section className="relative overflow-hidden border-b bg-gradient-to-br from-primary/10 via-background to-secondary/10 px-4 py-16 sm:px-6 lg:px-8">
+        <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.5))]" />
+        <div className="relative mx-auto max-w-7xl">
+          <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+            {/* Left: Text Content */}
+            <div className="flex flex-col justify-center space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-full border bg-background/50 px-4 py-2 text-sm backdrop-blur-sm w-fit">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span className="font-medium">AI-Powered Emotion Analysis</span>
+              </div>
+              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+                Understand Customer
+                <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"> Emotions</span>
+              </h1>
+              <p className="text-lg text-muted-foreground sm:text-xl">
+                Analyze social media comments and reviews to uncover emotional insights about Indonesian electric motorcycles. 
+                Make data-driven decisions with advanced sentiment analysis.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <Button size="lg" onClick={() => navigate({ to: '/analysis' })} className="gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  View Analysis
+                </Button>
+                <Button size="lg" variant="outline" onClick={() => navigate({ to: '/metrics' })} className="gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Model Metrics
+                </Button>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <Button onClick={handleAnalyze} disabled={uploadMutation.isPending || batchUploadMutation.isPending}>
-                {uploadMutation.isPending ? (
-                  <>
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    Menganalisis...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Analisis Sekarang
-                  </>
-                )}
-              </Button>
-              <Button variant="outline" asChild disabled={batchUploadMutation.isPending}>
-                <label htmlFor="file-upload" className="cursor-pointer">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Upload File
-                  <input
-                    id="file-upload"
-                    type="file"
-                    accept=".txt,.csv,.json"
-                    className="hidden"
-                    onChange={handleFileUpload}
-                    disabled={batchUploadMutation.isPending}
-                  />
-                </label>
-              </Button>
+
+            {/* Right: Image */}
+            <div className="relative flex items-center justify-center">
+              <div className="relative h-[300px] w-full overflow-hidden rounded-2xl border bg-background/50 shadow-2xl backdrop-blur-sm lg:h-[400px]">
+                <img
+                  src="/assets/generated/electric-motorcycle-hero.dim_800x600.png"
+                  alt="Electric Motorcycle Analysis"
+                  className="h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Dataset Upload Status */}
-      {uploadStatus.state !== 'idle' && (
-        <section className="mb-12">
-          <DatasetUploadStatus {...uploadStatus} />
-        </section>
-      )}
-
-      {/* Stats Overview */}
-      <section className="mb-12 grid gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Analisis</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{documents.length}</div>
-            <p className="text-xs text-muted-foreground">Dokumen dianalisis</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Model Ensemble</CardTitle>
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">BERT, RoBERTa, DistilBERT</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Algoritma CJT</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">3</div>
-            <p className="text-xs text-muted-foreground">JC, JA, JD</p>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Charts and Recent Analysis */}
-      <section className="space-y-6">
-        <div className="grid gap-6 lg:grid-cols-2">
-          <EmotionChart 
-            key={`emotion-chart-${documents.length}`}
-            documents={documents}
-            hasActiveDataset={hasActiveDataset}
-          />
-          <RecentAnalysis documents={documents.slice(0, 5)} />
-        </div>
-        
-        {/* Emotion Distribution Chart - key ensures re-render on document count change */}
-        <EmotionDistributionChart 
-          key={`emotion-dist-${documents.length}`}
-          documents={documents} 
-          hasActiveDataset={hasActiveDataset} 
-        />
-        
-        {/* Brand Emotion Chart - key ensures re-render on document count change */}
-        <BrandEmotionChart 
-          key={`brand-emotion-${documents.length}`}
-          documents={documents} 
-        />
-        
-        {/* Gender & Location Analysis */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <GenderEmotionChart key={`gender-${documents.length}`} />
-          <GeoEmotionMap key={`geo-${documents.length}`} />
-        </div>
-        
-        {/* Psycho-Social Heatmap - key ensures re-render on document count change */}
-        <PsychoSocialHeatmap 
-          key={`psycho-${documents.length}`}
-          documents={documents} 
-          hasActiveDataset={hasActiveDataset} 
-        />
-        
-        {/* Marketing Radar Charts - key ensures re-render on document count change */}
-        <div className="grid gap-6 lg:grid-cols-2">
-          <MarketingRadarChart 
-            key={`marketing-${documents.length}`}
-            documents={documents} 
-            hasActiveDataset={hasActiveDataset} 
-          />
-          <MarketingMixRadarChart 
-            key={`marketing-mix-${documents.length}`}
-            documents={documents} 
-            hasActiveDataset={hasActiveDataset} 
-          />
+          </div>
         </div>
       </section>
+
+      {/* Main Content */}
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="space-y-12">
+          {/* Quick Analysis Section */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <Sparkles className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">Quick Analysis</h2>
+                <p className="text-sm text-muted-foreground">Analyze text or upload datasets instantly</p>
+              </div>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Text Input Card */}
+              <Card className="border-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Analyze Text
+                  </CardTitle>
+                  <CardDescription>
+                    Enter text to analyze emotions and sentiment
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="text-input">Text Input</Label>
+                    <Textarea
+                      id="text-input"
+                      placeholder="Enter text to analyze (e.g., social media comment, review)..."
+                      value={textInput}
+                      onChange={(e) => setTextInput(e.target.value)}
+                      rows={6}
+                      className="resize-none"
+                    />
+                  </div>
+                  <Button 
+                    onClick={handleAnalyze} 
+                    disabled={uploadMutation.isPending || !textInput.trim()}
+                    className="w-full gap-2"
+                  >
+                    {uploadMutation.isPending ? (
+                      <>
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-4 w-4" />
+                        Analyze Text
+                      </>
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* File Upload Card */}
+              <Card className="border-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Upload className="h-5 w-5 text-primary" />
+                    Upload Dataset
+                  </CardTitle>
+                  <CardDescription>
+                    Upload .txt, .csv, or .json files for batch analysis
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="file-upload">File Upload</Label>
+                    <div className="flex items-center justify-center w-full">
+                      <label
+                        htmlFor="file-upload"
+                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/80 transition-colors"
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
+                          <p className="mb-2 text-sm text-muted-foreground">
+                            <span className="font-semibold">Click to upload</span> or drag and drop
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            TXT, CSV, or JSON files
+                          </p>
+                        </div>
+                        <input
+                          id="file-upload"
+                          type="file"
+                          className="hidden"
+                          accept=".txt,.csv,.json"
+                          onChange={handleFileUpload}
+                          disabled={uploadMutation.isPending || batchUploadMutation.isPending}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p>• <strong>.txt</strong>: Single document analysis</p>
+                    <p>• <strong>.csv/.json</strong>: Batch dataset upload with required columns</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Dataset Upload Status */}
+            {uploadStatus.state !== 'idle' && (
+              <DatasetUploadStatus {...uploadStatus} />
+            )}
+          </section>
+
+          {/* Statistics Cards */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <BarChart3 className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">Dataset Overview</h2>
+                <p className="text-sm text-muted-foreground">Current analysis statistics</p>
+              </div>
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardDescription>Total Documents</CardDescription>
+                  <CardTitle className="text-3xl">{isLoading ? '...' : documents.length}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">
+                    {hasActiveDataset ? 'Active dataset' : 'No data yet'}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardDescription>Analysis Status</CardDescription>
+                  <CardTitle className="text-3xl">
+                    {hasActiveDataset ? '✓' : '—'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">
+                    {hasActiveDataset ? 'Ready for insights' : 'Upload data to begin'}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardDescription>Emotion Categories</CardDescription>
+                  <CardTitle className="text-3xl">5</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">
+                    Interest, Trust, Fear, Skepticism, Satisfaction
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardDescription>AI Models</CardDescription>
+                  <CardTitle className="text-3xl">3</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-xs text-muted-foreground">
+                    BERT, RoBERTa, DistilBERT
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          {/* Visualizations Grid */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">Emotion Insights</h2>
+                <p className="text-sm text-muted-foreground">Visual analysis of emotional patterns</p>
+              </div>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <EmotionChart documents={documents} />
+              <EmotionDistributionChart documents={documents} />
+              <BrandEmotionChart documents={documents} />
+              <GenderEmotionChart />
+              <GeoEmotionMap />
+              <RecentAnalysis documents={documents} />
+            </div>
+          </section>
+
+          {/* Advanced Metrics */}
+          <section className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <BarChart3 className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold">Advanced Metrics</h2>
+                <p className="text-sm text-muted-foreground">Psycho-social and marketing analysis</p>
+              </div>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <PsychoSocialHeatmap documents={documents} />
+              <MarketingRadarChart documents={documents} />
+            </div>
+
+            <div className="grid gap-6">
+              <MarketingMixRadarChart documents={documents} />
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
   );
 }
