@@ -1,67 +1,92 @@
 {
   "kind": "build_request",
-  "title": "Fix dataset upload failures by handling stopped-canister (IC0508) errors and improving upload resilience",
-  "priority": "high",
+  "title": "Auto-generate missing Purchase Intention fields on dataset upload and include them in reports",
+  "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-28",
-      "text": "Make the dataset upload flow resilient to backend failures by preventing a failed `addCleaningLog` call from crashing the entire upload operation, and by surfacing a clear, actionable error when the backend canister is stopped (IC0508). Update both single upload (`useUploadDocument`) and batch upload (`useUploadDocumentsBatch`) to (a) wrap `actor.addCleaningLog(...)` in try/catch, (b) if logging fails, continue with `uploadDocument` when possible, and (c) if the failure is an IC replica/canister-stopped rejection (e.g., reject_message includes \"is stopped\" / error_code IC0508), throw an Error with an English message that explicitly states the backend canister is stopped and the upload cannot proceed until it is started/redeployed.",
+      "id": "REQ-33",
+      "text": "Extend dataset ingestion to recognize optional Purchase Intention columns (`intention_level`, `intention_score`) when present in uploaded CSV/JSON, and when they are missing, automatically generate deterministic values for each parsed row.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
-          "The replica returned a rejection error... Reject text: Canister 33tw5-ziaaa-aaaai-q5roq-cai is stopped ... Method name: addCleaningLog ... terjadi eror dalam upload data, tolong perbaiki"
+          "tolong menambahkan kolom ini secara otomatis"
         ]
       },
       "acceptanceCriteria": [
-        "Uploading a .txt file does not fail solely because `addCleaningLog` fails; the document upload still proceeds when the backend is otherwise available.",
-        "Uploading a .csv/.json dataset does not fail solely because `addCleaningLog` fails; batch upload still proceeds when the backend is otherwise available.",
-        "When the backend canister is stopped (IC0508 / reject_message contains \"is stopped\"), the upload mutation rejects with a clear English error message indicating the canister is stopped and must be started/redeployed before uploads can work.",
-        "No unhandled promise rejections occur during upload when `addCleaningLog` fails."
+        "For CSV uploads, header matching is case-insensitive and whitespace-tolerant for `intention_level` and `intention_score` (e.g., `Intention_Score`, `intention score`).",
+        "For JSON uploads, key matching is case-insensitive and whitespace-tolerant for `intention_level` and `intention_score`.",
+        "If one or both intention columns are absent, ingestion still succeeds and each parsed row is assigned generated `intention_level` and `intention_score` values.",
+        "Generation is deterministic (no `Math.random`, time-based seeds, or non-deterministic ordering) and produces the same outputs for the same row text/content."
       ]
     },
     {
-      "id": "REQ-29",
-      "text": "Update the Dashboard upload UI to display backend replica rejection details in a user-friendly, English error state. When an upload fails, ensure `DatasetUploadStatus` (error state) and the toast error message show an English summary and include the underlying error message (e.g., reject_message) so the issue is debuggable.",
+      "id": "REQ-34",
+      "text": "Add a deterministic frontend utility to compute per-row Purchase Intention from text, producing `intention_score` (0–100 integer) and `intention_level` (one of `low|medium|high`) with clear clamping and validation.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
         ],
         "quotes": [
-          "The replica returned a rejection error... reject_message: \"Canister 33tw5-ziaaa-aaaai-q5roq-cai is stopped\""
+          "tolong menambahkan kolom ini secara otomatis"
         ]
       },
       "acceptanceCriteria": [
-        "If an upload fails due to IC0508/canister stopped, the Dashboard shows an error status card and a toast with English text; the displayed error includes the underlying reject message (or a mapped English explanation) so it is actionable.",
-        "If an upload fails for a non-IC0508 reason, the UI still shows a clear English error message and preserves the original error message for debugging.",
-        "The upload status card does not remain stuck in \"uploading\" after any failure; it transitions to the \"error\" state reliably."
+        "A new utility exists under `frontend/src/lib` that exports a function to derive `{ intention_score, intention_level }` from a single row’s text.",
+        "`intention_score` is always an integer between 0 and 100 (inclusive).",
+        "`intention_level` is derived from the score using a documented threshold mapping (e.g., low/medium/high) and never returns other values.",
+        "The utility does not depend on any non-deterministic functions (e.g., `Math.random`)."
       ]
     },
     {
-      "id": "REQ-30",
-      "text": "Ensure all newly introduced user-facing strings related to the canister-stopped/upload-failure handling are in English (including mapped error titles, descriptions, and call-to-action guidance).",
+      "id": "REQ-35",
+      "text": "Update Strategic Recommendation Report generation to treat Purchase Intention data as available when it can be derived from the uploaded dataset (including auto-generated intention values), and remove the “Purchase Intention data not available” note in that case.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-4"
+          "msg-1"
+        ],
+        "quotes": [
+          "tolong menambahkan kolom ini secara otomatis"
         ]
       },
       "acceptanceCriteria": [
-        "All new strings added as part of the upload error handling (including IC0508 mapping) are English.",
-        "No Indonesian text is introduced for any new error-handling UI added in this change."
+        "When documents/dataset rows have either provided or auto-generated intention values, `generateStrategicReport(...)` sets `dataAvailability.hasPurchaseIntentionData` to `true`.",
+        "When purchase intention is available (provided or auto-generated), the report UI does not display a “Purchase Intention data not available” message/state for the current dataset.",
+        "All newly introduced user-facing text for this change is in English."
+      ]
+    },
+    {
+      "id": "REQ-36",
+      "text": "Ensure the Purchase Intention page and its charts can render using derived intention values when the original upload lacked `intention_level` / `intention_score`, without requiring backend schema changes.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "tolong menambahkan kolom ini secara otomatis"
+        ]
+      },
+      "acceptanceCriteria": [
+        "With a dataset uploaded that does not include `intention_level` / `intention_score`, the Purchase Intention page renders non-empty states using derived intention values (as long as documents exist).",
+        "No backend changes are required to store new fields; the feature works via frontend derivation from the currently loaded documents/dataset rows.",
+        "The page and charts handle the standard visualization states (loading, empty dataset, insufficient/invalid derived metric, ready) without runtime errors."
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files under `frontend/src/components/ui` or any other paths listed in `frontend.immutablePaths`.",
-    "Backend remains a single Motoko actor in `backend/main.mo`; do not add additional backend services."
+    "Do not modify any files under `frontend/src/components/ui` or other immutable frontend paths listed in SYSTEM_CONTEXT.",
+    "Keep the backend architecture as a single Motoko actor; do not introduce additional canisters or external databases.",
+    "Do not change the backend `Document` schema; implement intention field support via frontend ingestion/derivation."
   ],
   "nonGoals": [
-    "Starting/redeploying/stopping the canister from within the application (operational action outside app scope).",
-    "Changing the dataset parsing/validation rules beyond what is required to improve error handling for backend upload failures."
+    "Building a true ML-based purchase-intention model or integrating external AI services.",
+    "Guaranteeing that derived purchase-intention values match a real-world ground truth; the requirement is deterministic automatic completion.",
+    "Adding new authentication methods beyond Internet Identity."
   ],
   "imageRequirements": {
     "required": [],
@@ -70,7 +95,9 @@
   "userProfileUpdate": {
     "goalsToAdd": [],
     "goalsToRemove": [],
-    "preferencesToAdd": [],
+    "preferencesToAdd": [
+      "Prefer English for user-facing text in build specifications."
+    ],
     "preferencesToRemove": [],
     "miscToAdd": [],
     "miscToRemove": [],

@@ -1,22 +1,19 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ShoppingCart, TrendingUp, Users, MapPin } from 'lucide-react';
+import { ShoppingCart, TrendingUp, Users } from 'lucide-react';
 import { PurchaseIntentionChart } from '../components/PurchaseIntentionChart';
 import { IntentionBrandCorrelation } from '../components/IntentionBrandCorrelation';
 import { IntentionTrendChart } from '../components/IntentionTrendChart';
 import { IntentionDemographics } from '../components/IntentionDemographics';
-import { usePurchaseIntentionData, useGetAllDocuments } from '../hooks/useQueries';
+import { useGetAllDocuments } from '../hooks/useQueries';
 import { useMemo } from 'react';
+import { computeIntentionDistribution, computeAverageIntentionScore } from '../lib/purchaseIntentionAggregation';
 
 export function PurchaseIntentionPage() {
-  const { data: intentionData, isLoading } = usePurchaseIntentionData();
-  const { data: documents = [] } = useGetAllDocuments();
+  const { data: documents = [], isLoading } = useGetAllDocuments();
 
-  // Compute dataset status from documents
-  const hasActiveDataset = useMemo(() => documents.length > 0, [documents.length]);
-
-  // Calculate stats from intention data
+  // Compute intention stats from documents
   const stats = useMemo(() => {
-    if (!intentionData || !intentionData.distribution) {
+    if (documents.length === 0) {
       return {
         totalIntentions: 0,
         highPercentage: 0,
@@ -24,17 +21,17 @@ export function PurchaseIntentionPage() {
       };
     }
 
-    const { high, medium, low } = intentionData.distribution;
-    const total = Number(high) + Number(medium) + Number(low);
-    const highPercentage = total > 0 ? (Number(high) / total) * 100 : 0;
-    const avgScore = intentionData.individual?.score ? Number(intentionData.individual.score) : 0;
+    const distribution = computeIntentionDistribution(documents);
+    const total = distribution.high + distribution.medium + distribution.low;
+    const highPercentage = total > 0 ? (distribution.high / total) * 100 : 0;
+    const avgScore = computeAverageIntentionScore(documents);
 
     return {
       totalIntentions: total,
       highPercentage: highPercentage.toFixed(1),
       avgScore: avgScore.toFixed(0),
     };
-  }, [intentionData]);
+  }, [documents]);
 
   if (isLoading) {
     return (

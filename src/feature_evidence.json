@@ -2,11 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-make-the-dataset-upload-flow-resilient-to-backend-failures-by-preventing-a-failed-addcleaninglog-call-from-crashing-the-entire-upload-operation-and-by-surfacing-a-clear-actionable-error-when-the-backend-canister-is-stopped-ic0508-update-both-single-upload-useuploaddocument-and-batch-upload-useuploaddocumentsbatch-to-a-wrap-actor-addcleaninglog-in-try-catch-b-if-logging-fails-continue-with-uploaddocument-when-possible-and-c-if-the-failure-is-an-ic-replica-canister-stopped-rejection-e-g-reject-message-includes-is-stopped-error-code-ic0508-throw-an-error-with-an-english-message-that-explicitly-states-the-backend-canister-is-stopped-and-the-upload-cannot-proceed-until-it-is-started-redeployed",
-      "featureTitle": "Make the dataset upload flow resilient to backend failures by preventing a failed `addCleaningLog` call from crashing the entire upload operation, and by surfacing a clear, actionable error when the backend canister is stopped (IC0508). Update both single upload (`useUploadDocument`) and batch upload (`useUploadDocumentsBatch`) to (a) wrap `actor.addCleaningLog(...)` in try/catch, (b) if logging fails, continue with `uploadDocument` when possible, and (c) if the failure is an IC replica/canister-stopped rejection (e.g., reject_message includes \"is stopped\" / error_code IC0508), throw an Error with an English message that explicitly states the backend canister is stopped and the upload cannot proceed until it is started/redeployed.",
+      "featureId": "feature-extend-dataset-ingestion-to-recognize-optional-purchase-intention-columns-intention-level-intention-score-when-present-in-uploaded-csv-json-and-when-they-are-missing-automatically-generate-deterministic-values-for-each-parsed-row",
+      "featureTitle": "Extend dataset ingestion to recognize optional Purchase Intention columns (`intention_level`, `intention_score`) when present in uploaded CSV/JSON, and when they are missing, automatically generate deterministic values for each parsed row.",
       "files": [
-        "frontend/src/hooks/useQueries.ts",
-        "frontend/src/lib/icReplicaErrors.ts"
+        "frontend/src/lib/datasetIngestion.ts"
       ],
       "components": [
         "blob-storage@4.0.0",
@@ -17,16 +16,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-28"
+        "REQ-33"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-update-the-dashboard-upload-ui-to-display-backend-replica-rejection-details-in-a-user-friendly-english-error-state-when-an-upload-fails-ensure-datasetuploadstatus-error-state-and-the-toast-error-message-show-an-english-summary-and-include-the-underlying-error-message-e-g-reject-message-so-the-issue-is-debuggable",
-      "featureTitle": "Update the Dashboard upload UI to display backend replica rejection details in a user-friendly, English error state. When an upload fails, ensure `DatasetUploadStatus` (error state) and the toast error message show an English summary and include the underlying error message (e.g., reject_message) so the issue is debuggable.",
+      "featureId": "feature-add-a-deterministic-frontend-utility-to-compute-per-row-purchase-intention-from-text-producing-intention-score-0-100-integer-and-intention-level-one-of-low-medium-high-with-clear-clamping-and-validation",
+      "featureTitle": "Add a deterministic frontend utility to compute per-row Purchase Intention from text, producing `intention_score` (0–100 integer) and `intention_level` (one of `low|medium|high`) with clear clamping and validation.",
       "files": [
-        "frontend/src/components/DatasetUploadStatus.tsx",
-        "frontend/src/pages/Dashboard.tsx"
+        "frontend/src/lib/purchaseIntentionDerivation.ts"
       ],
       "components": [
         "blob-storage@4.0.0",
@@ -37,17 +35,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-29"
+        "REQ-34"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-ensure-all-newly-introduced-user-facing-strings-related-to-the-canister-stopped-upload-failure-handling-are-in-english-including-mapped-error-titles-descriptions-and-call-to-action-guidance",
-      "featureTitle": "Ensure all newly introduced user-facing strings related to the canister-stopped/upload-failure handling are in English (including mapped error titles, descriptions, and call-to-action guidance).",
+      "featureId": "feature-update-strategic-recommendation-report-generation-to-treat-purchase-intention-data-as-available-when-it-can-be-derived-from-the-uploaded-dataset-including-auto-generated-intention-values-and-remove-the-purchase-intention-data-not-available-note-in-that-case",
+      "featureTitle": "Update Strategic Recommendation Report generation to treat Purchase Intention data as available when it can be derived from the uploaded dataset (including auto-generated intention values), and remove the “Purchase Intention data not available” note in that case.",
       "files": [
-        "frontend/src/components/DatasetUploadStatus.tsx",
-        "frontend/src/lib/icReplicaErrors.ts",
-        "frontend/src/pages/Dashboard.tsx"
+        "frontend/src/lib/strategicReport.ts"
       ],
       "components": [
         "blob-storage@4.0.0",
@@ -58,7 +54,31 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-30"
+        "REQ-35"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-the-purchase-intention-page-and-its-charts-can-render-using-derived-intention-values-when-the-original-upload-lacked-intention-level-intention-score-without-requiring-backend-schema-changes",
+      "featureTitle": "Ensure the Purchase Intention page and its charts can render using derived intention values when the original upload lacked `intention_level` / `intention_score`, without requiring backend schema changes.",
+      "files": [
+        "frontend/src/components/IntentionBrandCorrelation.tsx",
+        "frontend/src/components/IntentionDemographics.tsx",
+        "frontend/src/components/IntentionTrendChart.tsx",
+        "frontend/src/components/PurchaseIntentionChart.tsx",
+        "frontend/src/lib/purchaseIntentionAggregation.ts",
+        "frontend/src/pages/PurchaseIntentionPage.tsx"
+      ],
+      "components": [
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-36"
       ],
       "confidence": "high"
     }

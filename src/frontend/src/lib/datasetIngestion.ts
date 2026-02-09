@@ -1,7 +1,10 @@
 /**
  * Dataset ingestion utilities for parsing and validating CSV/JSON uploads
  * with the required schema: ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted
+ * Supports optional intention_level and intention_score columns with auto-generation
  */
+
+import { derivePurchaseIntentionFromText, validateIntentionScore, validateIntentionLevel } from './purchaseIntentionDerivation';
 
 export interface DatasetRow {
   ID?: string;
@@ -12,6 +15,8 @@ export interface DatasetRow {
   text: string;
   Aspect_Category?: string;
   Keywords_Extracted?: string;
+  intention_level?: 'low' | 'medium' | 'high';
+  intention_score?: number;
 }
 
 export interface ParseResult {
@@ -23,10 +28,10 @@ export interface ParseResult {
 }
 
 /**
- * Normalize header/key names: case-insensitive, whitespace-tolerant
+ * Normalize header/key names: case-insensitive, whitespace-tolerant, underscore/space variants
  */
 function normalizeKey(key: string): string {
-  return key.trim().toLowerCase().replace(/\s+/g, '');
+  return key.trim().toLowerCase().replace(/[\s_]+/g, '');
 }
 
 /**
@@ -65,6 +70,10 @@ function parseCSV(content: string): ParseResult {
       };
     }
 
+    // Find optional intention columns
+    const intentionLevelIndex = normalizedHeaders.findIndex(h => h === 'intentionlevel');
+    const intentionScoreIndex = normalizedHeaders.findIndex(h => h === 'intentionscore');
+
     // Parse data rows
     const rows: DatasetRow[] = [];
     let skippedCount = 0;
@@ -96,9 +105,34 @@ function parseCSV(content: string): ParseResult {
         else if (normalizedHeader === 'region') row.Region = value;
         else if (normalizedHeader === 'source') row.Source = value;
         else if (normalizedHeader === 'user') row.User = value;
-        else if (normalizedHeader === 'aspect_category' || normalizedHeader === 'aspectcategory') row.Aspect_Category = value;
-        else if (normalizedHeader === 'keywords_extracted' || normalizedHeader === 'keywordsextracted') row.Keywords_Extracted = value;
+        else if (normalizedHeader === 'aspectcategory') row.Aspect_Category = value;
+        else if (normalizedHeader === 'keywordsextracted') row.Keywords_Extracted = value;
       });
+
+      // Handle intention fields: use provided values or auto-generate
+      let hasIntentionLevel = false;
+      let hasIntentionScore = false;
+
+      if (intentionLevelIndex !== -1 && values[intentionLevelIndex]) {
+        row.intention_level = validateIntentionLevel(values[intentionLevelIndex]);
+        hasIntentionLevel = true;
+      }
+
+      if (intentionScoreIndex !== -1 && values[intentionScoreIndex]) {
+        row.intention_score = validateIntentionScore(values[intentionScoreIndex]);
+        hasIntentionScore = true;
+      }
+
+      // Auto-generate missing intention fields
+      if (!hasIntentionLevel || !hasIntentionScore) {
+        const derived = derivePurchaseIntentionFromText(textValue);
+        if (!hasIntentionLevel) {
+          row.intention_level = derived.intention_level;
+        }
+        if (!hasIntentionScore) {
+          row.intention_score = derived.intention_score;
+        }
+      }
 
       rows.push(row);
     }
@@ -202,6 +236,9 @@ function parseJSON(content: string): ParseResult {
       // Build row object
       const row: DatasetRow = { text: textValue };
 
+      let hasIntentionLevel = false;
+      let hasIntentionScore = false;
+
       for (const [key, value] of Object.entries(item)) {
         const normalizedKey = normalizeKey(key);
         const strValue = String(value || '');
@@ -211,8 +248,27 @@ function parseJSON(content: string): ParseResult {
         else if (normalizedKey === 'region') row.Region = strValue;
         else if (normalizedKey === 'source') row.Source = strValue;
         else if (normalizedKey === 'user') row.User = strValue;
-        else if (normalizedKey === 'aspect_category' || normalizedKey === 'aspectcategory') row.Aspect_Category = strValue;
-        else if (normalizedKey === 'keywords_extracted' || normalizedKey === 'keywordsextracted') row.Keywords_Extracted = strValue;
+        else if (normalizedKey === 'aspectcategory') row.Aspect_Category = strValue;
+        else if (normalizedKey === 'keywordsextracted') row.Keywords_Extracted = strValue;
+        else if (normalizedKey === 'intentionlevel') {
+          row.intention_level = validateIntentionLevel(value);
+          hasIntentionLevel = true;
+        }
+        else if (normalizedKey === 'intentionscore') {
+          row.intention_score = validateIntentionScore(value);
+          hasIntentionScore = true;
+        }
+      }
+
+      // Auto-generate missing intention fields
+      if (!hasIntentionLevel || !hasIntentionScore) {
+        const derived = derivePurchaseIntentionFromText(textValue);
+        if (!hasIntentionLevel) {
+          row.intention_level = derived.intention_level;
+        }
+        if (!hasIntentionScore) {
+          row.intention_score = derived.intention_score;
+        }
       }
 
       rows.push(row);

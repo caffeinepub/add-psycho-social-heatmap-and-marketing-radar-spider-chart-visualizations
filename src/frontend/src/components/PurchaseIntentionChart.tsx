@@ -2,30 +2,36 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ShoppingCart } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { Pie, PieChart, Cell } from 'recharts';
-import { usePurchaseIntentionData } from '../hooks/useQueries';
+import { useGetAllDocuments } from '../hooks/useQueries';
+import { useMemo } from 'react';
+import { computeIntentionDistribution } from '../lib/purchaseIntentionAggregation';
 
 export function PurchaseIntentionChart() {
-  const { data: intentionData } = usePurchaseIntentionData();
+  const { data: documents = [], isLoading } = useGetAllDocuments();
 
-  const data = intentionData
-    ? [
-        {
-          level: 'Tinggi',
-          value: Number(intentionData.distribution.high),
-          fill: 'var(--chart-3)',
-        },
-        {
-          level: 'Sedang',
-          value: Number(intentionData.distribution.medium),
-          fill: 'var(--chart-2)',
-        },
-        {
-          level: 'Rendah',
-          value: Number(intentionData.distribution.low),
-          fill: 'var(--chart-4)',
-        },
-      ]
-    : [];
+  const data = useMemo(() => {
+    if (documents.length === 0) return [];
+
+    const distribution = computeIntentionDistribution(documents);
+
+    return [
+      {
+        level: 'Tinggi',
+        value: distribution.high,
+        fill: 'var(--chart-3)',
+      },
+      {
+        level: 'Sedang',
+        value: distribution.medium,
+        fill: 'var(--chart-2)',
+      },
+      {
+        level: 'Rendah',
+        value: distribution.low,
+        fill: 'var(--chart-4)',
+      },
+    ];
+  }, [documents]);
 
   const hasData = data.some((item) => item.value > 0);
 
@@ -57,9 +63,13 @@ export function PurchaseIntentionChart() {
         <CardDescription>Klasifikasi tingkat intensi pembelian konsumen</CardDescription>
       </CardHeader>
       <CardContent>
-        {!hasData ? (
+        {isLoading ? (
+          <div className="flex h-[300px] items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </div>
+        ) : !hasData ? (
           <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-            Tidak ada data aktif
+            No active dataset
           </div>
         ) : (
           <ChartContainer config={chartConfig} className="h-[300px] w-full">

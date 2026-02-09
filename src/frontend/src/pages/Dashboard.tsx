@@ -190,13 +190,12 @@ export function Dashboard() {
                 <Sparkles className="h-4 w-4 text-primary" />
                 <span className="font-medium">AI-Powered Emotion Analysis</span>
               </div>
-              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
-                Understand Customer
-                <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"> Emotions</span>
+              <h1 className="text-4xl font-bold tracking-tight text-blue-600 sm:text-5xl lg:text-6xl">
+                Pahami Emosi Pelanggan
               </h1>
               <p className="text-lg text-muted-foreground sm:text-xl">
-                Analyze social media comments and reviews to uncover emotional insights about Indonesian electric motorcycles. 
-                Make data-driven decisions with advanced sentiment analysis.
+                Analisis komentar media sosial dan ulasan untuk mengungkap wawasan emosional tentang sepeda motor listrik Indonesia. 
+                Buat keputusan berbasis data dengan analisis sentimen yang canggih.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Button size="lg" onClick={() => navigate({ to: '/analysis' })} className="gap-2">
@@ -432,16 +431,13 @@ export function Dashboard() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold">Advanced Metrics</h2>
-                <p className="text-sm text-muted-foreground">Psycho-social and marketing analysis</p>
+                <p className="text-sm text-muted-foreground">Psycho-social and marketing insights</p>
               </div>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
               <PsychoSocialHeatmap documents={documents} />
               <MarketingRadarChart documents={documents} />
-            </div>
-
-            <div className="grid gap-6">
               <MarketingMixRadarChart documents={documents} />
             </div>
           </section>

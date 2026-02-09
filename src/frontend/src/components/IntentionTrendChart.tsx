@@ -2,51 +2,61 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { TrendingUp } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { Line, LineChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { usePurchaseIntentionData } from '../hooks/useQueries';
+import { useGetAllDocuments } from '../hooks/useQueries';
+import { useMemo } from 'react';
+import { computeIntentionTrends } from '../lib/purchaseIntentionAggregation';
 
 export function IntentionTrendChart() {
-  const { data: intentionData } = usePurchaseIntentionData();
+  const { data: documents = [], isLoading } = useGetAllDocuments();
 
-  // Group trends by emotion/intention level
-  const trendsByLevel: Record<string, Array<{ id: number; trend: number }>> = {};
-  
-  intentionData?.trends.forEach((trend) => {
-    const level = trend.intentionLevel;
-    if (!trendsByLevel[level]) {
-      trendsByLevel[level] = [];
-    }
-    trendsByLevel[level].push({
-      id: Number(trend.id),
-      trend: Number(trend.trend),
+  const { data, levels } = useMemo(() => {
+    if (documents.length === 0) return { data: [], levels: [] };
+
+    const trends = computeIntentionTrends(documents);
+
+    // Group by level
+    const trendsByLevel: Record<string, Array<{ id: number; trend: number }>> = {};
+    trends.forEach((trend) => {
+      const level = trend.intentionLevel;
+      if (!trendsByLevel[level]) {
+        trendsByLevel[level] = [];
+      }
+      trendsByLevel[level].push({
+        id: trend.id,
+        trend: trend.trend,
+      });
     });
-  });
 
-  // Create time series data
-  const data = Object.keys(trendsByLevel).length > 0
-    ? Array.from({ length: 6 }, (_, i) => {
-        const point: Record<string, number | string> = { period: `T${i + 1}` };
-        Object.entries(trendsByLevel).forEach(([level, trends]) => {
-          const trendValue = trends[i % trends.length]?.trend || 0;
-          point[level] = trendValue;
-        });
-        return point;
-      })
-    : [];
+    // Create time series data
+    const chartData = Array.from({ length: 6 }, (_, i) => {
+      const point: Record<string, number | string> = { period: `T${i + 1}` };
+      Object.entries(trendsByLevel).forEach(([level, levelTrends]) => {
+        const trendValue = levelTrends[i % levelTrends.length]?.trend || 0;
+        point[level] = trendValue;
+      });
+      return point;
+    });
 
-  const hasData = data.length > 0;
+    return {
+      data: chartData,
+      levels: Object.keys(trendsByLevel),
+    };
+  }, [documents]);
+
+  const hasData = data.length > 0 && levels.length > 0;
 
   const chartConfig = {
-    trust: {
-      label: 'Kepercayaan',
-      color: 'var(--chart-2)',
-    },
-    satisfaction: {
-      label: 'Kepuasan',
+    high: {
+      label: 'Tinggi',
       color: 'var(--chart-3)',
     },
-    interest: {
-      label: 'Minat',
-      color: 'var(--chart-1)',
+    medium: {
+      label: 'Sedang',
+      color: 'var(--chart-2)',
+    },
+    low: {
+      label: 'Rendah',
+      color: 'var(--chart-4)',
     },
   };
 
@@ -58,13 +68,17 @@ export function IntentionTrendChart() {
           Tren Historis Intensi Pembelian
         </CardTitle>
         <CardDescription>
-          Evolusi skor intensi pembelian dari waktu ke waktu berdasarkan emosi
+          Evolusi skor intensi pembelian dari waktu ke waktu
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {!hasData ? (
+        {isLoading ? (
+          <div className="flex h-[300px] items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </div>
+        ) : !hasData ? (
           <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-            Tidak ada data aktif
+            No active dataset
           </div>
         ) : (
           <ChartContainer config={chartConfig} className="h-[300px] w-full">
@@ -83,7 +97,7 @@ export function IntentionTrendChart() {
               />
               <ChartTooltip content={<ChartTooltipContent />} />
               <ChartLegend content={<ChartLegendContent />} />
-              {Object.keys(trendsByLevel).map((level, index) => (
+              {levels.map((level, index) => (
                 <Line
                   key={level}
                   type="monotone"

@@ -2,51 +2,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Users, MapPin } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { usePurchaseIntentionData } from '../hooks/useQueries';
+import { useGetAllDocuments } from '../hooks/useQueries';
+import { useMemo } from 'react';
+import { computeIntentionDistribution, computeGenderBreakdown, computeLocationBreakdown } from '../lib/purchaseIntentionAggregation';
 
 export function IntentionDemographics() {
-  const { data: intentionData } = usePurchaseIntentionData();
+  const { data: documents = [], isLoading } = useGetAllDocuments();
 
-  // Mock demographic data based on intention data
-  const genderData = intentionData
-    ? [
-        {
-          category: 'Pria',
-          tinggi: Math.floor(Number(intentionData.distribution.high) * 0.6),
-          sedang: Math.floor(Number(intentionData.distribution.medium) * 0.55),
-          rendah: Math.floor(Number(intentionData.distribution.low) * 0.5),
-        },
-        {
-          category: 'Wanita',
-          tinggi: Math.floor(Number(intentionData.distribution.high) * 0.4),
-          sedang: Math.floor(Number(intentionData.distribution.medium) * 0.45),
-          rendah: Math.floor(Number(intentionData.distribution.low) * 0.5),
-        },
-      ]
-    : [];
+  const { genderData, locationData } = useMemo(() => {
+    if (documents.length === 0) {
+      return { genderData: [], locationData: [] };
+    }
 
-  const locationData = intentionData
-    ? [
-        {
-          location: 'Jawa',
-          tinggi: Math.floor(Number(intentionData.distribution.high) * 0.5),
-          sedang: Math.floor(Number(intentionData.distribution.medium) * 0.4),
-          rendah: Math.floor(Number(intentionData.distribution.low) * 0.3),
-        },
-        {
-          location: 'Sumatera',
-          tinggi: Math.floor(Number(intentionData.distribution.high) * 0.3),
-          sedang: Math.floor(Number(intentionData.distribution.medium) * 0.35),
-          rendah: Math.floor(Number(intentionData.distribution.low) * 0.4),
-        },
-        {
-          location: 'Kalimantan',
-          tinggi: Math.floor(Number(intentionData.distribution.high) * 0.2),
-          sedang: Math.floor(Number(intentionData.distribution.medium) * 0.25),
-          rendah: Math.floor(Number(intentionData.distribution.low) * 0.3),
-        },
-      ]
-    : [];
+    const distribution = computeIntentionDistribution(documents);
+    const gender = computeGenderBreakdown(distribution);
+    const location = computeLocationBreakdown(distribution);
+
+    return {
+      genderData: gender.map(item => ({
+        category: item.category,
+        tinggi: item.high,
+        sedang: item.medium,
+        rendah: item.low,
+      })),
+      locationData: location.map(item => ({
+        location: item.category,
+        tinggi: item.high,
+        sedang: item.medium,
+        rendah: item.low,
+      })),
+    };
+  }, [documents]);
 
   const hasData = genderData.length > 0 && locationData.length > 0;
 
@@ -76,9 +62,13 @@ export function IntentionDemographics() {
           <CardDescription>Distribusi intensi pembelian berdasarkan gender</CardDescription>
         </CardHeader>
         <CardContent>
-          {!hasData ? (
+          {isLoading ? (
+            <div className="flex h-[300px] items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : !hasData ? (
             <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-              Tidak ada data aktif
+              No active dataset
             </div>
           ) : (
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
@@ -115,9 +105,13 @@ export function IntentionDemographics() {
           <CardDescription>Distribusi intensi pembelian berdasarkan lokasi</CardDescription>
         </CardHeader>
         <CardContent>
-          {!hasData ? (
+          {isLoading ? (
+            <div className="flex h-[300px] items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : !hasData ? (
             <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-              Tidak ada data aktif
+              No active dataset
             </div>
           ) : (
             <ChartContainer config={chartConfig} className="h-[300px] w-full">

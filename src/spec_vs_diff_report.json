@@ -1,43 +1,49 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-09T00:54:22.324Z",
-  "summary": "REQ-28 is partially implemented: `useUploadDocument` now wraps `actor.addCleaningLog(...)` in try/catch, continues upload on non-stopped failures, and throws an English canister-stopped message on IC0508/\"is stopped\" rejections. However, the diff is truncated for `useUploadDocumentsBatch`, so equivalent resilience there is not confirmed. REQ-29 is partially implemented: `DatasetUploadStatus` has an explicit error UI section and `Dashboard` uses `mapUploadError`, but the toast/UI do not clearly include underlying rejection details (they are only logged to console). REQ-30 is partially met: newly added replica/canister-stopped strings are English, but there are still Indonesian user-facing strings in the upload flow.",
+  "generatedAt": "2026-02-09T02:13:22.660Z",
+  "summary": "The diff adds a deterministic purchase-intention derivation utility under frontend/src/lib and updates Purchase Intention dashboard components/charts to compute intention metrics from document text via that utility. Dataset ingestion is partially updated for CSV to recognize intention columns with case/whitespace tolerance and to validate provided intention values, but the truncation prevents confirming auto-generation completion and JSON ingestion support. Strategic report availability flag/UI behavior for purchase intention cannot be confirmed from the truncated strategicReport changes.",
   "missing_requirements": [
     {
-      "id": "REQ-28",
-      "requirement": "Update batch upload (`useUploadDocumentsBatch`) to wrap `actor.addCleaningLog(...)` in try/catch, continue batch upload when logging fails (unless canister stopped), and throw a clear English canister-stopped error on IC0508/\"is stopped\" rejections.",
-      "reason": "The diff summary shows the updated behavior in `useUploadDocument`, but the `useUploadDocumentsBatch` implementation is truncated before any `addCleaningLog` handling is visible, so the required resilience behavior for batch uploads is not evidenced.",
+      "id": "REQ-33",
+      "requirement": "For JSON uploads, key matching is case-insensitive and whitespace-tolerant for intention_level and intention_score; if absent, ingestion succeeds and auto-generates deterministic values per row.",
+      "reason": "The diff snippet for frontend/src/lib/datasetIngestion.ts only shows CSV parsing logic; JSON parsing changes (and deterministic auto-generation completion) are not visible due to truncation (the code cuts off at 'Auto-gene...').",
       "evidence": [
-        "frontend/src/hooks/useQueries.ts (useUploadDocumentsBatch section is truncated)"
+        "frontend/src/lib/datasetIngestion.ts (truncated)"
       ]
     },
     {
-      "id": "REQ-29",
-      "requirement": "Ensure `DatasetUploadStatus` (error state) and the toast error message show an English summary and include the underlying replica rejection details (e.g., reject_message) so the issue is debuggable.",
-      "reason": "In `Dashboard`, the failure handler maps the error to `{ summary, details }` but only shows `toast.error(summary)`; the underlying `details` are only sent to `console.error`, not shown in the toast. The `DatasetUploadStatus` error rendering is truncated, so it is not confirmed that it displays the underlying reject message/details either.",
+      "id": "REQ-35",
+      "requirement": "Update Strategic Recommendation Report generation to treat Purchase Intention data as available when provided or derived (set dataAvailability.hasPurchaseIntentionData=true) and remove the 'Purchase Intention data not available' note/state when intention is available; new user-facing text in English.",
+      "reason": "The strategic report generator file is shown only partially and does not include any visible logic for purchase intention availability (hasPurchaseIntentionData) or removal of any 'Purchase Intention data not available' message/state. The report page diff snippet also does not show any such conditional UI text being removed/adjusted.",
       "evidence": [
-        "frontend/src/pages/Dashboard.tsx (uses mapUploadError; toast shows only summary; details logged to console)",
-        "frontend/src/components/DatasetUploadStatus.tsx (error details UI is truncated)"
-      ]
-    },
-    {
-      "id": "REQ-30",
-      "requirement": "All newly introduced user-facing strings related to canister-stopped/upload-failure handling are in English; do not introduce Indonesian text for new error-handling UI.",
-      "reason": "The canister-stopped/error-mapping strings are English, but the modified Dashboard upload flow still includes Indonesian user-facing strings for upload/analyze messaging. The diff does not clearly show that these Indonesian strings are pre-existing vs newly introduced, so full compliance with the 'no new Indonesian text introduced' AC cannot be confirmed from the summary.",
-      "evidence": [
-        "frontend/src/pages/Dashboard.tsx (e.g., Indonesian toasts: 'Silakan masukkan teks untuk dianalisis', 'File berhasil diupload dan dianalisis!')"
+        "frontend/src/lib/strategicReport.ts (truncated)",
+        "frontend/src/pages/StrategicRecommendationReportPage.tsx (truncated)"
       ]
     }
   ],
-  "hallucinated_features": [],
+  "hallucinated_features": [
+    {
+      "description": "Added additional purchase-intention aggregation utilities beyond per-row derivation, including brand detection with a fixed brand list, distribution-by-brand, and a 'mock time series' intention trend computation.",
+      "reason": "BuildRequest focuses on ingestion/derivation and ensuring charts/pages/reports can use derived intention values. Implementing a mock time-series trend generator and explicit brand detection logic is not explicitly requested.",
+      "evidence": [
+        "frontend/src/lib/purchaseIntentionAggregation.ts"
+      ]
+    }
+  ],
   "confidence": 0.62,
   "changed_files": [
     "frontend-file-summaries.txt",
-    "frontend/src/components/DatasetUploadStatus.tsx",
-    "frontend/src/hooks/useQueries.ts",
-    "frontend/src/lib/icReplicaErrors.ts",
-    "frontend/src/pages/Dashboard.tsx",
+    "frontend/src/components/IntentionBrandCorrelation.tsx",
+    "frontend/src/components/IntentionDemographics.tsx",
+    "frontend/src/components/IntentionTrendChart.tsx",
+    "frontend/src/components/PurchaseIntentionChart.tsx",
+    "frontend/src/lib/datasetIngestion.ts",
+    "frontend/src/lib/purchaseIntentionAggregation.ts",
+    "frontend/src/lib/purchaseIntentionDerivation.ts",
+    "frontend/src/lib/strategicReport.ts",
+    "frontend/src/pages/PurchaseIntentionPage.tsx",
+    "frontend/src/pages/StrategicRecommendationReportPage.tsx",
     "project_state.json"
   ]
 }

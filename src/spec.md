@@ -1,12 +1,13 @@
 # Specification
 
 ## Summary
-**Goal:** Make dataset uploads more resilient to backend failures by preventing `addCleaningLog` errors from crashing uploads and by showing clear, actionable English errors when the backend canister is stopped (IC0508).
+**Goal:** Automatically complete missing Purchase Intention fields (`intention_score`, `intention_level`) during dataset upload and ensure reports/pages use these derived values.
 
 **Planned changes:**
-- Update single (`useUploadDocument`) and batch (`useUploadDocumentsBatch`) upload flows to wrap `actor.addCleaningLog(...)` in try/catch so logging failures do not cause unhandled rejections or crash the overall upload.
-- Detect canister-stopped replica rejections (e.g., IC0508 / reject message contains “is stopped”) and fail the upload with a clear English error stating the backend canister is stopped and must be started/redeployed before uploads can proceed.
-- Improve Dashboard upload error UI so `DatasetUploadStatus` and toast errors show an English summary and include the underlying replica rejection/error message for debugging, and ensure the status reliably transitions to an error state after failures.
-- Ensure all newly introduced user-facing strings for these upload-failure cases are in English.
+- Extend frontend dataset ingestion for CSV/JSON to detect `intention_score` and `intention_level` with case-insensitive, whitespace-tolerant header/key matching.
+- When one or both fields are missing, deterministically derive per-row `intention_score` (0–100 integer) and `intention_level` (`low|medium|high`) from each row’s text/content during ingestion.
+- Add a deterministic frontend utility under `frontend/src/lib` to compute `{ intention_score, intention_level }` with clamping, validation, and documented thresholds.
+- Update Strategic Recommendation Report generation to treat Purchase Intention as available when provided or derived, and remove the “Purchase Intention data not available” note in that case (English UI text).
+- Update the Purchase Intention page and charts to render using derived intention values (with standard loading/empty/insufficient/ready states) without requiring any backend schema changes.
 
-**User-visible outcome:** Uploads no longer fail solely due to `addCleaningLog` issues; when uploads do fail (including canister-stopped cases), the Dashboard clearly shows an English error with the underlying rejection details and does not get stuck in “uploading”.
+**User-visible outcome:** Users can upload datasets that do not include Purchase Intention columns and still see populated Purchase Intention charts and report sections based on deterministically derived intention values.

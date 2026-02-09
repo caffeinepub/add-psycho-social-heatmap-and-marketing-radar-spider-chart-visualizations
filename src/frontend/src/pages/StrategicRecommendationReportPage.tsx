@@ -1,198 +1,129 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { FileText, Download, Printer, AlertTriangle, CheckCircle2, TrendingUp, Target, AlertCircle, FileDown } from 'lucide-react';
+import { FileText, Copy, Printer, Download, AlertCircle } from 'lucide-react';
 import { useGetAllDocuments } from '../hooks/useQueries';
-import { generateStrategicReport, exportReportAsMarkdown } from '../lib/strategicReport';
-import { type Locale, getUILabels, getPriorityLabel } from '../lib/strategicReportLocale';
-import { exportReportAsPdf } from '../lib/reportPdfExport';
-import { toast } from 'sonner';
 import { useMemo, useState } from 'react';
+import { generateStrategicReport, exportReportAsMarkdown } from '../lib/strategicReport';
+import { toast } from 'sonner';
+import { useNavigate } from '@tanstack/react-router';
+import { exportReportAsPdf } from '../lib/reportPdfExport';
+import { getUILabels, getPriorityLabel, type Locale } from '../lib/strategicReportLocale';
 
 export function StrategicRecommendationReportPage() {
   const { data: documents = [], isLoading } = useGetAllDocuments();
+  const navigate = useNavigate();
   const [locale, setLocale] = useState<Locale>('en');
 
-  // Generate report from current documents with selected locale
   const report = useMemo(() => {
     return generateStrategicReport(documents, locale);
   }, [documents, locale]);
 
-  const labels = getUILabels(locale);
+  const uiLabels = getUILabels(locale);
 
-  const handleCopyMarkdown = async () => {
-    try {
-      const markdown = exportReportAsMarkdown(report);
-      await navigator.clipboard.writeText(markdown);
-      toast.success(locale === 'id' ? 'Laporan disalin ke clipboard sebagai Markdown' : 'Report copied to clipboard as Markdown');
-    } catch (error) {
-      toast.error(locale === 'id' ? 'Gagal menyalin laporan ke clipboard' : 'Failed to copy report to clipboard');
-    }
+  const handleCopyMarkdown = () => {
+    const markdown = exportReportAsMarkdown(report);
+    navigator.clipboard.writeText(markdown);
+    toast.success(locale === 'en' ? 'Report copied as Markdown' : 'Laporan disalin sebagai Markdown');
   };
 
   const handlePrint = () => {
     window.print();
   };
 
-  const handleDownloadPdf = () => {
-    const reportContainer = document.querySelector('.report-container');
-    if (!reportContainer) {
-      toast.error(locale === 'id' ? 'Konten laporan tidak tersedia' : 'Report content not available');
-      return;
-    }
+  const handleDownloadPDF = () => {
+    exportReportAsPdf({ locale });
+  };
 
-    exportReportAsPdf({
-      filename: locale === 'id' ? 'laporan-rekomendasi-strategis' : 'strategic-recommendation-report',
-      locale,
-    });
-
-    toast.success(locale === 'id' ? 'Membuka dialog cetak untuk ekspor PDF' : 'Opening print dialog for PDF export');
+  const toggleLocale = () => {
+    setLocale(prev => prev === 'en' ? 'id' : 'en');
   };
 
   if (isLoading) {
     return (
       <div className="container py-8">
-        <div className="flex items-center justify-center py-16">
+        <div className="flex h-64 items-center justify-center">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         </div>
       </div>
     );
   }
 
-  // Empty state
   if (documents.length === 0) {
     return (
       <div className="container py-8">
-        <div className="mb-8">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="mb-2 text-3xl font-bold">{labels.pageTitle}</h1>
-              <p className="text-muted-foreground">
-                {labels.pageDescription}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 print:hidden">
-              <span className="text-sm text-muted-foreground">{labels.languageLabel}:</span>
-              <Button
-                variant={locale === 'en' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setLocale('en')}
-              >
-                English
-              </Button>
-              <Button
-                variant={locale === 'id' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setLocale('id')}
-              >
-                Indonesia
-              </Button>
-            </div>
-          </div>
-        </div>
-
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <FileText className="mb-4 h-16 w-16 text-muted-foreground" />
-            <h3 className="mb-2 text-xl font-semibold">{labels.noDataTitle}</h3>
-            <p className="mb-6 text-center text-muted-foreground">
-              {labels.noDataDescription}
-            </p>
-            <Button onClick={() => window.location.href = '/'}>
-              {labels.goToDashboard}
-            </Button>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-muted-foreground" />
+              {uiLabels.noDataTitle}
+            </CardTitle>
+            <CardDescription>{uiLabels.noDataDescription}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => navigate({ to: '/' })}>{uiLabels.goToDashboard}</Button>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  const priorityColors = {
-    high: 'destructive',
-    medium: 'default',
-    low: 'secondary',
-  } as const;
-
   return (
     <div className="container py-8">
-      {/* Header - hidden in print */}
-      <div className="mb-8 print:hidden">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="mb-2 text-3xl font-bold">{labels.pageTitle}</h1>
-            <p className="text-muted-foreground">
-              {labels.pageDescription}
-            </p>
-          </div>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">{labels.languageLabel}:</span>
-              <Button
-                variant={locale === 'en' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setLocale('en')}
-              >
-                English
-              </Button>
-              <Button
-                variant={locale === 'id' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setLocale('id')}
-              >
-                Indonesia
-              </Button>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleCopyMarkdown}>
-                <Download className="mr-2 h-4 w-4" />
-                {labels.copyMarkdown}
-              </Button>
-              <Button variant="outline" onClick={handleDownloadPdf}>
-                <FileDown className="mr-2 h-4 w-4" />
-                {labels.downloadPdf}
-              </Button>
-              <Button onClick={handlePrint}>
-                <Printer className="mr-2 h-4 w-4" />
-                {labels.print}
-              </Button>
-            </div>
-          </div>
+      {/* Header */}
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between print:hidden">
+        <div>
+          <h1 className="mb-2 text-3xl font-bold">{uiLabels.pageTitle}</h1>
+          <p className="text-muted-foreground">{uiLabels.pageDescription}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={toggleLocale}>
+            {uiLabels.languageLabel}: {locale === 'en' ? 'EN' : 'ID'}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleCopyMarkdown}>
+            <Copy className="mr-2 h-4 w-4" />
+            {uiLabels.copyMarkdown}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handlePrint}>
+            <Printer className="mr-2 h-4 w-4" />
+            {uiLabels.print}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
+            <Download className="mr-2 h-4 w-4" />
+            {uiLabels.downloadPdf}
+          </Button>
         </div>
       </div>
 
-      {/* Report Container */}
-      <div className="report-container space-y-6">
+      {/* Report Content */}
+      <div className="space-y-8">
         {/* Metadata */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  {labels.reportMetadata}
-                </CardTitle>
-                <CardDescription>
-                  {labels.generatedOn} {new Date(report.generatedAt).toLocaleString(locale === 'id' ? 'id-ID' : 'en-US', {
-                    dateStyle: 'full',
-                    timeStyle: 'short',
-                  })}
-                </CardDescription>
-              </div>
-              <Badge variant="outline" className="text-sm">
-                {documents.length} {labels.documentsAnalyzed}
-              </Badge>
-            </div>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              {uiLabels.reportMetadata}
+            </CardTitle>
           </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-sm text-muted-foreground">{uiLabels.generatedOn}:</span>
+              <span className="text-sm font-medium">
+                {new Date(report.generatedAt).toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-muted-foreground">{uiLabels.documentsAnalyzed}:</span>
+              <span className="text-sm font-medium">{documents.length}</span>
+            </div>
+          </CardContent>
         </Card>
 
         {/* Executive Summary */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              {labels.executiveSummary}
-            </CardTitle>
+            <CardTitle>{uiLabels.executiveSummary}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="leading-relaxed text-foreground">{report.executiveSummary}</p>
@@ -203,19 +134,14 @@ export function StrategicRecommendationReportPage() {
         {report.keyFindings.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5" />
-                {labels.keyFindings}
-              </CardTitle>
+              <CardTitle>{uiLabels.keyFindings}</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
                 {report.keyFindings.map((finding, idx) => (
                   <li key={idx} className="flex gap-3">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                      {idx + 1}
-                    </span>
-                    <span className="leading-relaxed">{finding}</span>
+                    <span className="font-semibold text-primary">{idx + 1}.</span>
+                    <span className="flex-1 leading-relaxed">{finding}</span>
                   </li>
                 ))}
               </ul>
@@ -227,29 +153,30 @@ export function StrategicRecommendationReportPage() {
         {report.recommendations.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                {labels.strategicRecommendations}
-              </CardTitle>
-              <CardDescription>
-                {labels.recommendationsDescription}
-              </CardDescription>
+              <CardTitle>{uiLabels.strategicRecommendations}</CardTitle>
+              <CardDescription>{uiLabels.recommendationsDescription}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {report.recommendations.map((rec, idx) => (
-                <div key={idx}>
-                  {idx > 0 && <Separator className="my-6" />}
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <h3 className="text-lg font-semibold">
-                        {idx + 1}. {rec.title}
-                      </h3>
-                      <Badge variant={priorityColors[rec.priority]}>
-                        {getPriorityLabel(rec.priority, locale)}
-                      </Badge>
-                    </div>
-                    <p className="leading-relaxed text-muted-foreground">{rec.rationale}</p>
+                <div key={idx} className="space-y-2">
+                  <div className="flex items-start justify-between gap-4">
+                    <h3 className="text-lg font-semibold">
+                      {idx + 1}. {rec.title}
+                    </h3>
+                    <Badge
+                      variant={
+                        rec.priority === 'high'
+                          ? 'destructive'
+                          : rec.priority === 'medium'
+                            ? 'default'
+                            : 'secondary'
+                      }
+                    >
+                      {getPriorityLabel(rec.priority, locale)}
+                    </Badge>
                   </div>
+                  <p className="leading-relaxed text-muted-foreground">{rec.rationale}</p>
+                  {idx < report.recommendations.length - 1 && <Separator className="mt-4" />}
                 </div>
               ))}
             </CardContent>
@@ -258,19 +185,16 @@ export function StrategicRecommendationReportPage() {
 
         {/* Risks & Watchouts */}
         {report.risks.length > 0 && (
-          <Card className="border-orange-500/50">
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-orange-600 dark:text-orange-400">
-                <AlertTriangle className="h-5 w-5" />
-                {labels.risksWatchouts}
-              </CardTitle>
+              <CardTitle>{uiLabels.risksWatchouts}</CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-3">
                 {report.risks.map((risk, idx) => (
                   <li key={idx} className="flex gap-3">
-                    <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-orange-500" />
-                    <span className="leading-relaxed">{risk}</span>
+                    <span className="font-semibold text-destructive">{idx + 1}.</span>
+                    <span className="flex-1 leading-relaxed">{risk}</span>
                   </li>
                 ))}
               </ul>
@@ -282,39 +206,34 @@ export function StrategicRecommendationReportPage() {
         {report.nextSteps.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5" />
-                {labels.nextSteps}
-              </CardTitle>
+              <CardTitle>{uiLabels.nextSteps}</CardTitle>
             </CardHeader>
             <CardContent>
-              <ol className="space-y-3">
+              <ul className="space-y-3">
                 {report.nextSteps.map((step, idx) => (
                   <li key={idx} className="flex gap-3">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-                      {idx + 1}
-                    </span>
-                    <span className="leading-relaxed">{step}</span>
+                    <span className="font-semibold text-primary">{idx + 1}.</span>
+                    <span className="flex-1 leading-relaxed">{step}</span>
                   </li>
                 ))}
-              </ol>
+              </ul>
             </CardContent>
           </Card>
         )}
 
-        {/* Data Availability Notice */}
+        {/* Purchase Intention Notice (only show if data is not available) */}
         {!report.dataAvailability.hasPurchaseIntentionData && (
-          <Card className="border-blue-500/50 bg-blue-500/5">
-            <CardContent className="flex items-start gap-3 py-4">
-              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-blue-500" />
-              <div className="text-sm">
-                <p className="font-semibold text-blue-700 dark:text-blue-400">
-                  {labels.purchaseIntentionNotice}
-                </p>
-                <p className="text-muted-foreground">
-                  {labels.purchaseIntentionNoticeDescription}
-                </p>
-              </div>
+          <Card className="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/20 print:hidden">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-amber-900 dark:text-amber-100">
+                <AlertCircle className="h-5 w-5" />
+                {uiLabels.purchaseIntentionNotice}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm leading-relaxed text-amber-800 dark:text-amber-200">
+                {uiLabels.purchaseIntentionNoticeDescription}
+              </p>
             </CardContent>
           </Card>
         )}

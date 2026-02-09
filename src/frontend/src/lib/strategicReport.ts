@@ -7,7 +7,7 @@ import type { Document } from '../backend';
 import { mockEmotionAnalysis } from './mockData';
 import { computePsychoSocialMatrix, PSYCHO_SOCIAL_DIMENSIONS, EMOTION_CATEGORIES } from './psychoSocialMetrics';
 import { computeMarketingMetrics } from './marketingMetrics';
-import { type Locale, getReportTemplates, translateEmotion } from './strategicReportLocale';
+import { type Locale, getReportTemplates, translateEmotion, getUILabels, getPriorityLabel } from './strategicReportLocale';
 
 export interface StrategicRecommendation {
   title: string;
@@ -330,14 +330,14 @@ export function generateStrategicReport(documents: Document[], locale: Locale = 
       locale,
     };
   }
-  
+
   // Analyze data
   const emotionCounts = analyzeEmotionDistribution(documents);
   const topEmotions = getTopEmotions(emotionCounts, 3);
+  const brandMentions = analyzeBrandMentions(documents);
   const psychoSocialDimensions = getDominantPsychoSocialDimensions(documents);
   const marketingAnalysis = analyzeMarketingMetrics(documents);
-  const brandMentions = analyzeBrandMentions(documents);
-  
+
   // Generate recommendations
   const recommendations = generateRecommendations(
     topEmotions,
@@ -347,36 +347,36 @@ export function generateStrategicReport(documents: Document[], locale: Locale = 
     documents.length,
     locale
   );
-  
-  // Generate risks
-  const risks = generateRisks(
-    topEmotions,
-    psychoSocialDimensions,
-    marketingAnalysis,
-    documents,
-    locale
+
+  // Count high-priority recommendations
+  const highPriorityCount = recommendations.filter(r => r.priority === 'high').length;
+
+  // Generate executive summary
+  const executiveSummary = templates.executiveSummaryTemplate(
+    documents.length,
+    topEmotions.length > 0 ? translateEmotion(topEmotions[0].emotion, locale) : 'N/A',
+    recommendations.length,
+    highPriorityCount
   );
-  
-  // Build key findings
+
+  // Generate key findings
   const keyFindings: string[] = [];
   
   keyFindings.push(templates.analyzedDocuments(documents.length));
-  
+
   if (topEmotions.length > 0) {
     const emotionList = topEmotions
       .map(e => `${translateEmotion(e.emotion, locale)} (${e.percentage}%)`)
       .join(', ');
     keyFindings.push(templates.dominantEmotions(emotionList));
   }
-  
+
   if (psychoSocialDimensions.length > 0) {
-    const topFactors = psychoSocialDimensions
-      .slice(0, 3)
-      .map(d => `${d.dimension} (${d.score}/100)`)
-      .join(', ');
-    keyFindings.push(templates.psychoSocialFactors(topFactors));
+    const topDims = psychoSocialDimensions.slice(0, 3);
+    const dimList = topDims.map(d => `${d.dimension} (${d.score}%)`).join(', ');
+    keyFindings.push(templates.psychoSocialFactors(dimList));
   }
-  
+
   if (marketingAnalysis.strongest && marketingAnalysis.weakest) {
     keyFindings.push(
       templates.marketingFunnel(
@@ -387,33 +387,31 @@ export function generateStrategicReport(documents: Document[], locale: Locale = 
       )
     );
   }
-  
-  // Build executive summary
-  const dominantEmotionText = topEmotions.length > 0 
-    ? translateEmotion(topEmotions[0].emotion, locale)
-    : (locale === 'id' ? 'emosi campuran' : 'mixed emotions');
-  
-  const highPriorityCount = recommendations.filter(r => r.priority === 'high').length;
-  
-  const executiveSummary = templates.executiveSummaryTemplate(
-    documents.length,
-    dominantEmotionText,
-    recommendations.length,
-    highPriorityCount
+
+  // Generate risks
+  const risks = generateRisks(
+    topEmotions,
+    psychoSocialDimensions,
+    marketingAnalysis,
+    documents,
+    locale
   );
-  
+
+  // Get next steps from templates
+  const nextSteps = templates.nextSteps;
+
   return {
     generatedAt: new Date().toISOString(),
     executiveSummary,
     keyFindings,
     recommendations,
     risks,
-    nextSteps: templates.nextSteps,
+    nextSteps,
     dataAvailability: {
-      hasEmotionData: true,
-      hasPsychoSocialData: psychoSocialDimensions.length > 0,
-      hasMarketingData: marketingAnalysis.all.length > 0,
-      hasPurchaseIntentionData: false,
+      hasEmotionData: documents.length > 0,
+      hasPsychoSocialData: documents.length > 0,
+      hasMarketingData: documents.length > 0,
+      hasPurchaseIntentionData: documents.length > 0, // Now always true when documents exist
     },
     locale,
   };
@@ -423,66 +421,47 @@ export function generateStrategicReport(documents: Document[], locale: Locale = 
  * Export report as Markdown
  */
 export function exportReportAsMarkdown(report: StrategicReport): string {
-  const labels = getReportTemplates(report.locale);
-  const uiLabels = report.locale === 'id' 
-    ? {
-        reportTitle: 'Laporan Rekomendasi Strategis',
-        generatedOn: 'Dibuat pada',
-        documentsAnalyzed: 'Dokumen Dianalisis',
-        executiveSummary: 'Ringkasan Eksekutif',
-        keyFindings: 'Temuan Utama',
-        recommendations: 'Rekomendasi Strategis',
-        risks: 'Risiko & Perhatian',
-        nextSteps: 'Langkah Selanjutnya',
-        priority: 'Prioritas',
-      }
-    : {
-        reportTitle: 'Strategic Recommendation Report',
-        generatedOn: 'Generated on',
-        documentsAnalyzed: 'Documents Analyzed',
-        executiveSummary: 'Executive Summary',
-        keyFindings: 'Key Findings',
-        recommendations: 'Strategic Recommendations',
-        risks: 'Risks & Watchouts',
-        nextSteps: 'Next Steps',
-        priority: 'Priority',
-      };
+  const uiLabels = getUILabels(report.locale);
   
-  let markdown = `# ${uiLabels.reportTitle}\n\n`;
-  markdown += `**${uiLabels.generatedOn}:** ${new Date(report.generatedAt).toLocaleString()}\n\n`;
-  markdown += `**${uiLabels.documentsAnalyzed}:** ${report.keyFindings[0] || 'N/A'}\n\n`;
+  let markdown = `# ${uiLabels.pageTitle}\n\n`;
+  markdown += `${uiLabels.generatedOn}: ${new Date(report.generatedAt).toLocaleString()}\n\n`;
+  markdown += `---\n\n`;
   
-  markdown += `## ${uiLabels.executiveSummary}\n\n${report.executiveSummary}\n\n`;
+  markdown += `## ${uiLabels.executiveSummary}\n\n`;
+  markdown += `${report.executiveSummary}\n\n`;
   
-  markdown += `## ${uiLabels.keyFindings}\n\n`;
-  report.keyFindings.forEach(finding => {
-    markdown += `- ${finding}\n`;
-  });
-  markdown += '\n';
-  
-  markdown += `## ${uiLabels.recommendations}\n\n`;
-  report.recommendations.forEach((rec, idx) => {
-    markdown += `### ${idx + 1}. ${rec.title} [${uiLabels.priority}: ${rec.priority.toUpperCase()}]\n\n`;
-    markdown += `${rec.rationale}\n\n`;
-  });
-  
-  if (report.risks.length > 0) {
-    markdown += `## ${uiLabels.risks}\n\n`;
-    report.risks.forEach(risk => {
-      markdown += `- ${risk}\n`;
+  if (report.keyFindings.length > 0) {
+    markdown += `## ${uiLabels.keyFindings}\n\n`;
+    report.keyFindings.forEach((finding, idx) => {
+      markdown += `${idx + 1}. ${finding}\n`;
     });
-    markdown += '\n';
+    markdown += `\n`;
   }
   
-  markdown += `## ${uiLabels.nextSteps}\n\n`;
-  report.nextSteps.forEach(step => {
-    markdown += `- ${step}\n`;
-  });
+  if (report.recommendations.length > 0) {
+    markdown += `## ${uiLabels.strategicRecommendations}\n\n`;
+    report.recommendations.forEach((rec, idx) => {
+      markdown += `### ${idx + 1}. ${rec.title}\n\n`;
+      markdown += `**Priority**: ${getPriorityLabel(rec.priority, report.locale)}\n\n`;
+      markdown += `${rec.rationale}\n\n`;
+    });
+  }
+  
+  if (report.risks.length > 0) {
+    markdown += `## ${uiLabels.risksWatchouts}\n\n`;
+    report.risks.forEach((risk, idx) => {
+      markdown += `${idx + 1}. ${risk}\n`;
+    });
+    markdown += `\n`;
+  }
+  
+  if (report.nextSteps.length > 0) {
+    markdown += `## ${uiLabels.nextSteps}\n\n`;
+    report.nextSteps.forEach((step, idx) => {
+      markdown += `${idx + 1}. ${step}\n`;
+    });
+    markdown += `\n`;
+  }
   
   return markdown;
 }
-
-/**
- * Alias for backward compatibility
- */
-export const reportToMarkdown = exportReportAsMarkdown;

@@ -2,17 +2,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Package } from 'lucide-react';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from '@/components/ui/chart';
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { usePurchaseIntentionData } from '../hooks/useQueries';
+import { useGetAllDocuments } from '../hooks/useQueries';
+import { useMemo } from 'react';
+import { computeIntentionByBrand } from '../lib/purchaseIntentionAggregation';
 
 export function IntentionBrandCorrelation() {
-  const { data: intentionData } = usePurchaseIntentionData();
+  const { data: documents = [], isLoading } = useGetAllDocuments();
 
-  const data = intentionData?.brandCorrelation.map((item) => ({
-    brand: item.brand,
-    tinggi: Number(item.high),
-    sedang: Number(item.medium),
-    rendah: Number(item.low),
-  })) || [];
+  const data = useMemo(() => {
+    if (documents.length === 0) return [];
+
+    const brandData = computeIntentionByBrand(documents);
+
+    return brandData.map((item) => ({
+      brand: item.brand,
+      tinggi: item.high,
+      sedang: item.medium,
+      rendah: item.low,
+    }));
+  }, [documents]);
 
   const hasData = data.length > 0;
 
@@ -43,9 +51,13 @@ export function IntentionBrandCorrelation() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {!hasData ? (
+        {isLoading ? (
+          <div className="flex h-[300px] items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          </div>
+        ) : !hasData ? (
           <div className="flex h-[300px] items-center justify-center text-sm text-muted-foreground">
-            Tidak ada data aktif
+            No active dataset or insufficient brand data
           </div>
         ) : (
           <ChartContainer config={chartConfig} className="h-[300px] w-full">
