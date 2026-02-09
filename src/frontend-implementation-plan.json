@@ -1,96 +1,37 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Deterministic Purchase Intention derivation on upload and in reports/charts",
+  "title": "Blue gradient background and improved contrast for the sticky main header",
   "requirements": [
     {
-      "id": "REQ-33",
-      "summary": "Extend dataset ingestion to accept optional intention columns and deterministically auto-generate missing per-row intention values for CSV/JSON uploads.",
+      "id": "REQ-40",
+      "summary": "Replace the header’s semi-transparent background with a full-width blue gradient while keeping sticky, blur, and border behavior.",
       "acceptanceCriteria": [
-        "For CSV uploads, header matching is case-insensitive and whitespace-tolerant for `intention_level` and `intention_score` (e.g., `Intention_Score`, `intention score`).",
-        "For JSON uploads, key matching is case-insensitive and whitespace-tolerant for `intention_level` and `intention_score`.",
-        "If one or both intention columns are absent, ingestion still succeeds and each parsed row is assigned generated `intention_level` and `intention_score` values.",
-        "Generation is deterministic (no `Math.random`, time-based seeds, or non-deterministic ordering) and produces the same outputs for the same row text/content."
+        "The `<header>` in `frontend/src/components/Header.tsx` uses Tailwind gradient classes (e.g., `bg-gradient-to-r` or similar) with blue tones and no longer uses `bg-background/95` or `supports-[backdrop-filter]:bg-background/60` as the primary background.",
+        "The gradient is visible in both light and dark mode and remains full-width across the viewport.",
+        "Header remains `sticky top-0` with the existing z-index behavior and still renders correctly on desktop and mobile."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/lib/datasetIngestion.ts",
+          "path": "frontend/src/components/Header.tsx",
           "operation": "modify",
-          "description": "Update DatasetRow typing to optionally include `intention_level` and `intention_score`; enhance key/header normalization to be case-insensitive and whitespace-tolerant while also matching underscore/space variants; parse provided intention fields when present; deterministically derive and fill missing intention fields per row using the new frontend derivation utility."
+          "description": "Update the <header> wrapper className to remove the current `bg-background/95` and `supports-[backdrop-filter]:bg-background/60` background styling and replace it with a full-width blue Tailwind gradient (e.g., `bg-gradient-to-r` with blue/sky/indigo stops). Keep existing `sticky top-0`, `z-50`, `w-full`, `border-b`, and `backdrop-blur` behavior intact so the header remains sticky, blurred, and bordered across viewport sizes."
         }
       ]
     },
     {
-      "id": "REQ-34",
-      "summary": "Add a deterministic frontend utility to derive per-row purchase intention score and level from text with clamping and validation.",
+      "id": "REQ-41",
+      "summary": "Ensure header foreground elements (brand, nav buttons, theme toggle, mobile trigger) remain readable with distinct hover/active states on the new gradient without editing immutable UI component sources.",
       "acceptanceCriteria": [
-        "A new utility exists under `frontend/src/lib` that exports a function to derive `{ intention_score, intention_level }` from a single row’s text.",
-        "`intention_score` is always an integer between 0 and 100 (inclusive).",
-        "`intention_level` is derived from the score using a documented threshold mapping (e.g., low/medium/high) and never returns other values.",
-        "The utility does not depend on any non-deterministic functions (e.g., `Math.random`)."
+        "Navigation labels and icons remain clearly legible against the gradient in both themes (no low-contrast text).",
+        "Hover and active states remain visually distinct on the gradient background for both desktop nav buttons and the mobile sheet trigger.",
+        "No files under `frontend/src/components/ui` and no immutable hook entrypoints are edited."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/lib/purchaseIntentionDerivation.ts",
-          "operation": "create",
-          "description": "Create a deterministic `derivePurchaseIntentionFromText(text)` utility that hashes/stabilizes input text into an integer score (0–100, clamped) and maps it to `low|medium|high` via documented thresholds; include validation helpers to safely coerce/repair provided intention values."
-        }
-      ]
-    },
-    {
-      "id": "REQ-35",
-      "summary": "Update Strategic Recommendation Report generation and UI to treat purchase intention as available when it can be derived and hide the “not available” note in that case.",
-      "acceptanceCriteria": [
-        "When documents/dataset rows have either provided or auto-generated intention values, `generateStrategicReport(...)` sets `dataAvailability.hasPurchaseIntentionData` to `true`.",
-        "When purchase intention is available (provided or auto-generated), the report UI does not display a “Purchase Intention data not available” message/state for the current dataset.",
-        "All newly introduced user-facing text for this change is in English."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/lib/strategicReport.ts",
+          "path": "frontend/src/components/Header.tsx",
           "operation": "modify",
-          "description": "Update `generateStrategicReport(...)` to set `dataAvailability.hasPurchaseIntentionData` to true when purchase intention can be derived from the current documents (e.g., documents exist and deterministic derivation is possible), so the UI hides the unavailability notice without adding new non-English user-facing strings."
-        }
-      ]
-    },
-    {
-      "id": "REQ-36",
-      "summary": "Ensure the Purchase Intention page and charts render non-empty states using derived intention values from currently loaded documents, without backend schema changes.",
-      "acceptanceCriteria": [
-        "With a dataset uploaded that does not include `intention_level` / `intention_score`, the Purchase Intention page renders non-empty states using derived intention values (as long as documents exist).",
-        "No backend changes are required to store new fields; the feature works via frontend derivation from the currently loaded documents/dataset rows.",
-        "The page and charts handle the standard visualization states (loading, empty dataset, insufficient/invalid derived metric, ready) without runtime errors."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/lib/purchaseIntentionAggregation.ts",
-          "operation": "create",
-          "description": "Create deterministic aggregation helpers to compute purchase-intention distribution (low/medium/high), per-document derived score summaries, and chart-ready series from loaded documents using `derivePurchaseIntentionFromText`, including safe handling for empty/invalid inputs."
-        },
-        {
-          "path": "frontend/src/pages/PurchaseIntentionPage.tsx",
-          "operation": "modify",
-          "description": "Refactor the page to derive purchase intention stats directly from currently loaded documents (and to rely on document loading state) so it renders meaningful values even when the original upload lacked intention columns; ensure loading/empty/invalid/ready states are handled without runtime errors."
-        },
-        {
-          "path": "frontend/src/components/PurchaseIntentionChart.tsx",
-          "operation": "modify",
-          "description": "Update the chart to use derived distribution data from documents (via the new aggregation helpers) and to explicitly handle loading, empty dataset, insufficient/invalid derived metric, and ready states."
-        },
-        {
-          "path": "frontend/src/components/IntentionBrandCorrelation.tsx",
-          "operation": "modify",
-          "description": "Update the brand correlation visualization to use derived intention values computed from loaded documents (via aggregation helpers) with robust empty/invalid handling (no runtime errors) when documents exist but correlation cannot be computed."
-        },
-        {
-          "path": "frontend/src/components/IntentionTrendChart.tsx",
-          "operation": "modify",
-          "description": "Update the trend chart to render based on derived intention values from loaded documents (via aggregation helpers) and support loading/empty/invalid/ready states consistently."
-        },
-        {
-          "path": "frontend/src/components/IntentionDemographics.tsx",
-          "operation": "modify",
-          "description": "Update demographic charts to base their derived/mock breakdowns on the derived intention distribution computed from loaded documents (via aggregation helpers), and handle loading/empty/invalid states safely."
+          "description": "Adjust header foreground classes to ensure strong contrast on the blue gradient: set brand/title area text/icon styling for legibility; override Button `className` props (without changing Button source) for desktop nav, theme toggle, and mobile sheet trigger to use high-contrast text/icon colors and distinct hover/active backgrounds suitable for a gradient (e.g., white/near-white text with subtle translucent hover/active fills). Ensure both desktop and mobile navigation states (active vs. inactive) remain visually distinct while keeping existing nav items/routes/icons unchanged."
         }
       ]
     }

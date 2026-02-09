@@ -1,107 +1,58 @@
 {
   "kind": "build_request",
-  "title": "Auto-generate missing Purchase Intention fields on dataset upload and include them in reports",
-  "priority": "normal",
+  "title": "Apply a full-width blue gradient background to the main navigation header",
+  "priority": "high",
   "requirements": [
     {
-      "id": "REQ-33",
-      "text": "Extend dataset ingestion to recognize optional Purchase Intention columns (`intention_level`, `intention_score`) when present in uploaded CSV/JSON, and when they are missing, automatically generate deterministic values for each parsed row.",
+      "id": "REQ-40",
+      "text": "Update the main navigation header background to use a full-width blue gradient (not a solid color) across the entire header bar, replacing the current semi-transparent `bg-background/95` styling while keeping the header sticky, blurred, and bordered.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-messages"
         ],
         "quotes": [
-          "tolong menambahkan kolom ini secara otomatis"
+          "biru pada background seluruh header, gradient",
+          "berikan warna biru pada background seluruh header, gradient",
+          "kerjakan sekarang"
         ]
       },
       "acceptanceCriteria": [
-        "For CSV uploads, header matching is case-insensitive and whitespace-tolerant for `intention_level` and `intention_score` (e.g., `Intention_Score`, `intention score`).",
-        "For JSON uploads, key matching is case-insensitive and whitespace-tolerant for `intention_level` and `intention_score`.",
-        "If one or both intention columns are absent, ingestion still succeeds and each parsed row is assigned generated `intention_level` and `intention_score` values.",
-        "Generation is deterministic (no `Math.random`, time-based seeds, or non-deterministic ordering) and produces the same outputs for the same row text/content."
+        "The `<header>` in `frontend/src/components/Header.tsx` uses Tailwind gradient classes (e.g., `bg-gradient-to-r` or similar) with blue tones and no longer uses `bg-background/95` or `supports-[backdrop-filter]:bg-background/60` as the primary background.",
+        "The gradient is visible in both light and dark mode and remains full-width across the viewport.",
+        "Header remains `sticky top-0` with the existing z-index behavior and still renders correctly on desktop and mobile."
       ]
     },
     {
-      "id": "REQ-34",
-      "text": "Add a deterministic frontend utility to compute per-row Purchase Intention from text, producing `intention_score` (0–100 integer) and `intention_level` (one of `low|medium|high`) with clear clamping and validation.",
+      "id": "REQ-41",
+      "text": "Adjust header foreground styling to ensure readable contrast on the new blue gradient background, including nav buttons (active/hover states), theme toggle button, and brand/title area, without modifying any immutable UI component sources.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "recent-messages"
         ],
         "quotes": [
-          "tolong menambahkan kolom ini secara otomatis"
+          "berikan warna biru pada background seluruh header, gradient"
         ]
       },
       "acceptanceCriteria": [
-        "A new utility exists under `frontend/src/lib` that exports a function to derive `{ intention_score, intention_level }` from a single row’s text.",
-        "`intention_score` is always an integer between 0 and 100 (inclusive).",
-        "`intention_level` is derived from the score using a documented threshold mapping (e.g., low/medium/high) and never returns other values.",
-        "The utility does not depend on any non-deterministic functions (e.g., `Math.random`)."
-      ]
-    },
-    {
-      "id": "REQ-35",
-      "text": "Update Strategic Recommendation Report generation to treat Purchase Intention data as available when it can be derived from the uploaded dataset (including auto-generated intention values), and remove the “Purchase Intention data not available” note in that case.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "tolong menambahkan kolom ini secara otomatis"
-        ]
-      },
-      "acceptanceCriteria": [
-        "When documents/dataset rows have either provided or auto-generated intention values, `generateStrategicReport(...)` sets `dataAvailability.hasPurchaseIntentionData` to `true`.",
-        "When purchase intention is available (provided or auto-generated), the report UI does not display a “Purchase Intention data not available” message/state for the current dataset.",
-        "All newly introduced user-facing text for this change is in English."
-      ]
-    },
-    {
-      "id": "REQ-36",
-      "text": "Ensure the Purchase Intention page and its charts can render using derived intention values when the original upload lacked `intention_level` / `intention_score`, without requiring backend schema changes.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "tolong menambahkan kolom ini secara otomatis"
-        ]
-      },
-      "acceptanceCriteria": [
-        "With a dataset uploaded that does not include `intention_level` / `intention_score`, the Purchase Intention page renders non-empty states using derived intention values (as long as documents exist).",
-        "No backend changes are required to store new fields; the feature works via frontend derivation from the currently loaded documents/dataset rows.",
-        "The page and charts handle the standard visualization states (loading, empty dataset, insufficient/invalid derived metric, ready) without runtime errors."
+        "Navigation labels and icons remain clearly legible against the gradient in both themes (no low-contrast text).",
+        "Hover and active states remain visually distinct on the gradient background for both desktop nav buttons and the mobile sheet trigger.",
+        "No files under `frontend/src/components/ui` and no immutable hook entrypoints are edited."
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files under `frontend/src/components/ui` or other immutable frontend paths listed in SYSTEM_CONTEXT.",
-    "Keep the backend architecture as a single Motoko actor; do not introduce additional canisters or external databases.",
-    "Do not change the backend `Document` schema; implement intention field support via frontend ingestion/derivation."
+    "Frontend changes must be limited to non-immutable paths (do not edit any files under `frontend/src/components/ui` or other immutable paths listed in SYSTEM_CONTEXT).",
+    "Keep existing navigation items, routes, and icons unchanged; only update styling/appearance of the header background and related contrast styles."
   ],
   "nonGoals": [
-    "Building a true ML-based purchase-intention model or integrating external AI services.",
-    "Guaranteeing that derived purchase-intention values match a real-world ground truth; the requirement is deterministic automatic completion.",
-    "Adding new authentication methods beyond Internet Identity."
+    "Do not add new navigation items or change route paths.",
+    "Do not introduce new authentication or theming systems.",
+    "Do not redesign other pages or global theme tokens beyond what is necessary to support the header gradient readability."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
-  },
-  "userProfileUpdate": {
-    "goalsToAdd": [],
-    "goalsToRemove": [],
-    "preferencesToAdd": [
-      "Prefer English for user-facing text in build specifications."
-    ],
-    "preferencesToRemove": [],
-    "miscToAdd": [],
-    "miscToRemove": [],
-    "fieldsToSet": {},
-    "fieldsToDelete": []
   }
 }

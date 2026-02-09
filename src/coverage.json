@@ -1,67 +1,35 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-09T02:13:22.664Z",
+  "generatedAt": "2026-02-09T08:25:29.288Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 4,
-    "implemented": 4,
+    "total": 2,
+    "implemented": 2,
     "items": [
       {
-        "id": "REQ-33",
-        "summary": "Extend dataset ingestion to recognize optional Purchase Intention columns (`intention_level`, `intention_score`) when present in uploaded CSV/JSON, and when they are missing, automatically generate deterministic values for each parsed row.",
+        "id": "REQ-40",
+        "summary": "Update the main navigation header background to use a full-width blue gradient (not a solid color) across the entire header bar, replacing the current semi-transparent `bg-background/95` styling while keeping the header sticky, blurred, and bordered.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/lib/datasetIngestion.ts"
+          "frontend/src/components/Header.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/lib/datasetIngestion.ts"
+          "frontend/src/components/Header.tsx"
         ]
       },
       {
-        "id": "REQ-34",
-        "summary": "Add a deterministic frontend utility to compute per-row Purchase Intention from text, producing `intention_score` (0–100 integer) and `intention_level` (one of `low|medium|high`) with clear clamping and validation.",
+        "id": "REQ-41",
+        "summary": "Adjust header foreground styling to ensure readable contrast on the new blue gradient background, including nav buttons (active/hover states), theme toggle button, and brand/title area, without modifying any immutable UI component sources.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/lib/purchaseIntentionDerivation.ts"
+          "frontend/src/components/Header.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/lib/purchaseIntentionDerivation.ts"
-        ]
-      },
-      {
-        "id": "REQ-35",
-        "summary": "Update Strategic Recommendation Report generation to treat Purchase Intention data as available when it can be derived from the uploaded dataset (including auto-generated intention values), and remove the “Purchase Intention data not available” note in that case.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/lib/strategicReport.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/lib/strategicReport.ts"
-        ]
-      },
-      {
-        "id": "REQ-36",
-        "summary": "Ensure the Purchase Intention page and its charts can render using derived intention values when the original upload lacked `intention_level` / `intention_score`, without requiring backend schema changes.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/lib/purchaseIntentionAggregation.ts",
-          "frontend/src/pages/PurchaseIntentionPage.tsx",
-          "frontend/src/components/PurchaseIntentionChart.tsx",
-          "frontend/src/components/IntentionBrandCorrelation.tsx",
-          "frontend/src/components/IntentionTrendChart.tsx",
-          "frontend/src/components/IntentionDemographics.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/lib/purchaseIntentionAggregation.ts",
-          "frontend/src/pages/PurchaseIntentionPage.tsx",
-          "frontend/src/components/PurchaseIntentionChart.tsx",
-          "frontend/src/components/IntentionBrandCorrelation.tsx",
-          "frontend/src/components/IntentionTrendChart.tsx",
-          "frontend/src/components/IntentionDemographics.tsx"
+          "frontend/src/components/Header.tsx"
         ]
       }
     ]
@@ -71,16 +39,7 @@
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/components/IntentionBrandCorrelation.tsx",
-    "frontend/src/components/IntentionDemographics.tsx",
-    "frontend/src/components/IntentionTrendChart.tsx",
-    "frontend/src/components/PurchaseIntentionChart.tsx",
-    "frontend/src/lib/datasetIngestion.ts",
-    "frontend/src/lib/purchaseIntentionAggregation.ts",
-    "frontend/src/lib/purchaseIntentionDerivation.ts",
-    "frontend/src/lib/strategicReport.ts",
-    "frontend/src/pages/PurchaseIntentionPage.tsx",
-    "frontend/src/pages/StrategicRecommendationReportPage.tsx",
+    "frontend/src/components/Header.tsx",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

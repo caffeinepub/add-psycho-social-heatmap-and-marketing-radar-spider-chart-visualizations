@@ -178,19 +178,19 @@ export function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="relative overflow-hidden border-b bg-gradient-to-br from-primary/10 via-background to-secondary/10 px-4 py-16 sm:px-6 lg:px-8">
-        <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.5))]" />
+      <section className="relative overflow-hidden border-b bg-gradient-to-br from-primary/5 via-background to-primary/10 px-4 py-16 sm:px-6 lg:px-8">
+        <div className="absolute inset-0 bg-grid-white/5 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.5))]" />
         <div className="relative mx-auto max-w-7xl">
           <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
             {/* Left: Text Content */}
             <div className="flex flex-col justify-center space-y-6">
-              <div className="inline-flex items-center gap-2 rounded-full border bg-background/50 px-4 py-2 text-sm backdrop-blur-sm w-fit">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-2 text-sm backdrop-blur-sm w-fit">
                 <Sparkles className="h-4 w-4 text-primary" />
-                <span className="font-medium">AI-Powered Emotion Analysis</span>
+                <span className="font-medium text-primary">AI-Powered Emotion Analysis</span>
               </div>
-              <h1 className="text-4xl font-bold tracking-tight text-blue-600 sm:text-5xl lg:text-6xl">
+              <h1 className="text-4xl font-bold tracking-tight text-primary sm:text-5xl lg:text-6xl">
                 Pahami Emosi Pelanggan
               </h1>
               <p className="text-lg text-muted-foreground sm:text-xl">
@@ -198,11 +198,11 @@ export function Dashboard() {
                 Buat keputusan berbasis data dengan analisis sentimen yang canggih.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button size="lg" onClick={() => navigate({ to: '/analysis' })} className="gap-2">
+                <Button size="lg" onClick={() => navigate({ to: '/analysis' })} className="gap-2 shadow-sm">
                   <BarChart3 className="h-5 w-5" />
                   View Analysis
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => navigate({ to: '/metrics' })} className="gap-2">
+                <Button size="lg" variant="outline" onClick={() => navigate({ to: '/metrics' })} className="gap-2 border-primary/20 hover:bg-primary/5 hover:text-primary">
                   <TrendingUp className="h-5 w-5" />
                   Model Metrics
                 </Button>
@@ -211,7 +211,7 @@ export function Dashboard() {
 
             {/* Right: Image */}
             <div className="relative flex items-center justify-center">
-              <div className="relative h-[300px] w-full overflow-hidden rounded-2xl border bg-background/50 shadow-2xl backdrop-blur-sm lg:h-[400px]">
+              <div className="relative h-[300px] w-full overflow-hidden rounded-xl border border-primary/10 bg-card shadow-lg backdrop-blur-sm lg:h-[400px]">
                 <img
                   src="/assets/generated/electric-motorcycle-hero.dim_800x600.png"
                   alt="Electric Motorcycle Analysis"
@@ -230,8 +230,8 @@ export function Dashboard() {
           {/* Quick Analysis Section */}
           <section className="space-y-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <Sparkles className="h-5 w-5 text-primary" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Sparkles className="h-5 w-5" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold">Quick Analysis</h2>
@@ -241,7 +241,7 @@ export function Dashboard() {
 
             <div className="grid gap-6 lg:grid-cols-2">
               {/* Text Input Card */}
-              <Card className="border-2">
+              <Card className="border-primary/10 shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-primary" />
@@ -260,13 +260,13 @@ export function Dashboard() {
                       value={textInput}
                       onChange={(e) => setTextInput(e.target.value)}
                       rows={6}
-                      className="resize-none"
+                      className="resize-none border-primary/10 focus-visible:ring-primary"
                     />
                   </div>
                   <Button 
                     onClick={handleAnalyze} 
                     disabled={uploadMutation.isPending || !textInput.trim()}
-                    className="w-full gap-2"
+                    className="w-full gap-2 shadow-sm"
                   >
                     {uploadMutation.isPending ? (
                       <>
@@ -284,7 +284,7 @@ export function Dashboard() {
               </Card>
 
               {/* File Upload Card */}
-              <Card className="border-2">
+              <Card className="border-primary/10 shadow-sm">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Upload className="h-5 w-5 text-primary" />
@@ -300,10 +300,10 @@ export function Dashboard() {
                     <div className="flex items-center justify-center w-full">
                       <label
                         htmlFor="file-upload"
-                        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/80 transition-colors"
+                        className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-primary/20 rounded-lg cursor-pointer bg-primary/5 hover:bg-primary/10 transition-colors"
                       >
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                          <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
+                          <Upload className="w-10 h-10 mb-3 text-primary" />
                           <p className="mb-2 text-sm text-muted-foreground">
                             <span className="font-semibold">Click to upload</span> or drag and drop
                           </p>
@@ -322,79 +322,78 @@ export function Dashboard() {
                       </label>
                     </div>
                   </div>
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <p>• <strong>.txt</strong>: Single document analysis</p>
-                    <p>• <strong>.csv/.json</strong>: Batch dataset upload with required columns</p>
-                  </div>
+
+                  {uploadStatus.state !== 'idle' && (
+                    <DatasetUploadStatus {...uploadStatus} />
+                  )}
                 </CardContent>
               </Card>
             </div>
-
-            {/* Dataset Upload Status */}
-            {uploadStatus.state !== 'idle' && (
-              <DatasetUploadStatus {...uploadStatus} />
-            )}
           </section>
 
           {/* Statistics Cards */}
           <section className="space-y-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <BarChart3 className="h-5 w-5 text-primary" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <BarChart3 className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Dataset Overview</h2>
-                <p className="text-sm text-muted-foreground">Current analysis statistics</p>
+                <h2 className="text-2xl font-bold">Overview Statistics</h2>
+                <p className="text-sm text-muted-foreground">Key metrics from your analysis</p>
               </div>
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardDescription>Total Documents</CardDescription>
-                  <CardTitle className="text-3xl">{isLoading ? '...' : documents.length}</CardTitle>
+              <Card className="border-primary/10 shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Documents</CardTitle>
+                  <FileText className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
+                  <div className="text-2xl font-bold text-primary">{documents.length}</div>
                   <p className="text-xs text-muted-foreground">
                     {hasActiveDataset ? 'Active dataset' : 'No data yet'}
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardDescription>Analysis Status</CardDescription>
-                  <CardTitle className="text-3xl">
-                    {hasActiveDataset ? '✓' : '—'}
-                  </CardTitle>
+              <Card className="border-primary/10 shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Emotions Detected</CardTitle>
+                  <Sparkles className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
-                  <p className="text-xs text-muted-foreground">
-                    {hasActiveDataset ? 'Ready for insights' : 'Upload data to begin'}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardDescription>Emotion Categories</CardDescription>
-                  <CardTitle className="text-3xl">5</CardTitle>
-                </CardHeader>
-                <CardContent>
+                  <div className="text-2xl font-bold text-primary">5</div>
                   <p className="text-xs text-muted-foreground">
                     Interest, Trust, Fear, Skepticism, Satisfaction
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardDescription>AI Models</CardDescription>
-                  <CardTitle className="text-3xl">3</CardTitle>
+              <Card className="border-primary/10 shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Brands Tracked</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-primary" />
                 </CardHeader>
                 <CardContent>
+                  <div className="text-2xl font-bold text-primary">11</div>
                   <p className="text-xs text-muted-foreground">
-                    BERT, RoBERTa, DistilBERT
+                    Indonesian electric motorcycle brands
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-primary/10 shadow-sm">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Analysis Status</CardTitle>
+                  <BarChart3 className="h-4 w-4 text-primary" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-primary">
+                    {isLoading ? '...' : hasActiveDataset ? 'Active' : 'Ready'}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {hasActiveDataset ? 'Data loaded' : 'Upload data to begin'}
                   </p>
                 </CardContent>
               </Card>
@@ -404,41 +403,105 @@ export function Dashboard() {
           {/* Visualizations Grid */}
           <section className="space-y-6">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <TrendingUp className="h-5 w-5 text-primary" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <TrendingUp className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">Emotion Insights</h2>
-                <p className="text-sm text-muted-foreground">Visual analysis of emotional patterns</p>
+                <h2 className="text-2xl font-bold">Data Visualizations</h2>
+                <p className="text-sm text-muted-foreground">Comprehensive emotion analysis insights</p>
               </div>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
-              <EmotionChart documents={documents} />
-              <EmotionDistributionChart documents={documents} />
-              <BrandEmotionChart documents={documents} />
-              <GenderEmotionChart />
-              <GeoEmotionMap />
-              <RecentAnalysis documents={documents} />
-            </div>
-          </section>
+              <Card className="border-primary/10 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Emotion Distribution</CardTitle>
+                  <CardDescription>Overall emotion breakdown from analyzed data</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <EmotionDistributionChart documents={documents} />
+                </CardContent>
+              </Card>
 
-          {/* Advanced Metrics */}
-          <section className="space-y-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <BarChart3 className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold">Advanced Metrics</h2>
-                <p className="text-sm text-muted-foreground">Psycho-social and marketing insights</p>
-              </div>
-            </div>
+              <Card className="border-primary/10 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Recent Analysis</CardTitle>
+                  <CardDescription>Latest analyzed documents and their emotions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RecentAnalysis documents={documents} />
+                </CardContent>
+              </Card>
 
-            <div className="grid gap-6 lg:grid-cols-2">
-              <PsychoSocialHeatmap documents={documents} />
-              <MarketingRadarChart documents={documents} />
-              <MarketingMixRadarChart documents={documents} />
+              <Card className="border-primary/10 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Emotion Frequency</CardTitle>
+                  <CardDescription>Emotion counts across all documents</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <EmotionChart documents={documents} hasActiveDataset={hasActiveDataset} />
+                </CardContent>
+              </Card>
+
+              <Card className="border-primary/10 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Brand Emotion Analysis</CardTitle>
+                  <CardDescription>Emotion distribution by motorcycle brand</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <BrandEmotionChart documents={documents} />
+                </CardContent>
+              </Card>
+
+              <Card className="border-primary/10 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Gender-Based Emotions</CardTitle>
+                  <CardDescription>Emotion patterns by gender demographics</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <GenderEmotionChart />
+                </CardContent>
+              </Card>
+
+              <Card className="border-primary/10 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Geographic Distribution</CardTitle>
+                  <CardDescription>Emotion intensity across locations</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <GeoEmotionMap />
+                </CardContent>
+              </Card>
+
+              <Card className="border-primary/10 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Psycho-Social Factors</CardTitle>
+                  <CardDescription>UTAUT2 constructs across emotions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <PsychoSocialHeatmap documents={documents} />
+                </CardContent>
+              </Card>
+
+              <Card className="border-primary/10 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Marketing Effectiveness</CardTitle>
+                  <CardDescription>Marketing funnel metrics analysis</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MarketingRadarChart documents={documents} />
+                </CardContent>
+              </Card>
+
+              <Card className="lg:col-span-2 border-primary/10 shadow-sm">
+                <CardHeader>
+                  <CardTitle>Marketing Mix Analysis</CardTitle>
+                  <CardDescription>8P Marketing Mix factor evaluation</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MarketingMixRadarChart documents={documents} />
+                </CardContent>
+              </Card>
             </div>
           </section>
         </div>

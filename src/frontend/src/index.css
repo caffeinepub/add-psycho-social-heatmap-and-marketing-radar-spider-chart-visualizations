@@ -10,49 +10,49 @@
     --card-foreground: oklch(15% 0 0);
     --popover: oklch(100% 0 0);
     --popover-foreground: oklch(15% 0 0);
-    --primary: oklch(55% 0.18 270);
+    --primary: oklch(58% 0.16 235);
     --primary-foreground: oklch(100% 0 0);
-    --secondary: oklch(92% 0.01 270);
+    --secondary: oklch(94% 0.01 235);
     --secondary-foreground: oklch(20% 0 0);
-    --muted: oklch(92% 0.01 270);
-    --muted-foreground: oklch(45% 0.01 270);
-    --accent: oklch(92% 0.01 270);
+    --muted: oklch(94% 0.01 235);
+    --muted-foreground: oklch(48% 0.01 235);
+    --accent: oklch(94% 0.01 235);
     --accent-foreground: oklch(20% 0 0);
     --destructive: oklch(55% 0.22 25);
     --destructive-foreground: oklch(100% 0 0);
-    --border: oklch(88% 0.01 270);
-    --input: oklch(88% 0.01 270);
-    --ring: oklch(55% 0.18 270);
+    --border: oklch(90% 0.01 235);
+    --input: oklch(90% 0.01 235);
+    --ring: oklch(58% 0.16 235);
     --radius: 0.5rem;
-    --chart-1: oklch(60% 0.15 270);
-    --chart-2: oklch(65% 0.12 220);
+    --chart-1: oklch(60% 0.14 235);
+    --chart-2: oklch(65% 0.12 210);
     --chart-3: oklch(55% 0.18 25);
     --chart-4: oklch(60% 0.10 50);
     --chart-5: oklch(70% 0.12 150);
   }
 
   .dark {
-    --background: oklch(15% 0.01 270);
+    --background: oklch(15% 0.01 235);
     --foreground: oklch(95% 0 0);
-    --card: oklch(18% 0.01 270);
+    --card: oklch(18% 0.01 235);
     --card-foreground: oklch(95% 0 0);
-    --popover: oklch(18% 0.01 270);
+    --popover: oklch(18% 0.01 235);
     --popover-foreground: oklch(95% 0 0);
-    --primary: oklch(65% 0.18 270);
+    --primary: oklch(68% 0.16 235);
     --primary-foreground: oklch(15% 0 0);
-    --secondary: oklch(25% 0.02 270);
+    --secondary: oklch(25% 0.02 235);
     --secondary-foreground: oklch(95% 0 0);
-    --muted: oklch(25% 0.02 270);
-    --muted-foreground: oklch(65% 0.02 270);
-    --accent: oklch(25% 0.02 270);
+    --muted: oklch(25% 0.02 235);
+    --muted-foreground: oklch(65% 0.02 235);
+    --accent: oklch(25% 0.02 235);
     --accent-foreground: oklch(95% 0 0);
     --destructive: oklch(55% 0.22 25);
     --destructive-foreground: oklch(100% 0 0);
-    --border: oklch(25% 0.02 270);
-    --input: oklch(25% 0.02 270);
-    --ring: oklch(65% 0.18 270);
-    --chart-1: oklch(65% 0.15 270);
-    --chart-2: oklch(70% 0.12 220);
+    --border: oklch(25% 0.02 235);
+    --input: oklch(25% 0.02 235);
+    --ring: oklch(68% 0.16 235);
+    --chart-1: oklch(68% 0.14 235);
+    --chart-2: oklch(72% 0.12 210);
     --chart-3: oklch(60% 0.18 25);
     --chart-4: oklch(65% 0.10 50);
     --chart-5: oklch(75% 0.12 150);
@@ -105,7 +105,7 @@
   /* Remove shadows and adjust colors for print */
   .card {
     box-shadow: none !important;
-    border: 1px solid oklch(88% 0.01 270) !important;
+    border: 1px solid oklch(90% 0.01 235) !important;
   }
 
   /* Ensure proper badge rendering */

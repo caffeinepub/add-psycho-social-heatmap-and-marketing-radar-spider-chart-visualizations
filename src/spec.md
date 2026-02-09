@@ -1,13 +1,10 @@
 # Specification
 
 ## Summary
-**Goal:** Automatically complete missing Purchase Intention fields (`intention_score`, `intention_level`) during dataset upload and ensure reports/pages use these derived values.
+**Goal:** Update the main navigation header to use a full-width blue gradient background while keeping it sticky, blurred, and bordered, and ensure all header content remains readable.
 
 **Planned changes:**
-- Extend frontend dataset ingestion for CSV/JSON to detect `intention_score` and `intention_level` with case-insensitive, whitespace-tolerant header/key matching.
-- When one or both fields are missing, deterministically derive per-row `intention_score` (0–100 integer) and `intention_level` (`low|medium|high`) from each row’s text/content during ingestion.
-- Add a deterministic frontend utility under `frontend/src/lib` to compute `{ intention_score, intention_level }` with clamping, validation, and documented thresholds.
-- Update Strategic Recommendation Report generation to treat Purchase Intention as available when provided or derived, and remove the “Purchase Intention data not available” note in that case (English UI text).
-- Update the Purchase Intention page and charts to render using derived intention values (with standard loading/empty/insufficient/ready states) without requiring any backend schema changes.
+- Replace the current semi-transparent header background styling in `frontend/src/components/Header.tsx` with Tailwind blue-toned gradient classes that span the full viewport width in both light and dark mode.
+- Adjust header foreground styles (brand/title, navigation buttons including hover/active states, theme toggle, and mobile sheet trigger) to maintain strong contrast and clear legibility on the new gradient without editing any `frontend/src/components/ui` files.
 
-**User-visible outcome:** Users can upload datasets that do not include Purchase Intention columns and still see populated Purchase Intention charts and report sections based on deterministically derived intention values.
+**User-visible outcome:** The app header displays a full-width blue gradient background with readable navigation and controls across desktop/mobile and in both light and dark themes.

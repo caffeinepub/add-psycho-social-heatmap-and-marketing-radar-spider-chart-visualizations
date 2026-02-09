@@ -1,7 +1,7 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 27,
-  "summary": "Build dashboard visualizations (Psycho-Social Heatmap and Radar charts—including Marketing Effectiveness and Marketing Mix) and generate a more comprehensive Strategic Recommendation Report that analyzes outputs from each visualization, with an in-app PDF download button for decision-makers.",
+  "projectStateVersion": 31,
+  "summary": "Build dashboard visualizations (Psycho-Social Heatmap and Radar charts—including Marketing Effectiveness and Marketing Mix) and generate a more comprehensive Strategic Recommendation Report that analyzes outputs from each visualization, with an in-app PDF download button for decision-makers, plus apply a modern-minimal UI refresh across the entire app using a white/blue palette and attractive icons for main menu items.",
   "architectural_notes": [
     "Psycho-Social Heatmap dimensions should be based on UTAUT2: PE (Performance Expectancy/Harapan Kinerja), EE (Effort Expectancy/Harapan Usaha), SI (Social Influence/Pengaruh Sosial), HM (Hedonic Motivation/Motivasi Hedonis), FC (Facilitating Conditions/Kondisi Pendukung), PV (Price Value/Nilai Harga), H (Habit/Kebiasaan).",
     "Add a Marketing Mix radar chart with the following axes/labels and short codes: Product—Innovative Product Strategy (PROD); Price—Innovative Pricing Architecture (PRICE); Place—Innovative Distribution Network (DIST); Promotion—Innovative Communication Strategy (COMM); People—Innovative Human Resource Development (HRD); Process—Innovative Customer Journey Design (CUSJ); Physical Evidence—Innovative Brand Experience Creation (BRAND); Collaboration Ecosystem Strategy (proposed).",
@@ -9,7 +9,10 @@
     "Strategic Recommendation Report should include a dedicated section that synthesizes insights from each dashboard visualization (emotion distribution, UTAUT2 heatmap, marketing mix radar, purchase intention where available) into actionable recommendations, and support generating a PDF for download.",
     "Dashboard marketing/intro copy should support localization (English/Bahasa Indonesia), at minimum for the \"Understand Customer Emotions\" heading and description.",
     "Dashboard hero headline should display \"Pahami Emosi Pelanggan\" with blue text styling (ensure consistent with existing layout/styling constraints).",
-    "Purchase Intention analysis/report section depends on purchase-intention inputs; when missing, the report shows a note that Purchase Intention data is unavailable. User requested auto-adding/generating fields like intention_level and intention_score for uploaded CSVs."
+    "Purchase Intention analysis/report section depends on purchase-intention inputs; when missing, the report shows a note that Purchase Intention data is unavailable. User requested auto-adding/generating fields like intention_level and intention_score for uploaded CSVs.",
+    "UI refresh direction: modern minimal style across the entire application; use white/blue as the primary palette.",
+    "Icons: add icons only for main menu items (not every menu entry); icon library/style is flexible as long as it fits modern-minimal and looks attractive.",
+    "Header styling requirement: set the entire header/navigation background to a blue gradient (full-width background), not just active item/accents."
   ],
   "known_issues": [
     "Ensure all dashboard visualizations (charts/heatmap/radar/report) reliably render when valid input data is provided; potential rendering/state update issue after data input.",
@@ -306,6 +309,46 @@
         "REQ-36"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-update-the-global-theme-tokens-to-a-modern-minimal-white-blue-look-across-the-entire-app-by-adjusting-the-oklch-css-variables-in-frontend-src-index-css-light-dark-mode-so-primary-ring-and-chart-colors-read-as-blue-not-purple-while-keeping-high-contrast-and-accessibility",
+      "title": "Update the global theme tokens to a modern-minimal white/blue look across the entire app by adjusting the OKLCH CSS variables in `frontend/src/index.css` (light + dark mode) so `--primary`, `--ring`, and chart colors read as blue (not purple), while keeping high contrast and accessibility.",
+      "reqIds": [
+        "REQ-37"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-refresh-the-main-navigation-header-to-feel-more-modern-minimal-and-visually-attractive-while-keeping-icons-only-on-main-menu-items-refine-spacing-hover-active-states-and-icon-styling-in-frontend-src-components-header-tsx-using-the-existing-lucide-icons-and-without-editing-any-immutable-ui-component-sources",
+      "title": "Refresh the main navigation (header) to feel more modern-minimal and visually attractive while keeping icons only on main menu items: refine spacing, hover/active states, and icon styling in `frontend/src/components/Header.tsx`, using the existing Lucide icons and without editing any immutable UI component sources.",
+      "reqIds": [
+        "REQ-38"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-apply-small-consistent-modern-minimal-polish-across-global-surfaces-backgrounds-borders-and-section-chrome-so-pages-look-cohesive-with-the-new-white-blue-palette-e-g-subtle-border-opacity-muted-backgrounds-by-updating-page-level-classes-where-needed-e-g-frontend-src-pages-dashboard-tsx-without-introducing-new-features-or-changing-product-behavior",
+      "title": "Apply small, consistent modern-minimal polish across global surfaces (backgrounds, borders, and section chrome) so pages look cohesive with the new white/blue palette (e.g., subtle border opacity, muted backgrounds), by updating page-level classes where needed (e.g., `frontend/src/pages/Dashboard.tsx`) without introducing new features or changing product behavior.",
+      "reqIds": [
+        "REQ-39"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-update-the-main-navigation-header-background-to-use-a-full-width-blue-gradient-not-a-solid-color-across-the-entire-header-bar-replacing-the-current-semi-transparent-bg-background-95-styling-while-keeping-the-header-sticky-blurred-and-bordered",
+      "title": "Update the main navigation header background to use a full-width blue gradient (not a solid color) across the entire header bar, replacing the current semi-transparent `bg-background/95` styling while keeping the header sticky, blurred, and bordered.",
+      "reqIds": [
+        "REQ-40"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-adjust-header-foreground-styling-to-ensure-readable-contrast-on-the-new-blue-gradient-background-including-nav-buttons-active-hover-states-theme-toggle-button-and-brand-title-area-without-modifying-any-immutable-ui-component-sources",
+      "title": "Adjust header foreground styling to ensure readable contrast on the new blue gradient background, including nav buttons (active/hover states), theme toggle button, and brand/title area, without modifying any immutable UI component sources.",
+      "reqIds": [
+        "REQ-41"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -372,6 +415,18 @@
     {
       "id": "AR-11",
       "summary": "Automatically add/generate missing Purchase Intention fields (e.g., intention_level and intention_score) to uploaded datasets so the Strategic Recommendation Report can include Purchase Intention analysis when the source CSV lacks these columns.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-12",
+      "summary": "Apply a modern-minimal UI style across the entire app with a white/blue color palette, and add attractive minimal icons to main menu items only (icon library/style flexible).",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Apply a blue gradient background across the entire main navigation header (menu utama/header background full-width).",
       "reqIds": [],
       "status": "pending"
     }

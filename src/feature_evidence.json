@@ -2,10 +2,10 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-extend-dataset-ingestion-to-recognize-optional-purchase-intention-columns-intention-level-intention-score-when-present-in-uploaded-csv-json-and-when-they-are-missing-automatically-generate-deterministic-values-for-each-parsed-row",
-      "featureTitle": "Extend dataset ingestion to recognize optional Purchase Intention columns (`intention_level`, `intention_score`) when present in uploaded CSV/JSON, and when they are missing, automatically generate deterministic values for each parsed row.",
+      "featureId": "feature-update-the-main-navigation-header-background-to-use-a-full-width-blue-gradient-not-a-solid-color-across-the-entire-header-bar-replacing-the-current-semi-transparent-bg-background-95-styling-while-keeping-the-header-sticky-blurred-and-bordered",
+      "featureTitle": "Update the main navigation header background to use a full-width blue gradient (not a solid color) across the entire header bar, replacing the current semi-transparent `bg-background/95` styling while keeping the header sticky, blurred, and bordered.",
       "files": [
-        "frontend/src/lib/datasetIngestion.ts"
+        "frontend/src/components/Header.tsx"
       ],
       "components": [
         "blob-storage@4.0.0",
@@ -16,15 +16,15 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-33"
+        "REQ-40"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-add-a-deterministic-frontend-utility-to-compute-per-row-purchase-intention-from-text-producing-intention-score-0-100-integer-and-intention-level-one-of-low-medium-high-with-clear-clamping-and-validation",
-      "featureTitle": "Add a deterministic frontend utility to compute per-row Purchase Intention from text, producing `intention_score` (0–100 integer) and `intention_level` (one of `low|medium|high`) with clear clamping and validation.",
+      "featureId": "feature-adjust-header-foreground-styling-to-ensure-readable-contrast-on-the-new-blue-gradient-background-including-nav-buttons-active-hover-states-theme-toggle-button-and-brand-title-area-without-modifying-any-immutable-ui-component-sources",
+      "featureTitle": "Adjust header foreground styling to ensure readable contrast on the new blue gradient background, including nav buttons (active/hover states), theme toggle button, and brand/title area, without modifying any immutable UI component sources.",
       "files": [
-        "frontend/src/lib/purchaseIntentionDerivation.ts"
+        "frontend/src/components/Header.tsx"
       ],
       "components": [
         "blob-storage@4.0.0",
@@ -35,50 +35,7 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-34"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-update-strategic-recommendation-report-generation-to-treat-purchase-intention-data-as-available-when-it-can-be-derived-from-the-uploaded-dataset-including-auto-generated-intention-values-and-remove-the-purchase-intention-data-not-available-note-in-that-case",
-      "featureTitle": "Update Strategic Recommendation Report generation to treat Purchase Intention data as available when it can be derived from the uploaded dataset (including auto-generated intention values), and remove the “Purchase Intention data not available” note in that case.",
-      "files": [
-        "frontend/src/lib/strategicReport.ts"
-      ],
-      "components": [
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-35"
-      ],
-      "confidence": "high"
-    },
-    {
-      "featureId": "feature-ensure-the-purchase-intention-page-and-its-charts-can-render-using-derived-intention-values-when-the-original-upload-lacked-intention-level-intention-score-without-requiring-backend-schema-changes",
-      "featureTitle": "Ensure the Purchase Intention page and its charts can render using derived intention values when the original upload lacked `intention_level` / `intention_score`, without requiring backend schema changes.",
-      "files": [
-        "frontend/src/components/IntentionBrandCorrelation.tsx",
-        "frontend/src/components/IntentionDemographics.tsx",
-        "frontend/src/components/IntentionTrendChart.tsx",
-        "frontend/src/components/PurchaseIntentionChart.tsx",
-        "frontend/src/lib/purchaseIntentionAggregation.ts",
-        "frontend/src/pages/PurchaseIntentionPage.tsx"
-      ],
-      "components": [
-        "blob-storage@4.0.0",
-        "core-infrastructure@1.0.2",
-        "shadcn-ui@1.0.0",
-        "build-template-react@1.0.0",
-        "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
-      ],
-      "testIds": [
-        "REQ-36"
+        "REQ-41"
       ],
       "confidence": "high"
     }
