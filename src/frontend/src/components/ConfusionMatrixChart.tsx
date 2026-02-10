@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Grid3x3, AlertCircle } from 'lucide-react';
 import { useMemo } from 'react';
+import { getModelPalette, getLegendSwatches, normalizeModelName } from '@/lib/confusionMatrixPalettes';
 
 interface ConfusionMatrixChartProps {
   confusionMatrix: number[][] | null;
@@ -24,6 +25,11 @@ function formatPercentage(value: number): string {
 }
 
 export function ConfusionMatrixChart({ confusionMatrix, emotions, modelName, hasActiveDataset = true }: ConfusionMatrixChartProps) {
+  // Get model-specific palette
+  const palette = useMemo(() => getModelPalette(modelName), [modelName]);
+  const normalizedModel = useMemo(() => normalizeModelName(modelName), [modelName]);
+  const isKnownModel = normalizedModel !== 'unknown';
+
   // Validate data structure and dimensions
   const isValidData = useMemo(() => {
     if (!confusionMatrix || !emotions || confusionMatrix.length === 0 || emotions.length === 0) {
@@ -67,26 +73,48 @@ export function ConfusionMatrixChart({ confusionMatrix, emotions, modelName, has
     return Math.min(max, 100); // Ensure max doesn't exceed 100%
   }, [matrix]);
 
-  // Get color intensity based on percentage value (0-100 range)
-  // Uses normalized intensity (0-1) for consistent color mapping
-  const getColorClass = (value: number): string => {
-    if (maxValue === 0) return 'bg-muted/20';
-    const intensity = value / 100; // Normalize to 0-1 range for color calculation
+  /**
+   * Get continuous gradient cell style for any model
+   */
+  const getCellStyle = (value: number): React.CSSProperties => {
+    const intensity = value / 100;
     
-    if (intensity === 0) return 'bg-muted/20';
-    if (intensity < 0.15) return 'bg-primary/15';
-    if (intensity < 0.30) return 'bg-primary/30';
-    if (intensity < 0.50) return 'bg-primary/50';
-    if (intensity < 0.70) return 'bg-primary/70';
-    if (intensity < 0.85) return 'bg-primary/85';
-    return 'bg-primary';
+    // Very low values get neutral background
+    if (intensity < 0.05) {
+      return {
+        backgroundColor: 'var(--muted)',
+        opacity: 0.3,
+      };
+    }
+    
+    // Create continuous gradient using color-mix
+    const startWeight = (1 - intensity) * 100;
+    const endWeight = intensity * 100;
+    
+    return {
+      background: `color-mix(in oklch, ${palette.gradientStart} ${startWeight}%, ${palette.gradientEnd} ${endWeight}%)`,
+    };
   };
 
-  // Get text color based on background intensity for readability
+  /**
+   * Get text color based on background intensity for optimal readability
+   * Uses intensity-aware switching with subtle text shadow for mid-range values
+   */
   const getTextColor = (value: number): string => {
-    if (maxValue === 0) return 'text-foreground';
     const intensity = value / 100;
-    return intensity > 0.5 ? 'text-primary-foreground' : 'text-foreground';
+    
+    // For very light backgrounds, use dark text
+    if (intensity < 0.4) {
+      return 'text-foreground';
+    }
+    
+    // For very dark backgrounds, use light text
+    if (intensity > 0.75) {
+      return 'text-primary-foreground drop-shadow-sm';
+    }
+    
+    // Mid-range: use foreground with subtle shadow for better contrast
+    return 'text-foreground drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]';
   };
 
   // Translate emotion labels to Indonesian
@@ -162,7 +190,7 @@ export function ConfusionMatrixChart({ confusionMatrix, emotions, modelName, has
             
             {/* Matrix table */}
             <div className="mx-auto w-fit">
-              <table className="border-collapse border-2 border-border">
+              <table className="border-collapse border-2 border-border shadow-md">
                 <thead>
                   <tr>
                     {/* Empty corner cell */}
@@ -171,8 +199,12 @@ export function ConfusionMatrixChart({ confusionMatrix, emotions, modelName, has
                     {safeEmotions.map((emotion) => (
                       <th
                         key={`header-${emotion}`}
-                        className="border-2 border-border bg-muted/50 p-2 text-center text-xs font-semibold"
-                        style={{ minWidth: '90px' }}
+                        className="border-2 p-3 text-center text-xs font-semibold transition-colors"
+                        style={{
+                          minWidth: '95px',
+                          backgroundColor: palette.labelBg,
+                          borderColor: palette.labelBorder,
+                        }}
                       >
                         {translateEmotion(emotion)}
                       </th>
@@ -184,8 +216,12 @@ export function ConfusionMatrixChart({ confusionMatrix, emotions, modelName, has
                     <tr key={`row-${rowIndex}`}>
                       {/* Row header (Actual) */}
                       <th
-                        className="border-2 border-border bg-muted/50 p-2 text-right text-xs font-semibold"
-                        style={{ minWidth: '90px' }}
+                        className="border-2 p-3 text-right text-xs font-semibold transition-colors"
+                        style={{
+                          minWidth: '95px',
+                          backgroundColor: palette.labelBg,
+                          borderColor: palette.labelBorder,
+                        }}
                       >
                         {translateEmotion(safeEmotions[rowIndex])}
                       </th>
@@ -197,23 +233,46 @@ export function ConfusionMatrixChart({ confusionMatrix, emotions, modelName, has
                         return (
                           <td
                             key={`cell-${rowIndex}-${colIndex}`}
-                            className={`group relative border-2 border-border p-0 transition-all hover:z-10 hover:scale-105 ${isCorrect ? 'border-accent' : ''}`}
-                            style={{ minWidth: '90px', minHeight: '90px' }}
+                            className="group relative border-2 p-0 transition-all duration-200 hover:z-10 hover:scale-105 hover:shadow-lg"
+                            style={{
+                              minWidth: '95px',
+                              minHeight: '95px',
+                              borderColor: isCorrect ? palette.labelBorder : 'var(--border)',
+                              borderWidth: isCorrect ? '3px' : '2px',
+                            }}
                           >
                             <div
-                              className={`flex h-full w-full items-center justify-center p-3 ${getColorClass(value)}`}
+                              className="flex h-full w-full items-center justify-center p-4 transition-all duration-200"
+                              style={getCellStyle(value)}
                               title={`Aktual: ${translateEmotion(safeEmotions[rowIndex])}\nPrediksi: ${translateEmotion(safeEmotions[colIndex])}\nPersentase: ${formatPercentage(value)}%`}
                             >
-                              <div className={`text-base font-bold ${getTextColor(value)}`}>
+                              <div className={`text-base font-bold transition-all ${getTextColor(value)}`}>
                                 {formatPercentage(value)}%
                               </div>
                             </div>
                             
                             {/* Hover tooltip */}
-                            <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden -translate-x-1/2 whitespace-nowrap rounded-md border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-lg group-hover:block">
-                              <div className="font-semibold">Aktual: {translateEmotion(safeEmotions[rowIndex])}</div>
-                              <div className="font-semibold">Prediksi: {translateEmotion(safeEmotions[colIndex])}</div>
-                              <div className="mt-1 text-primary">Persentase: {formatPercentage(value)}%</div>
+                            <div 
+                              className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg px-3 py-2 text-xs shadow-xl group-hover:block"
+                              style={{
+                                backgroundColor: palette.tooltipBg,
+                                borderWidth: '2px',
+                                borderStyle: 'solid',
+                                borderColor: palette.tooltipBorder,
+                              }}
+                            >
+                              <div className="font-semibold text-foreground">
+                                Aktual: {translateEmotion(safeEmotions[rowIndex])}
+                              </div>
+                              <div className="font-semibold text-foreground">
+                                Prediksi: {translateEmotion(safeEmotions[colIndex])}
+                              </div>
+                              <div 
+                                className="mt-1 font-bold"
+                                style={{ color: palette.tooltipAccent }}
+                              >
+                                Persentase: {formatPercentage(value)}%
+                              </div>
                             </div>
                           </td>
                         );
@@ -227,17 +286,25 @@ export function ConfusionMatrixChart({ confusionMatrix, emotions, modelName, has
             {/* Legend */}
             <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground">
               <div className="flex items-center gap-2">
-                <div className="h-4 w-4 rounded border-2 border-accent bg-muted"></div>
+                <div 
+                  className="h-4 w-4 rounded border-2 bg-muted/50"
+                  style={{ borderColor: palette.labelBorder }}
+                ></div>
                 <span>Prediksi benar (diagonal)</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex gap-1">
-                  <div className="h-4 w-4 rounded border border-border bg-primary/15"></div>
-                  <div className="h-4 w-4 rounded border border-border bg-primary/50"></div>
-                  <div className="h-4 w-4 rounded border border-border bg-primary/85"></div>
-                  <div className="h-4 w-4 rounded border border-border bg-primary"></div>
+                  {getLegendSwatches(modelName).map((swatch, idx) => (
+                    <div 
+                      key={idx}
+                      className="h-4 w-4 rounded border border-border shadow-sm" 
+                      style={{ 
+                        background: `color-mix(in oklch, ${palette.gradientStart} ${swatch.start}%, ${palette.gradientEnd} ${swatch.end}%)` 
+                      }}
+                    ></div>
+                  ))}
                 </div>
-                <span>Intensitas persentase (0-100%)</span>
+                <span>{palette.legendLabel}</span>
               </div>
             </div>
           </div>

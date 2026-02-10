@@ -1,37 +1,70 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Blue gradient background and improved contrast for the sticky main header",
+  "title": "Improve upload error handling for IC0508 canister-stopped replica rejections",
   "requirements": [
     {
-      "id": "REQ-40",
-      "summary": "Replace the header’s semi-transparent background with a full-width blue gradient while keeping sticky, blur, and border behavior.",
+      "id": "REQ-1",
+      "summary": "Show a clear English user-facing message when uploads fail because the target canister is stopped/unavailable (IC0508 / reject_code 5), while still surfacing technical details for debugging.",
       "acceptanceCriteria": [
-        "The `<header>` in `frontend/src/components/Header.tsx` uses Tailwind gradient classes (e.g., `bg-gradient-to-r` or similar) with blue tones and no longer uses `bg-background/95` or `supports-[backdrop-filter]:bg-background/60` as the primary background.",
-        "The gradient is visible in both light and dark mode and remains full-width across the viewport.",
-        "Header remains `sticky top-0` with the existing z-index behavior and still renders correctly on desktop and mobile."
+        "Triggering an upload while the backend canister is stopped results in a user-facing message in English that explicitly states the backend canister is stopped/unavailable and uploads cannot proceed until it is started/redeployed.",
+        "The UI continues to display technical details (at minimum the reject_message and error_code/reject_code when available) so operators can debug using the provided information."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/Header.tsx",
+          "path": "frontend/src/lib/icReplicaErrors.ts",
           "operation": "modify",
-          "description": "Update the <header> wrapper className to remove the current `bg-background/95` and `supports-[backdrop-filter]:bg-background/60` background styling and replace it with a full-width blue Tailwind gradient (e.g., `bg-gradient-to-r` with blue/sky/indigo stops). Keep existing `sticky top-0`, `z-50`, `w-full`, `border-b`, and `backdrop-blur` behavior intact so the header remains sticky, blurred, and bordered across viewport sizes."
+          "description": "Strengthen canister-stopped (IC0508 / reject_code 5) user-facing messaging to explicitly state the backend is unavailable/stopped and the user cannot fix it from the UI (try again later/contact administrator), while returning a separate technical details block for debugging."
+        },
+        {
+          "path": "frontend/src/pages/Dashboard.tsx",
+          "operation": "modify",
+          "description": "Ensure all upload entry points (quick text upload, .txt upload, CSV/JSON batch upload) display the canister-stopped summary in the toast and surface the technical details in console logs and (for dataset uploads) in DatasetUploadStatus errorMessage."
+        },
+        {
+          "path": "frontend/src/components/DatasetUploadStatus.tsx",
+          "operation": "modify",
+          "description": "Adjust DatasetUploadStatus error panel labeling/copy (English) to clearly separate user-facing summary from technical replica rejection details in the multi-line error block, without changing any files under frontend/src/components/ui."
         }
       ]
     },
     {
-      "id": "REQ-41",
-      "summary": "Ensure header foreground elements (brand, nav buttons, theme toggle, mobile trigger) remain readable with distinct hover/active states on the new gradient without editing immutable UI component sources.",
+      "id": "REQ-2",
+      "summary": "Preserve original replica rejection details when errors propagate from upload mutations so IC0508 detection works reliably and messaging is consistent across single and batch uploads.",
       "acceptanceCriteria": [
-        "Navigation labels and icons remain clearly legible against the gradient in both themes (no low-contrast text).",
-        "Hover and active states remain visually distinct on the gradient background for both desktop nav buttons and the mobile sheet trigger.",
-        "No files under `frontend/src/components/ui` and no immutable hook entrypoints are edited."
+        "If addCleaningLog fails due to canister stopped, the thrown error still contains the original rejection details (or an equivalent structured error) such that the existing canister-stopped detection logic can identify IC0508/reject_code 5.",
+        "Uploading a dataset (CSV/JSON batch) and uploading a single document both produce consistent canister-stopped messaging when the canister is stopped."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/Header.tsx",
+          "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Adjust header foreground classes to ensure strong contrast on the blue gradient: set brand/title area text/icon styling for legibility; override Button `className` props (without changing Button source) for desktop nav, theme toggle, and mobile sheet trigger to use high-contrast text/icon colors and distinct hover/active backgrounds suitable for a gradient (e.g., white/near-white text with subtle translucent hover/active fills). Ensure both desktop and mobile navigation states (active vs. inactive) remain visually distinct while keeping existing nav items/routes/icons unchanged."
+          "description": "Update upload mutations to rethrow the original replica rejection error (instead of replacing it with a new generic Error) when canister-stopped is detected during addCleaningLog, so reject_code/error_code metadata is preserved for downstream mapping in both single and batch upload flows."
+        },
+        {
+          "path": "frontend/src/pages/Dashboard.tsx",
+          "operation": "modify",
+          "description": "Keep upload error handling unified by relying on the shared error mapping to generate the user-facing summary and technical details, ensuring consistent canister-stopped messaging for both single-document and dataset batch uploads."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Format upload technical error details as a readable English multi-line block including relevant replica rejection fields (error_code, reject_code, reject_message, and available request/canister identifiers) for DatasetUploadStatus and console logs.",
+      "acceptanceCriteria": [
+        "When an upload fails, DatasetUploadStatus shows an error block that includes (when available) IC error_code, reject_code, and reject_message on separate lines for readability.",
+        "Console logs for upload failures include the same technical fields (when available) without dropping the original error information."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/lib/icReplicaErrors.ts",
+          "operation": "modify",
+          "description": "Enhance replica rejection extraction and technical formatting to produce a multi-line English details block including (when present) error_code, reject_code, reject_message, and any available request/canister identifiers; ensure mapUploadError uses this block for both canister-stopped and non-stopped failures."
+        },
+        {
+          "path": "frontend/src/pages/Dashboard.tsx",
+          "operation": "modify",
+          "description": "Update upload failure console logging to log the same formatted multi-line technical details block (and optionally the original error object) so operators get consistent debugging information without losing replica rejection fields; ensure DatasetUploadStatus errorMessage uses the formatted multi-line block for batch failures."
         }
       ]
     }

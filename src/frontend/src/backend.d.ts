@@ -25,6 +25,29 @@ export interface PurchaseIntention {
     brand?: string;
     location?: string;
 }
+export interface Document {
+    id: bigint;
+    content: string;
+    author: Principal;
+    timestamp: bigint;
+}
+export type Principal = Principal;
+export interface PurchaseIntentionDistribution {
+    low: bigint;
+    high: bigint;
+    medium: bigint;
+}
+export interface BertResult {
+    emotion: string;
+    brandSpecific?: string;
+    confidence: number;
+}
+export interface BrandIntentionCorrelation {
+    low: bigint;
+    high: bigint;
+    brand: string;
+    medium: bigint;
+}
 export interface IntentionResult {
     brandCorrelation: Array<BrandIntentionCorrelation>;
     trends: Array<IntentionTrend>;
@@ -40,24 +63,6 @@ export interface GenderDistribution {
     emotionDistribution: Array<GenderDistributionEntry>;
     brandDistribution: Array<GenderDistributionEntry>;
 }
-export interface BrandIntentionCorrelation {
-    low: bigint;
-    high: bigint;
-    brand: string;
-    medium: bigint;
-}
-export interface Document {
-    id: bigint;
-    content: string;
-    author: Principal;
-    timestamp: bigint;
-}
-export type Principal = Principal;
-export interface PurchaseIntentionDistribution {
-    low: bigint;
-    high: bigint;
-    medium: bigint;
-}
 export interface GenderDistributionEntry {
     maleCount: number;
     femaleCount: number;
@@ -68,16 +73,12 @@ export interface CleaningLog {
     step: string;
     timestamp: bigint;
 }
-export interface BertResult {
-    emotion: string;
-    brandSpecific?: string;
-    confidence: number;
-}
 export interface backendInterface {
     addCleaningLog(_logs: Array<CleaningLog>): Promise<bigint>;
     analyzeGenderDistribution(): Promise<GenderDistribution>;
     analyzeGeoDistribution(_texts: Array<Array<string>>): Promise<GeoLocationDistribution>;
     analyzeText(input: string): Promise<BertResult>;
+    batchUploadDocuments(contents: Array<string>): Promise<Array<bigint>>;
     calculateIntention(input: string, gender: string, location: string, brand: string): Promise<IntentionResult>;
     deleteDocument(id: bigint): Promise<boolean>;
     getAllDocuments(): Promise<Array<Document>>;

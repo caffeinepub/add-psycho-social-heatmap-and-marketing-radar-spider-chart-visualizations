@@ -1,58 +1,80 @@
 {
   "kind": "build_request",
-  "title": "Apply a full-width blue gradient background to the main navigation header",
-  "priority": "high",
+  "title": "Improve dataset upload handling for IC0508 canister-stopped replica rejection",
+  "priority": "normal",
   "requirements": [
     {
-      "id": "REQ-40",
-      "text": "Update the main navigation header background to use a full-width blue gradient (not a solid color) across the entire header bar, replacing the current semi-transparent `bg-background/95` styling while keeping the header sticky, blurred, and bordered.",
+      "id": "REQ-1",
+      "text": "When uploads fail due to an Internet Computer replica rejection indicating the target canister is stopped (error_code IC0508 / reject_code 5, e.g. \"Canister hhqxf-xiaaa-aaaam-afemq-cai is stopped\"), show a clear English user-facing error that explains the backend is unavailable and the user cannot fix it from the UI (try again later / contact administrator), while still surfacing technical details for debugging.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "recent-messages"
         ],
         "quotes": [
-          "biru pada background seluruh header, gradient",
-          "berikan warna biru pada background seluruh header, gradient",
-          "kerjakan sekarang"
+          "Reject text: Canister hhqxf-xiaaa-aaaam-afemq-cai is stopped\n  Error code: IC0508\n...\nMethod name: batchUploadDocuments"
         ]
       },
       "acceptanceCriteria": [
-        "The `<header>` in `frontend/src/components/Header.tsx` uses Tailwind gradient classes (e.g., `bg-gradient-to-r` or similar) with blue tones and no longer uses `bg-background/95` or `supports-[backdrop-filter]:bg-background/60` as the primary background.",
-        "The gradient is visible in both light and dark mode and remains full-width across the viewport.",
-        "Header remains `sticky top-0` with the existing z-index behavior and still renders correctly on desktop and mobile."
+        "Triggering an upload while the backend canister is stopped results in a user-facing message in English that explicitly states the backend canister is stopped/unavailable and uploads cannot proceed until it is started/redeployed.",
+        "The UI continues to display technical details (at minimum the reject_message and error_code/reject_code when available) so operators can debug using the provided information."
       ]
     },
     {
-      "id": "REQ-41",
-      "text": "Adjust header foreground styling to ensure readable contrast on the new blue gradient background, including nav buttons (active/hover states), theme toggle button, and brand/title area, without modifying any immutable UI component sources.",
+      "id": "REQ-2",
+      "text": "Preserve original replica rejection details when propagating errors from upload mutations so that the error mapping logic can reliably detect IC0508 (canister stopped) and render the correct message, rather than replacing the error with a new generic Error that loses reject_code/error_code metadata.",
       "target": "frontend",
       "source": {
         "messageIds": [
           "recent-messages"
         ],
         "quotes": [
-          "berikan warna biru pada background seluruh header, gradient"
+          "Method name: batchUploadDocuments\n...\nerror_code\": \"IC0508\""
         ]
       },
       "acceptanceCriteria": [
-        "Navigation labels and icons remain clearly legible against the gradient in both themes (no low-contrast text).",
-        "Hover and active states remain visually distinct on the gradient background for both desktop nav buttons and the mobile sheet trigger.",
-        "No files under `frontend/src/components/ui` and no immutable hook entrypoints are edited."
+        "If addCleaningLog fails due to canister stopped, the thrown error still contains the original rejection details (or an equivalent structured error) such that the existing canister-stopped detection logic can identify IC0508/reject_code 5.",
+        "Uploading a dataset (CSV/JSON batch) and uploading a single document both produce consistent canister-stopped messaging when the canister is stopped."
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Update upload error detail formatting to include the most relevant replica rejection fields when present (error_code, reject_code, reject_message, and any available request/canister identifiers) in a readable English multi-line block for the DatasetUploadStatus error panel and console logs.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "recent-messages"
+        ],
+        "quotes": [
+          "Request ID: d79066b314f23efbab52935936d91d32b21a1e23e470081f87e01ccb5ee25574\nReject code: 5\nReject text: Canister hhqxf-xiaaa-aaaam-afemq-cai is stopped\nError code: IC0508"
+        ]
+      },
+      "acceptanceCriteria": [
+        "When an upload fails, DatasetUploadStatus shows an error block that includes (when available) IC error_code, reject_code, and reject_message on separate lines for readability.",
+        "Console logs for upload failures include the same technical fields (when available) without dropping the original error information."
       ]
     }
   ],
   "constraints": [
-    "Frontend changes must be limited to non-immutable paths (do not edit any files under `frontend/src/components/ui` or other immutable paths listed in SYSTEM_CONTEXT).",
-    "Keep existing navigation items, routes, and icons unchanged; only update styling/appearance of the header background and related contrast styles."
+    "Use English for any user-facing text added or modified as part of this fix.",
+    "Do not edit files under frontend/src/components/ui or any paths listed as immutable in SYSTEM_CONTEXT."
   ],
   "nonGoals": [
-    "Do not add new navigation items or change route paths.",
-    "Do not introduce new authentication or theming systems.",
-    "Do not redesign other pages or global theme tokens beyond what is necessary to support the header gradient readability."
+    "Starting/stopping/redeploying the canister from the application UI (this is an operational/deployment action, not an app feature).",
+    "Changing the backend Motoko canister logic or storage schema to address operational canister stop state."
   ],
   "imageRequirements": {
     "required": [],
     "edits": []
+  },
+  "userProfileUpdate": {
+    "goalsToAdd": [],
+    "goalsToRemove": [],
+    "preferencesToAdd": [],
+    "preferencesToRemove": [],
+    "miscToAdd": [],
+    "miscToRemove": [],
+    "fieldsToSet": {},
+    "fieldsToDelete": []
   }
 }

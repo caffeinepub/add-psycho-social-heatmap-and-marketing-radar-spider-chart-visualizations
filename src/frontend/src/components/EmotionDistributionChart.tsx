@@ -6,7 +6,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import type { Document } from '../backend';
 import { mockEmotionAnalysis } from '../lib/mockData';
 import { useMemo } from 'react';
-import { getVisualizationState, sanitizeChartData, normalizeEmotionLabel, getEmotionDisplayLabel } from '../lib/visualizationState';
+import { 
+  getVisualizationState, 
+  sanitizeChartData, 
+  getEmotionDisplayLabel,
+  CANONICAL_EMOTIONS,
+  aggregateEmotionTotals
+} from '../lib/visualizationState';
 
 interface EmotionDistributionChartProps {
   documents: Document[];
@@ -21,27 +27,28 @@ type EmotionData = {
 };
 
 export function EmotionDistributionChart({ documents, hasActiveDataset = true }: EmotionDistributionChartProps) {
-  // Calculate emotion distribution
+  // Calculate emotion distribution using canonical ordering
   const emotionData = useMemo(() => {
     if (!hasActiveDataset || !documents || documents.length === 0) {
       return [];
     }
 
-    const emotionCounts: Record<string, number> = {};
-    
-    documents.forEach((doc) => {
-      const analysis = mockEmotionAnalysis(doc.content);
-      // Normalize to English for consistency
-      const normalizedEmotion = normalizeEmotionLabel(analysis.primaryEmotion);
-      emotionCounts[normalizedEmotion] = (emotionCounts[normalizedEmotion] || 0) + 1;
-    });
+    // Aggregate using shared helper
+    const emotionCounts = aggregateEmotionTotals(documents, mockEmotionAnalysis);
 
-    const data = Object.entries(emotionCounts).map(([emotion, count], index) => ({
-      emotion,
-      displayLabel: getEmotionDisplayLabel(emotion),
-      count,
-      fill: `var(--chart-${(index % 5) + 1})`,
-    }));
+    // Build data in canonical order, only including emotions present in dataset
+    const data: EmotionData[] = [];
+    CANONICAL_EMOTIONS.forEach((emotion, index) => {
+      const count = emotionCounts[emotion];
+      if (count && count > 0) {
+        data.push({
+          emotion,
+          displayLabel: getEmotionDisplayLabel(emotion),
+          count,
+          fill: `var(--chart-${(index % 5) + 1})`,
+        });
+      }
+    });
 
     // Sanitize to ensure all counts are finite numbers
     return sanitizeChartData(data, ['count']);

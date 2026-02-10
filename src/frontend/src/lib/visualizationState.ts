@@ -140,3 +140,27 @@ export function getEmotionDisplayLabel(emotion: string): string {
   };
   return displayMap[emotion.toLowerCase()] || emotion;
 }
+
+/**
+ * Canonical emotion category list in consistent order
+ */
+export const CANONICAL_EMOTIONS = ['interest', 'trust', 'fear', 'skepticism', 'satisfaction'] as const;
+
+/**
+ * Aggregate normalized emotion totals from documents
+ * Returns a map of normalized emotion -> count
+ */
+export function aggregateEmotionTotals(
+  documents: { content: string }[],
+  mockAnalysisFn: (content: string) => { primaryEmotion: string }
+): Record<string, number> {
+  const emotionCounts: Record<string, number> = {};
+  
+  documents.forEach((doc) => {
+    const analysis = mockAnalysisFn(doc.content);
+    const normalizedEmotion = normalizeEmotionLabel(analysis.primaryEmotion);
+    emotionCounts[normalizedEmotion] = (emotionCounts[normalizedEmotion] || 0) + 1;
+  });
+
+  return emotionCounts;
+}

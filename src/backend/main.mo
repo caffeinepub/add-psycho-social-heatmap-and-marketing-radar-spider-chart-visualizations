@@ -7,8 +7,11 @@ import Principal "mo:core/Principal";
 import Iter "mo:core/Iter";
 import Int "mo:core/Int";
 import Runtime "mo:core/Runtime";
+import MixinStorage "blob-storage/Mixin";
 
 actor {
+  include MixinStorage();
+
   type BertResult = {
     emotion : Text;
     confidence : Float;
@@ -157,7 +160,7 @@ actor {
   };
 
   public query ({ caller }) func getLatestCleaningLog() : async ?[CleaningLog] {
-    if (cleaningLogId == 0) {
+    if (cleaningLogId <= 0) {
       return null;
     };
     cleaningLogStore.get(cleaningLogId - 1);
@@ -334,7 +337,10 @@ actor {
   public query ({ caller }) func getConfusionMatrix(modelName : Text) : async ConfusionMatrixResult {
     switch (confusionMatrices.get(modelName)) {
       case (?matrix) { matrix };
-      case (null) { Runtime.trap("No confusion matrix found for model: " # modelName) };
+      case (null) {
+        let errorMsg = "No confusion matrix found for model: " # modelName;
+        Runtime.trap(errorMsg);
+      };
     };
   };
 
@@ -354,13 +360,11 @@ actor {
 
   func detectBrand(text : Text) : ?Text {
     let brandIter = brands.values();
-    let matchingBrand = brandIter.find(
+    brandIter.find(
       func(br) {
         text.contains(#text(br));
       }
     );
-
-    matchingBrand;
   };
 
   public shared ({ caller }) func uploadDocument(content : Text) : async Nat {
@@ -375,6 +379,26 @@ actor {
     documentStore.add(newId, document);
     idCounter += 1;
     newId;
+  };
+
+  public shared ({ caller }) func batchUploadDocuments(contents : [Text]) : async [Nat] {
+    let startingId = idCounter;
+    let newIds = Array.tabulate(contents.size(), func(i) { startingId + i });
+
+    contents.values().zip(newIds.values()).forEach(
+      func((content, newId)) {
+        let document : Document = {
+          id = newId;
+          author = caller;
+          content;
+          timestamp = 0;
+        };
+        documentStore.add(newId, document);
+      }
+    );
+
+    idCounter += contents.size();
+    newIds;
   };
 
   public query ({ caller }) func getDocument(id : Nat) : async ?Document {
@@ -505,4 +529,3 @@ actor {
     { individual = individualIntention; distribution; brandCorrelation; trends };
   };
 };
-

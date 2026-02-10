@@ -58,7 +58,12 @@ export function AnalysisPage() {
   // Compute dataset status directly from full documents (not filtered)
   const hasActiveDataset = useMemo(() => documents.length > 0, [documents.length]);
 
+  // Compute filtered documents - ensure this is declared before any usage
   const filteredDocuments = useMemo(() => {
+    if (!documents || documents.length === 0) {
+      return [];
+    }
+    
     return documents.filter((doc) => {
       const analysis = mockEmotionAnalysis(doc.content);
       const matchesSearch = doc.content.toLowerCase().includes(searchQuery.toLowerCase());
@@ -73,6 +78,10 @@ export function AnalysisPage() {
       return matchesSearch && matchesBrand && matchesEmotion;
     });
   }, [documents, searchQuery, selectedBrand, selectedEmotion]);
+
+  // Compute derived values after filteredDocuments is declared
+  const filteredCount = filteredDocuments.length;
+  const totalCount = documents.length;
 
   const handleDelete = async (id: bigint) => {
     try {
@@ -101,7 +110,7 @@ export function AnalysisPage() {
               <div>
                 <p className="font-semibold text-green-700 dark:text-green-400">Dataset Aktif</p>
                 <p className="text-sm text-muted-foreground">
-                  {documents.length} dokumen tersedia untuk analisis
+                  {totalCount} dokumen tersedia untuk analisis
                 </p>
               </div>
             </div>
@@ -182,7 +191,7 @@ export function AnalysisPage() {
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <FileText className="h-4 w-4" />
-            Menampilkan {filteredDocuments.length} dari {documents.length} dokumen
+            Menampilkan {filteredCount} dari {totalCount} dokumen
           </div>
         </CardContent>
       </Card>
@@ -197,31 +206,35 @@ export function AnalysisPage() {
         <TabsContent value="overview" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
             <EmotionChart 
-              key={`emotion-chart-analysis-${filteredDocuments.length}-${documents.length}`}
+              key={`emotion-chart-analysis-${filteredCount}-${totalCount}`}
               documents={filteredDocuments}
               hasActiveDataset={hasActiveDataset}
             />
             <EmotionDistributionChart 
-              key={`emotion-dist-analysis-${filteredDocuments.length}-${documents.length}`}
+              key={`emotion-dist-analysis-${filteredCount}-${totalCount}`}
               documents={filteredDocuments} 
               hasActiveDataset={hasActiveDataset}
             />
           </div>
           <TemporalEvolutionChart 
-            key={`temporal-${filteredDocuments.length}`}
+            key={`temporal-${filteredCount}`}
             documents={filteredDocuments} 
           />
         </TabsContent>
         <TabsContent value="brands" className="space-y-6">
           <BrandEmotionChart 
-            key={`brand-analysis-${filteredDocuments.length}`}
+            key={`brand-analysis-${filteredCount}`}
             documents={filteredDocuments} 
           />
         </TabsContent>
         <TabsContent value="demographics" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-2">
-            <GenderEmotionChart key={`gender-analysis-${documents.length}`} />
-            <GeoEmotionMap key={`geo-analysis-${documents.length}`} />
+            <GenderEmotionChart 
+              key={`gender-analysis-${filteredCount}-${totalCount}`}
+              documents={filteredDocuments}
+              hasActiveDataset={hasActiveDataset}
+            />
+            <GeoEmotionMap key={`geo-analysis-${totalCount}`} />
           </div>
         </TabsContent>
       </Tabs>
@@ -237,9 +250,9 @@ export function AnalysisPage() {
             <div className="flex h-32 items-center justify-center">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             </div>
-          ) : filteredDocuments.length === 0 ? (
+          ) : filteredCount === 0 ? (
             <div className="flex h-32 items-center justify-center text-muted-foreground">
-              {documents.length === 0 
+              {totalCount === 0 
                 ? 'Belum ada dokumen yang dianalisis'
                 : 'Tidak ada dokumen yang sesuai dengan filter'}
             </div>

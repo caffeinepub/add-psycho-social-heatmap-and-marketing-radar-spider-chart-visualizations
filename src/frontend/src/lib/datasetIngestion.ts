@@ -2,9 +2,11 @@
  * Dataset ingestion utilities for parsing and validating CSV/JSON uploads
  * with the required schema: ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted
  * Supports optional intention_level and intention_score columns with auto-generation
+ * RFC4180-compliant CSV parsing with quoted field support and deterministic recovery
  */
 
 import { derivePurchaseIntentionFromText, validateIntentionScore, validateIntentionLevel } from './purchaseIntentionDerivation';
+import { parseRFC4180CSV, trimFields } from './csvRfc4180';
 
 export interface DatasetRow {
   ID?: string;
@@ -19,12 +21,21 @@ export interface DatasetRow {
   intention_score?: number;
 }
 
+export interface ParseDiagnostics {
+  normalizedHeaders: string[];
+  textIndex: number;
+  fieldCountsPerRow: number[];
+  sampleRows: Array<{ rowIndex: number; fieldCount: number; fields: string[] }>;
+  recoveryAppliedCount: number;
+}
+
 export interface ParseResult {
   success: boolean;
   rows: DatasetRow[];
   error?: string;
   skippedCount: number;
   validCount: number;
+  diagnostics?: ParseDiagnostics;
 }
 
 /**
@@ -35,28 +46,92 @@ function normalizeKey(key: string): string {
 }
 
 /**
- * Parse CSV content into rows
+ * Detect if a text value looks like a sentiment/category token rather than actual review text
+ */
+function isSuspiciousTextValue(text: string): boolean {
+  const trimmed = text.trim();
+  const sentimentTokens = ['positive', 'negative', 'neutral', 'high', 'medium', 'low'];
+  
+  // Check if it's a known sentiment token
+  if (sentimentTokens.includes(trimmed.toLowerCase())) {
+    return true;
+  }
+  
+  // Check if it's unusually short (less than 10 characters)
+  if (trimmed.length < 10) {
+    return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Find the most text-like field in a row (longest sentence-like content)
+ */
+function findBestTextCandidate(fields: string[]): { index: number; value: string } | null {
+  let bestIndex = -1;
+  let bestLength = 0;
+  
+  for (let i = 0; i < fields.length; i++) {
+    const field = fields[i].trim();
+    // Look for fields that are at least 20 characters and contain spaces (sentence-like)
+    if (field.length >= 20 && field.includes(' ')) {
+      if (field.length > bestLength) {
+        bestLength = field.length;
+        bestIndex = i;
+      }
+    }
+  }
+  
+  if (bestIndex !== -1) {
+    return { index: bestIndex, value: fields[bestIndex].trim() };
+  }
+  
+  return null;
+}
+
+/**
+ * Attempt to recover from column misalignment by finding the best text candidate
+ */
+function recoverTextValue(fields: string[], textIndex: number, headers: string[]): { text: string; recovered: boolean } {
+  const originalText = fields[textIndex]?.trim() || '';
+  
+  // If original text looks good, use it
+  if (originalText && !isSuspiciousTextValue(originalText)) {
+    return { text: originalText, recovered: false };
+  }
+  
+  // Try to find a better candidate
+  const candidate = findBestTextCandidate(fields);
+  if (candidate && candidate.value) {
+    return { text: candidate.value, recovered: true };
+  }
+  
+  // Fall back to original even if suspicious
+  return { text: originalText, recovered: false };
+}
+
+/**
+ * Parse CSV content into rows with RFC4180 support and recovery
  */
 function parseCSV(content: string): ParseResult {
   try {
-    const lines = content.split('\n').filter(line => line.trim());
+    // Parse using RFC4180 tokenizer
+    const { rows: rawRows, stats } = parseRFC4180CSV(content);
     
-    if (lines.length < 2) {
+    if (rawRows.length < 2) {
       return {
         success: false,
         rows: [],
-        error: 'File CSV kosong atau tidak memiliki data',
+        error: 'CSV file is empty or has no data rows',
         skippedCount: 0,
         validCount: 0,
       };
     }
 
-    // Parse header
-    const headerLine = lines[0];
-    const headers = headerLine.split(',').map(h => h.trim());
-    
-    // Normalize headers for matching
-    const normalizedHeaders = headers.map(normalizeKey);
+    // Parse and normalize header
+    const headerRow = trimFields(rawRows[0]);
+    const normalizedHeaders = headerRow.map(normalizeKey);
     
     // Check if 'text' column exists
     const textIndex = normalizedHeaders.findIndex(h => h === 'text');
@@ -64,9 +139,20 @@ function parseCSV(content: string): ParseResult {
       return {
         success: false,
         rows: [],
-        error: 'Kolom "text" wajib ada dalam file CSV. Format yang diperlukan: ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted',
+        error: 'Required column "text" not found in CSV. Expected format: ID,Date,Region,Source,User,text,Aspect_Category,Keywords_Extracted',
         skippedCount: 0,
         validCount: 0,
+        diagnostics: {
+          normalizedHeaders,
+          textIndex: -1,
+          fieldCountsPerRow: stats.fieldCountsPerRow,
+          sampleRows: rawRows.slice(0, 3).map((fields, idx) => ({
+            rowIndex: idx,
+            fieldCount: fields.length,
+            fields: trimFields(fields),
+          })),
+          recoveryAppliedCount: 0,
+        },
       };
     }
 
@@ -77,17 +163,25 @@ function parseCSV(content: string): ParseResult {
     // Parse data rows
     const rows: DatasetRow[] = [];
     let skippedCount = 0;
+    let recoveryAppliedCount = 0;
 
-    for (let i = 1; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) continue;
-
-      const values = line.split(',').map(v => v.trim());
+    for (let i = 1; i < rawRows.length; i++) {
+      const rawFields = trimFields(rawRows[i]);
       
-      // Get text value
-      const textValue = values[textIndex] || '';
+      // Skip completely empty rows
+      if (rawFields.every(f => !f)) {
+        skippedCount++;
+        continue;
+      }
       
-      // Skip rows with empty text
+      // Attempt to recover text value if needed
+      const { text: textValue, recovered } = recoverTextValue(rawFields, textIndex, headerRow);
+      
+      if (recovered) {
+        recoveryAppliedCount++;
+      }
+      
+      // Skip rows with empty text after recovery
       if (!textValue) {
         skippedCount++;
         continue;
@@ -96,9 +190,10 @@ function parseCSV(content: string): ParseResult {
       // Build row object with normalized keys
       const row: DatasetRow = { text: textValue };
       
-      headers.forEach((header, idx) => {
-        const normalizedHeader = normalizeKey(header);
-        const value = values[idx] || '';
+      // Map other fields
+      for (let idx = 0; idx < headerRow.length && idx < rawFields.length; idx++) {
+        const normalizedHeader = normalizedHeaders[idx];
+        const value = rawFields[idx] || '';
         
         if (normalizedHeader === 'id') row.ID = value;
         else if (normalizedHeader === 'date') row.Date = value;
@@ -107,19 +202,19 @@ function parseCSV(content: string): ParseResult {
         else if (normalizedHeader === 'user') row.User = value;
         else if (normalizedHeader === 'aspectcategory') row.Aspect_Category = value;
         else if (normalizedHeader === 'keywordsextracted') row.Keywords_Extracted = value;
-      });
+      }
 
       // Handle intention fields: use provided values or auto-generate
       let hasIntentionLevel = false;
       let hasIntentionScore = false;
 
-      if (intentionLevelIndex !== -1 && values[intentionLevelIndex]) {
-        row.intention_level = validateIntentionLevel(values[intentionLevelIndex]);
+      if (intentionLevelIndex !== -1 && intentionLevelIndex < rawFields.length && rawFields[intentionLevelIndex]) {
+        row.intention_level = validateIntentionLevel(rawFields[intentionLevelIndex]);
         hasIntentionLevel = true;
       }
 
-      if (intentionScoreIndex !== -1 && values[intentionScoreIndex]) {
-        row.intention_score = validateIntentionScore(values[intentionScoreIndex]);
+      if (intentionScoreIndex !== -1 && intentionScoreIndex < rawFields.length && rawFields[intentionScoreIndex]) {
+        row.intention_score = validateIntentionScore(rawFields[intentionScoreIndex]);
         hasIntentionScore = true;
       }
 
@@ -137,13 +232,26 @@ function parseCSV(content: string): ParseResult {
       rows.push(row);
     }
 
+    const diagnostics: ParseDiagnostics = {
+      normalizedHeaders,
+      textIndex,
+      fieldCountsPerRow: stats.fieldCountsPerRow,
+      sampleRows: rawRows.slice(0, Math.min(4, rawRows.length)).map((fields, idx) => ({
+        rowIndex: idx,
+        fieldCount: fields.length,
+        fields: trimFields(fields).slice(0, 8), // Limit to first 8 fields for preview
+      })),
+      recoveryAppliedCount,
+    };
+
     if (rows.length === 0) {
       return {
         success: false,
         rows: [],
-        error: 'Tidak ada baris valid dengan kolom "text" yang terisi',
+        error: 'No valid rows with non-empty "text" column found',
         skippedCount,
         validCount: 0,
+        diagnostics,
       };
     }
 
@@ -152,12 +260,13 @@ function parseCSV(content: string): ParseResult {
       rows,
       skippedCount,
       validCount: rows.length,
+      diagnostics,
     };
   } catch (error) {
     return {
       success: false,
       rows: [],
-      error: `Gagal mem-parse file CSV: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      error: `Failed to parse CSV file: ${error instanceof Error ? error.message : 'Unknown error'}`,
       skippedCount: 0,
       validCount: 0,
     };
@@ -175,7 +284,7 @@ function parseJSON(content: string): ParseResult {
       return {
         success: false,
         rows: [],
-        error: 'File JSON harus berisi array of objects',
+        error: 'JSON file must contain an array of objects',
         skippedCount: 0,
         validCount: 0,
       };
@@ -185,7 +294,7 @@ function parseJSON(content: string): ParseResult {
       return {
         success: false,
         rows: [],
-        error: 'File JSON kosong',
+        error: 'JSON file is empty',
         skippedCount: 0,
         validCount: 0,
       };
@@ -202,7 +311,7 @@ function parseJSON(content: string): ParseResult {
       return {
         success: false,
         rows: [],
-        error: 'Kolom "text" wajib ada dalam file JSON. Format yang diperlukan: array of objects dengan key "text"',
+        error: 'Required field "text" not found in JSON. Expected format: array of objects with "text" key',
         skippedCount: 0,
         validCount: 0,
       };
@@ -278,7 +387,7 @@ function parseJSON(content: string): ParseResult {
       return {
         success: false,
         rows: [],
-        error: 'Tidak ada baris valid dengan kolom "text" yang terisi',
+        error: 'No valid rows with non-empty "text" field found',
         skippedCount,
         validCount: 0,
       };
@@ -294,7 +403,7 @@ function parseJSON(content: string): ParseResult {
     return {
       success: false,
       rows: [],
-      error: `Gagal mem-parse file JSON: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      error: `Failed to parse JSON file: ${error instanceof Error ? error.message : 'Unknown error'}`,
       skippedCount: 0,
       validCount: 0,
     };
@@ -315,7 +424,7 @@ export function parseDatasetFile(content: string, filename: string): ParseResult
     return {
       success: false,
       rows: [],
-      error: `Format file tidak didukung: .${extension}. Gunakan .csv atau .json`,
+      error: `Unsupported file format: .${extension}. Use .csv or .json`,
       skippedCount: 0,
       validCount: 0,
     };

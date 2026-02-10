@@ -2,10 +2,12 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-update-the-main-navigation-header-background-to-use-a-full-width-blue-gradient-not-a-solid-color-across-the-entire-header-bar-replacing-the-current-semi-transparent-bg-background-95-styling-while-keeping-the-header-sticky-blurred-and-bordered",
-      "featureTitle": "Update the main navigation header background to use a full-width blue gradient (not a solid color) across the entire header bar, replacing the current semi-transparent `bg-background/95` styling while keeping the header sticky, blurred, and bordered.",
+      "featureId": "feature-when-uploads-fail-due-to-an-internet-computer-replica-rejection-indicating-the-target-canister-is-stopped-error-code-ic0508-reject-code-5-e-g-canister-hhqxf-xiaaa-aaaam-afemq-cai-is-stopped-show-a-clear-english-user-facing-error-that-explains-the-backend-is-unavailable-and-the-user-cannot-fix-it-from-the-ui-try-again-later-contact-administrator-while-still-surfacing-technical-details-for-debugging",
+      "featureTitle": "When uploads fail due to an Internet Computer replica rejection indicating the target canister is stopped (error_code IC0508 / reject_code 5, e.g. \"Canister hhqxf-xiaaa-aaaam-afemq-cai is stopped\"), show a clear English user-facing error that explains the backend is unavailable and the user cannot fix it from the UI (try again later / contact administrator), while still surfacing technical details for debugging.",
       "files": [
-        "frontend/src/components/Header.tsx"
+        "frontend/src/components/DatasetUploadStatus.tsx",
+        "frontend/src/lib/icReplicaErrors.ts",
+        "frontend/src/pages/Dashboard.tsx"
       ],
       "components": [
         "blob-storage@4.0.0",
@@ -16,15 +18,16 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-40"
+        "REQ-1"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-adjust-header-foreground-styling-to-ensure-readable-contrast-on-the-new-blue-gradient-background-including-nav-buttons-active-hover-states-theme-toggle-button-and-brand-title-area-without-modifying-any-immutable-ui-component-sources",
-      "featureTitle": "Adjust header foreground styling to ensure readable contrast on the new blue gradient background, including nav buttons (active/hover states), theme toggle button, and brand/title area, without modifying any immutable UI component sources.",
+      "featureId": "feature-preserve-original-replica-rejection-details-when-propagating-errors-from-upload-mutations-so-that-the-error-mapping-logic-can-reliably-detect-ic0508-canister-stopped-and-render-the-correct-message-rather-than-replacing-the-error-with-a-new-generic-error-that-loses-reject-code-error-code-metadata",
+      "featureTitle": "Preserve original replica rejection details when propagating errors from upload mutations so that the error mapping logic can reliably detect IC0508 (canister stopped) and render the correct message, rather than replacing the error with a new generic Error that loses reject_code/error_code metadata.",
       "files": [
-        "frontend/src/components/Header.tsx"
+        "frontend/src/hooks/useQueries.ts",
+        "frontend/src/pages/Dashboard.tsx"
       ],
       "components": [
         "blob-storage@4.0.0",
@@ -35,7 +38,27 @@
         "github-export-icp-cli@1.0.0"
       ],
       "testIds": [
-        "REQ-41"
+        "REQ-2"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-update-upload-error-detail-formatting-to-include-the-most-relevant-replica-rejection-fields-when-present-error-code-reject-code-reject-message-and-any-available-request-canister-identifiers-in-a-readable-english-multi-line-block-for-the-datasetuploadstatus-error-panel-and-console-logs",
+      "featureTitle": "Update upload error detail formatting to include the most relevant replica rejection fields when present (error_code, reject_code, reject_message, and any available request/canister identifiers) in a readable English multi-line block for the DatasetUploadStatus error panel and console logs.",
+      "files": [
+        "frontend/src/lib/icReplicaErrors.ts",
+        "frontend/src/pages/Dashboard.tsx"
+      ],
+      "components": [
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-3"
       ],
       "confidence": "high"
     }

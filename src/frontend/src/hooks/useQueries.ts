@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
 import type { Document, ConfusionMatrixResult, GenderDistribution, GeoLocationDistribution, IntentionResult, CleaningLog } from '../backend';
-import { isCanisterStopped, getCanisterStoppedMessage } from '../lib/icReplicaErrors';
 
 export function useGetAllDocuments() {
   const { actor, isFetching } = useActor();
@@ -49,17 +48,12 @@ export function useUploadDocument() {
         { step: 'Pemeriksaan nilai numerik', status: 'aman', timestamp: BigInt(Date.now()) },
       ];
       
-      // Try to add cleaning logs, but don't fail the upload if logging fails
-      // (unless the canister is stopped, in which case we must fail)
+      // Try to add cleaning logs, preserving original error for canister-stopped detection
       try {
         await actor.addCleaningLog(cleaningLogs);
       } catch (logError) {
-        // If canister is stopped, we cannot proceed with upload
-        if (isCanisterStopped(logError)) {
-          throw new Error(getCanisterStoppedMessage());
-        }
-        // Otherwise, log the error but continue with upload
-        console.warn('Failed to add cleaning log (continuing with upload):', logError);
+        // Rethrow the original error to preserve replica rejection details
+        throw logError;
       }
       
       // Proceed with document upload
@@ -79,9 +73,12 @@ export function useUploadDocument() {
       
       return docId;
     },
-    onSuccess: () => {
-      // Invalidate all queries to force refetch
-      queryClient.invalidateQueries({ queryKey: ['documents'] });
+    onSuccess: async () => {
+      // Invalidate and refetch documents immediately
+      await queryClient.invalidateQueries({ queryKey: ['documents'] });
+      await queryClient.refetchQueries({ queryKey: ['documents'] });
+      
+      // Invalidate other dependent queries
       queryClient.invalidateQueries({ queryKey: ['cleaningLogs'] });
       queryClient.invalidateQueries({ queryKey: ['confusionMatrix'] });
       queryClient.invalidateQueries({ queryKey: ['genderDistribution'] });
@@ -96,20 +93,9 @@ export function useUploadDocumentsBatch() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ 
-      contents, 
-      onProgress 
-    }: { 
-      contents: string[]; 
-      onProgress?: (uploaded: number, total: number) => void;
-    }) => {
+    mutationFn: async (contents: string[]) => {
       if (!actor) throw new Error('Actor not initialized');
       
-      const results: { success: bigint[]; failed: number[] } = {
-        success: [],
-        failed: [],
-      };
-
       // Generate cleaning logs once for the batch
       const cleaningLogs: CleaningLog[] = [
         { step: 'Menghapus duplikat', status: 'selesai', timestamp: BigInt(Date.now()) },
@@ -119,36 +105,19 @@ export function useUploadDocumentsBatch() {
         { step: 'Pemeriksaan nilai numerik', status: 'aman', timestamp: BigInt(Date.now()) },
       ];
       
-      // Try to add cleaning logs, but don't fail the batch upload if logging fails
-      // (unless the canister is stopped, in which case we must fail)
+      // Try to add cleaning logs, preserving original error for canister-stopped detection
       try {
         await actor.addCleaningLog(cleaningLogs);
       } catch (logError) {
-        // If canister is stopped, we cannot proceed with batch upload
-        if (isCanisterStopped(logError)) {
-          throw new Error(getCanisterStoppedMessage());
-        }
-        // Otherwise, log the error but continue with batch upload
-        console.warn('Failed to add cleaning log (continuing with batch upload):', logError);
+        // Rethrow the original error to preserve replica rejection details
+        throw logError;
       }
 
-      // Upload each document
-      for (let i = 0; i < contents.length; i++) {
-        try {
-          const docId = await actor.uploadDocument(contents[i]);
-          results.success.push(docId);
-          
-          if (onProgress) {
-            onProgress(i + 1, contents.length);
-          }
-        } catch (error) {
-          console.error(`Failed to upload document ${i}:`, error);
-          results.failed.push(i);
-        }
-      }
+      // Use single batch upload call instead of looping
+      const docIds = await actor.batchUploadDocuments(contents);
 
       // Trigger confusion matrix generation for all models after batch upload
-      if (results.success.length > 0) {
+      if (docIds.length > 0) {
         try {
           const sampleContent = contents[0];
           await actor.processIncorrect(sampleContent, 'BERT', 'interest', 'trust');
@@ -162,10 +131,10 @@ export function useUploadDocumentsBatch() {
         }
       }
 
-      return results;
+      return { success: docIds, failed: [] };
     },
-    onSuccess: () => {
-      // Invalidate all queries to force refetch
+    onSuccess: async () => {
+      // Single invalidation and refetch to sync data in the background
       queryClient.invalidateQueries({ queryKey: ['documents'] });
       queryClient.invalidateQueries({ queryKey: ['cleaningLogs'] });
       queryClient.invalidateQueries({ queryKey: ['confusionMatrix'] });

@@ -7,6 +7,8 @@ interface ReplicaRejection {
   reject_code?: number;
   reject_message?: string;
   error_code?: string;
+  request_id?: string;
+  canister_id?: string;
 }
 
 /**
@@ -26,6 +28,8 @@ export function extractReplicaRejection(error: unknown): ReplicaRejection | null
     reject_code: err.reject_code ?? err.code,
     reject_message: err.reject_message ?? err.message,
     error_code: err.error_code,
+    request_id: err.request_id,
+    canister_id: err.canister_id,
   };
 
   // Check nested body property (common in IC agent errors)
@@ -34,6 +38,10 @@ export function extractReplicaRejection(error: unknown): ReplicaRejection | null
     rejection.reject_message = rejection.reject_message ?? err.body.reject_message;
     rejection.error_code = rejection.error_code ?? err.body.error_code;
   }
+
+  // Check for request_id in various locations
+  if (err.requestId) rejection.request_id = rejection.request_id ?? err.requestId;
+  if (err.body?.request_id) rejection.request_id = rejection.request_id ?? err.body.request_id;
 
   // Return null if we couldn't extract any useful info
   if (!rejection.reject_code && !rejection.reject_message && !rejection.error_code) {
@@ -70,7 +78,46 @@ export function isCanisterStopped(error: unknown): boolean {
  * Produces a user-friendly English error message for canister-stopped upload failures.
  */
 export function getCanisterStoppedMessage(): string {
-  return 'The backend canister is currently stopped. Uploads cannot proceed until the canister is started or redeployed. Please contact the system administrator.';
+  return 'The backend canister is currently stopped or unavailable. Uploads cannot proceed until the canister is started or redeployed. Please try again later or contact the system administrator.';
+}
+
+/**
+ * Formats technical replica rejection details as a readable multi-line English block.
+ */
+export function formatTechnicalDetails(rejection: ReplicaRejection | null, fallbackError?: unknown): string {
+  if (!rejection) {
+    // Fallback to basic error message
+    if (fallbackError instanceof Error) {
+      return fallbackError.message;
+    } else if (typeof fallbackError === 'string') {
+      return fallbackError;
+    }
+    return 'Unknown error occurred';
+  }
+
+  const lines: string[] = [];
+
+  if (rejection.error_code) {
+    lines.push(`Error Code: ${rejection.error_code}`);
+  }
+
+  if (rejection.reject_code !== undefined) {
+    lines.push(`Reject Code: ${rejection.reject_code}`);
+  }
+
+  if (rejection.reject_message) {
+    lines.push(`Message: ${rejection.reject_message}`);
+  }
+
+  if (rejection.request_id) {
+    lines.push(`Request ID: ${rejection.request_id}`);
+  }
+
+  if (rejection.canister_id) {
+    lines.push(`Canister ID: ${rejection.canister_id}`);
+  }
+
+  return lines.length > 0 ? lines.join('\n') : 'No additional error information available';
 }
 
 /**
@@ -78,34 +125,19 @@ export function getCanisterStoppedMessage(): string {
  * Returns both a user-friendly summary and technical details for debugging.
  */
 export function mapUploadError(error: unknown): { summary: string; details: string } {
+  const rejection = extractReplicaRejection(error);
+
   // Check if it's a canister-stopped error
   if (isCanisterStopped(error)) {
-    const rejection = extractReplicaRejection(error);
     return {
       summary: getCanisterStoppedMessage(),
-      details: rejection?.reject_message || 'Canister stopped (IC0508)',
+      details: formatTechnicalDetails(rejection, error),
     };
   }
 
-  // Extract any available error details
-  const rejection = extractReplicaRejection(error);
-  
-  // Build technical details string
-  let details = '';
-  if (rejection) {
-    if (rejection.error_code) details += `Error code: ${rejection.error_code}. `;
-    if (rejection.reject_code) details += `Reject code: ${rejection.reject_code}. `;
-    if (rejection.reject_message) details += rejection.reject_message;
-  } else if (error instanceof Error) {
-    details = error.message;
-  } else if (typeof error === 'string') {
-    details = error;
-  } else {
-    details = 'Unknown error occurred';
-  }
-
+  // For other errors, provide generic message with technical details
   return {
     summary: 'Upload failed. Please check the error details below and try again.',
-    details: details.trim() || 'No additional error information available',
+    details: formatTechnicalDetails(rejection, error),
   };
 }

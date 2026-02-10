@@ -29,6 +29,33 @@
     --chart-3: oklch(55% 0.18 25);
     --chart-4: oklch(60% 0.10 50);
     --chart-5: oklch(70% 0.12 150);
+    
+    /* BERT Confusion Matrix: green→yellow gradient palette */
+    --bert-matrix-green: oklch(78% 0.16 145);
+    --bert-matrix-yellow: oklch(88% 0.15 95);
+    --bert-matrix-label-bg: oklch(92% 0.08 120);
+    --bert-matrix-label-border: oklch(70% 0.14 125);
+    --bert-matrix-tooltip-bg: oklch(96% 0.06 120);
+    --bert-matrix-tooltip-border: oklch(68% 0.13 120);
+    --bert-matrix-tooltip-accent: oklch(58% 0.18 130);
+    
+    /* RoBERTa Confusion Matrix: blue→purple gradient palette */
+    --roberta-matrix-blue: oklch(75% 0.15 240);
+    --roberta-matrix-purple: oklch(70% 0.18 290);
+    --roberta-matrix-label-bg: oklch(92% 0.08 260);
+    --roberta-matrix-label-border: oklch(65% 0.14 265);
+    --roberta-matrix-tooltip-bg: oklch(96% 0.06 260);
+    --roberta-matrix-tooltip-border: oklch(63% 0.13 265);
+    --roberta-matrix-tooltip-accent: oklch(60% 0.18 270);
+    
+    /* DistilBERT Confusion Matrix: orange→red gradient palette */
+    --distilbert-matrix-orange: oklch(78% 0.16 50);
+    --distilbert-matrix-red: oklch(68% 0.22 25);
+    --distilbert-matrix-label-bg: oklch(92% 0.08 35);
+    --distilbert-matrix-label-border: oklch(65% 0.16 30);
+    --distilbert-matrix-tooltip-bg: oklch(96% 0.06 35);
+    --distilbert-matrix-tooltip-border: oklch(63% 0.15 30);
+    --distilbert-matrix-tooltip-accent: oklch(60% 0.20 25);
   }
 
   .dark {
@@ -56,6 +83,33 @@
     --chart-3: oklch(60% 0.18 25);
     --chart-4: oklch(65% 0.10 50);
     --chart-5: oklch(75% 0.12 150);
+    
+    /* BERT Confusion Matrix: green→yellow gradient palette (dark mode) */
+    --bert-matrix-green: oklch(58% 0.15 145);
+    --bert-matrix-yellow: oklch(68% 0.14 95);
+    --bert-matrix-label-bg: oklch(28% 0.06 120);
+    --bert-matrix-label-border: oklch(48% 0.12 125);
+    --bert-matrix-tooltip-bg: oklch(22% 0.04 120);
+    --bert-matrix-tooltip-border: oklch(45% 0.11 120);
+    --bert-matrix-tooltip-accent: oklch(72% 0.16 130);
+    
+    /* RoBERTa Confusion Matrix: blue→purple gradient palette (dark mode) */
+    --roberta-matrix-blue: oklch(58% 0.14 240);
+    --roberta-matrix-purple: oklch(60% 0.17 290);
+    --roberta-matrix-label-bg: oklch(28% 0.06 260);
+    --roberta-matrix-label-border: oklch(48% 0.12 265);
+    --roberta-matrix-tooltip-bg: oklch(22% 0.04 260);
+    --roberta-matrix-tooltip-border: oklch(45% 0.11 265);
+    --roberta-matrix-tooltip-accent: oklch(72% 0.16 270);
+    
+    /* DistilBERT Confusion Matrix: orange→red gradient palette (dark mode) */
+    --distilbert-matrix-orange: oklch(60% 0.15 50);
+    --distilbert-matrix-red: oklch(58% 0.20 25);
+    --distilbert-matrix-label-bg: oklch(28% 0.06 35);
+    --distilbert-matrix-label-border: oklch(48% 0.14 30);
+    --distilbert-matrix-tooltip-bg: oklch(22% 0.04 35);
+    --distilbert-matrix-tooltip-border: oklch(45% 0.13 30);
+    --distilbert-matrix-tooltip-accent: oklch(72% 0.18 25);
   }
 }
 
@@ -65,56 +119,5 @@
   }
   body {
     @apply bg-background text-foreground;
-  }
-}
-
-/* Print-specific styles for Strategic Report */
-@media print {
-  /* Hide non-essential elements */
-  .print\:hidden {
-    display: none !important;
-  }
-
-  /* Optimize page layout */
-  body {
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
-  }
-
-  .report-container {
-    max-width: 100%;
-  }
-
-  /* Ensure cards print with borders */
-  .report-container > * {
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-
-  /* Add spacing between sections */
-  .report-container > * + * {
-    margin-top: 1.5rem;
-  }
-
-  /* Ensure proper text rendering */
-  h1, h2, h3, h4, h5, h6 {
-    page-break-after: avoid;
-    break-after: avoid;
-  }
-
-  /* Remove shadows and adjust colors for print */
-  .card {
-    box-shadow: none !important;
-    border: 1px solid oklch(90% 0.01 235) !important;
-  }
-
-  /* Ensure proper badge rendering */
-  .badge {
-    border: 1px solid currentColor;
-  }
-
-  /* Optimize list rendering */
-  ul, ol {
-    page-break-inside: avoid;
   }
 }
